@@ -1,0 +1,21 @@
+{
+  "components": {
+    "plugins": {
+      "CodeGeneration": {
+        "src": "src/plugins/CodeGeneration",
+        "test": "test/plugins/CodeGeneration"
+      },
+      "BIPCodeGenerator": {
+        "src": "src/plugins/BIPCodeGenerator",
+        "test": "test/plugins/BIPCodeGenerator"
+      },
+      "CodeGenerator": {
+        "src": "src/plugins/CodeGenerator",
+        "test": "test/plugins/CodeGenerator"
+      }
+    }
+  },
+  "dependencies": {
+    "plugins": {}
+  }
+}
