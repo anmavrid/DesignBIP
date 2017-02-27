@@ -1,6 +1,6 @@
 {
-  "id": "CodeGenerator",
-  "name": "CodeGenerator",
+  "id": "ArchitectureSpecGenerator",
+  "name": "ArchitectureSpecGenerator",
   "version": "0.1.0",
   "description": "",
   "icon": {
