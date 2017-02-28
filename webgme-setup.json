@@ -13,9 +13,15 @@
         "src": "src/plugins/CodeGenerator",
         "test": "test/plugins/CodeGenerator"
       }
+    },
+    "seeds": {
+      "BIP": {
+        "src": "src/seeds/BIP"
+      }
     }
   },
   "dependencies": {
-    "plugins": {}
+    "plugins": {},
+    "seeds": {}
   }
 }
