@@ -12,14 +12,21 @@ config.seedProjects.basePaths.push(__dirname + '/../src/seeds/BIP');
 
 
 
+config.visualization.panelPaths.push(__dirname + '/../node_modules/webgme-codeeditor/src/visualizers/panels');
 
 
 
 
 // Visualizer descriptors
-
+config.visualization.visualizerDescriptors.push(__dirname + '/../src/visualizers/Visualizers.json');
 // Add requirejs paths
-
+config.requirejsPaths = {
+  'CodeEditor': 'panels/CodeEditor/CodeEditorPanel',
+  'panels': './src/visualizers/panels',
+  'widgets': './src/visualizers/widgets',
+  'panels/CodeEditor': './node_modules/webgme-codeeditor/src/visualizers/panels/CodeEditor',
+  'widgets/CodeEditor': './node_modules/webgme-codeeditor/src/visualizers/widgets/CodeEditor'
+};
 
 
 config.mongo.uri = 'mongodb://127.0.0.1:27017/bip';

@@ -18,10 +18,21 @@
       "BIP": {
         "src": "src/seeds/BIP"
       }
-    }
+    },
+    "visualizers": {}
   },
   "dependencies": {
     "plugins": {},
-    "seeds": {}
+    "seeds": {},
+    "visualizers": {
+      "CodeEditor": {
+        "src": "panels/CodeEditor/CodeEditorPanel",
+        "title": "CodeEditor",
+        "panel": "src/visualizers/panels/CodeEditor",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/CodeEditor",
+        "project": "webgme-codeeditor"
+      }
+    }
   }
 }
