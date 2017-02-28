@@ -55,17 +55,24 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-                nodeObject;
+            nodeObject;
 
         nodeObject = self.activeNode;
 
         self.loadNodeMap(nodeObject)
                 .then(function (nodes) {
                     self.logger.debug(Object.keys(nodes));
-                    self.generateMacros(self.generateArchitectureModel(nodes));
+                    var model = self.generateMacros(self.generateArchitectureModel(nodes));
+                    for (var end of model.connectorEnds){
+                        delete end.connector;
+                        delete end.port;
+                    }
+                    self.logger.info(JSON.stringify( model , null, 4));
+                })
+                .then(function(){
                     self.result.setSuccess(true);
                     callback(null, self.result);
-                })
+                }) 
                 .catch(function (err) {
                     self.logger.error(err.stack);
                     // Result success is false at invocation.
@@ -88,7 +95,6 @@ define([
     
     ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel){
         var self = this; 
-        
         
         for (var port of architectureModel.ports) {
             var require = new Set;
@@ -114,7 +120,6 @@ define([
                             accept.add(otherConnectorEnd.port.name);
                 if (connectorEnd.type === 'Trigger'){
                         require.add("-");
-                        //require.add(';');
                     }
                 else {
                     var triggerExists = false;
@@ -125,16 +130,18 @@ define([
                     for (var otherConnectorEnd of connector.ends) {
                         if (triggerExists === false){
                             if (otherConnectorEnd.port.name !== port.name || parseInt(otherConnectorEnd.multiplicity) >1 ) {
+                                var reqCause = [];
                                 for (var i = 0; i < parseInt(otherConnectorEnd.multiplicity); i++)
-                                    require.add(otherConnectorEnd.port.name);
-                                //require.add(';');
+                                    reqCause.push(otherConnectorEnd.port.name);
+                                require.add(reqCause);
                             }
                         }
                         else{
                             if (otherConnectorEnd.type === 'Trigger' && (otherConnectorEnd.port.name !== port.name || parseInt(otherConnectorEnd.multiplicity) >1 )){
+                                var reqCause = [];
                                 for (var i = 0; i < parseInt(otherConnectorEnd.multiplicity); i++)
-                                    require.add(otherConnectorEnd.port.name);
-                                //require.add(';');
+                                    reqCause.push(otherConnectorEnd.port.name);
+                                require.add(reqCause);
                             }
                         }
                     }
@@ -142,72 +149,113 @@ define([
             }
             //for debugging
             self.logger.info("port: "+port.name);
-            for (var req of require)
-                self.logger.info("requires "+ req);
+            for (var req of require){
+                for (var cause of req)
+                    self.logger.info("requires "+ cause);
+            }
             for (var acc of accept)
                 self.logger.info("accepts "+ acc);
             
-            port.require = require;
-            port.accept = accept;
+            //set to list
+            port.require = [...require];
+            port.accept = [...accept];
         }
-        return architectureModel.ports;
+        return architectureModel;
     };
     
     ArchitectureSpecGenerator.prototype.generateArchitectureModel = function (nodes) {
         var self = this,
+                portObjects = {},
+                connectorObjects = {},
+                endObjects = {},
                 architectureModel = {
                     ports: [],
                     connectors: [],
                     connectorEnds: []
                 };
+                
+        //create new clean objects        
+        function portToObject(port) {
+            var path = self.core.getPath(port);
+            if (!portObjects.hasOwnProperty(path)) {
+                portObjects[path] = {};
+            }
+            return portObjects[path];
+        }
+        
+        function connectorToObject(connector) {
+            var path = self.core.getPath(connector);
+            if (!connectorObjects.hasOwnProperty(path)) {
+                connectorObjects[path] = {};
+            }
+            return connectorObjects[path];
+        }
+        
+        function endToObject(end) {
+            var path = self.core.getPath(end);
+            if (!endObjects.hasOwnProperty(path)) {
+                endObjects[path] = {};
+            }
+            return endObjects[path];
+        }
         
         for (var path in nodes) {
             var node = nodes[path];
-            if (self.isMetaTypeOf(node, self.META.EnforceableTransition)) {
-                architectureModel.ports.push(node);
-                node.name = self.core.getAttribute(node, 'name');
+            
+            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+                for (var child of self.core.getChildrenPaths(node)) 
+                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) 
+                        portToObject(nodes[child]).componentType = path;                 
+            }
+            else if (self.isMetaTypeOf(node, self.META.EnforceableTransition)) {
+                var port = portToObject(node);
+                architectureModel.ports.push(port);
+                port.name = self.core.getAttribute(node, 'name');
+                self.logger.info("1."+ port.name);
             }
             else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Join) {
-                    architectureModel.connectors.push(node); 
-                    var srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
-                    var dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
-                    srcConnectorEnd.connector = node;
-                    dstConnectorEnd.connector = node;
-                    node.ends = [srcConnectorEnd, dstConnectorEnd];
+                    var connector = connectorToObject(node);
+                    architectureModel.connectors.push(connector); 
+                    var srcConnectorEnd = endToObject(nodes[self.core.getPointerPath(node, 'src')]);
+                    var dstConnectorEnd = endToObject(nodes[self.core.getPointerPath(node, 'dst')]);
+                    srcConnectorEnd.connector = connector;
+                    dstConnectorEnd.connector = connector;
+                    connector.ends = [srcConnectorEnd, dstConnectorEnd];
                 }
             }
             else if (self.isMetaTypeOf(node, self.META.Join)) {
-                architectureModel.connectors.push(node);
-                node.ends = [];
+                var connector = connectorToObject(node);
+                architectureModel.connectors.push(connector);
+                connector.ends = [];
                 for (var pathConnector in nodes) {
                     var nodeConnector = nodes[pathConnector];
                     if (self.isMetaTypeOf(nodeConnector, self.META.Connector) 
                             && nodes[self.core.getPointerPath(nodeConnector, 'dst')] === node) {
-                        var srcConnectorEnd = nodes[self.core.getPointerPath(nodeConnector, 'src')];
-                        srcConnectorEnd.connector = node;
-                        node.ends.push(srcConnectorEnd);
+                        var srcConnectorEnd = endToObject(nodes[self.core.getPointerPath(nodeConnector, 'src')]);
+                        srcConnectorEnd.connector = connector;
+                        connector.ends.push(srcConnectorEnd);
                     }
                 }
             }
             else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
-                var connectorEnd = nodes[self.core.getPointerPath(node, 'src')];
+                var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
+                var connectorEnd = endToObject(gmeEnd);
                 architectureModel.connectorEnds.push(connectorEnd);
-                var port = nodes[self.core.getPointerPath(node, 'dst')];
+                var port = portToObject(nodes[self.core.getPointerPath(node, 'dst')]);
                 connectorEnd.port = port;
                 if (!port.hasOwnProperty("connectorEnds"))
                     port.connectorEnds = [];
                 port.connectorEnds.push(connectorEnd);
-                connectorEnd.type = self.core.getAttribute(connectorEnd, 'name');
-                connectorEnd.degree = self.core.getAttribute(connectorEnd, 'Degree');
-                connectorEnd.multiplicity = self.core.getAttribute(connectorEnd, 'Multiplicity');
+                connectorEnd.type = self.core.getAttribute(gmeEnd, 'name');
+                connectorEnd.degree = self.core.getAttribute(gmeEnd, 'Degree');
+                connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'Multiplicity');
             }
         }
 
         for (var port of architectureModel.ports) {
             port.connectors = new Set();
             for (var connectorEnd of port.connectorEnds) {
-                //self.logger.info(connectorEnd.connector);
                 if (connectorEnd.hasOwnProperty('connector'))
                   port.connectors.add(connectorEnd.connector);
             }
@@ -215,7 +263,7 @@ define([
         
         //For debugging
 //        for (var port of architectureModel.ports){
-//            self.logger.info("port: "+self.core.getAttribute(port, 'name'));
+//            self.logger.info("port: " + port.name);
 //            
 //            for (var connectorEnd of port.connectorEnds){
 //                self.logger.info("end type: "+ self.core.getAttribute(connectorEnd, 'name') +" multiplicity: "+ self.core.getAttribute(connectorEnd, 'Multiplicity') +" and degree: "+ self.core.getAttribute(connectorEnd, 'Degree'));
