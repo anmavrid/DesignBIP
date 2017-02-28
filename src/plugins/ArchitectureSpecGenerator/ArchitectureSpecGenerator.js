@@ -63,11 +63,7 @@ define([
                 .then(function (nodes) {
                     self.logger.debug(Object.keys(nodes));
                     var model = self.generateMacros(self.generateArchitectureModel(nodes));
-                    for (var end of model.connectorEnds){
-                        delete end.connector;
-                        delete end.port;
-                    }
-                    self.logger.info(JSON.stringify( model , null, 4));
+                    self.logger.info(JSON.stringify(model, null, 4));
                 })
                 .then(function(){
                     self.result.setSuccess(true);
@@ -94,7 +90,7 @@ define([
     };
     
     ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel){
-        var self = this; 
+        //var self = this; 
         
         for (var port of architectureModel.ports) {
             var require = new Set;
@@ -147,18 +143,15 @@ define([
                     }
                 }
             }
-            //for debugging
-            self.logger.info("port: "+port.name);
-            for (var req of require){
-                for (var cause of req)
-                    self.logger.info("requires "+ cause);
-            }
-            for (var acc of accept)
-                self.logger.info("accepts "+ acc);
-            
             //set to list
             port.require = [...require];
             port.accept = [...accept];
+        }
+        
+        //remove circular references
+        for (var end of architectureModel.connectorEnds){
+                delete end.connector;
+                delete end.port;
         }
         return architectureModel;
     };
@@ -211,7 +204,6 @@ define([
                 var port = portToObject(node);
                 architectureModel.ports.push(port);
                 port.name = self.core.getAttribute(node, 'name');
-                self.logger.info("1."+ port.name);
             }
             else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Join) {
@@ -259,16 +251,7 @@ define([
                 if (connectorEnd.hasOwnProperty('connector'))
                   port.connectors.add(connectorEnd.connector);
             }
-        }
-        
-        //For debugging
-//        for (var port of architectureModel.ports){
-//            self.logger.info("port: " + port.name);
-//            
-//            for (var connectorEnd of port.connectorEnds){
-//                self.logger.info("end type: "+ self.core.getAttribute(connectorEnd, 'name') +" multiplicity: "+ self.core.getAttribute(connectorEnd, 'Multiplicity') +" and degree: "+ self.core.getAttribute(connectorEnd, 'Degree'));
-//            }
-//        }
+        }  
         return architectureModel;       
     };
 
