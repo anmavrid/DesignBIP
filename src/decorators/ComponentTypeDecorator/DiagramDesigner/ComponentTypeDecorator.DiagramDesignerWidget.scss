@@ -1,10 +1,25 @@
 .ComponentType-decorator {
-  width: 150px;
+  width: 164px;
   min-height: 40px;
   border: 1px solid black;
   background-color: #dedede;
   padding: 3px;
   text-align: center;
+  .ports-container {
+    width: 160px;
+    .lhs {
+      width: 60px;
+      display: inline-block;
+    }
+    .center {
+      width: 40px;
+      display: inline-block;
+    }
+    .rhs {
+      width: 60px;
+      display: inline-block;
+    }
+  }
   .name {
     margin-top: 10px;
     white-space: nowrap;

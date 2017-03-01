@@ -1,10 +1,21 @@
 .ComponentType-decorator {
-  width: 150px;
+  width: 164px;
   min-height: 40px;
   border: 1px solid black;
   background-color: #dedede;
   padding: 3px;
   text-align: center; }
+  .ComponentType-decorator .ports-container {
+    width: 160px; }
+    .ComponentType-decorator .ports-container .lhs {
+      width: 60px;
+      display: inline-block; }
+    .ComponentType-decorator .ports-container .center {
+      width: 40px;
+      display: inline-block; }
+    .ComponentType-decorator .ports-container .rhs {
+      width: 60px;
+      display: inline-block; }
   .ComponentType-decorator .name {
     margin-top: 10px;
     white-space: nowrap;

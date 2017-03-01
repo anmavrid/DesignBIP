@@ -23,7 +23,13 @@ define([
     'use strict';
 
     var ComponentTypeDecorator,
-        DECORATOR_ID = 'ComponentTypeDecorator';
+        DECORATOR_ID = 'ComponentTypeDecorator',
+        DECORATOR_WIDTH = 164,
+        PORTS_TOP_MARGIN = 10,
+        PORT_HEIGHT = 12,
+        MULTI_PORT_HEIGHT = 10,
+        CONN_END_WIDTH = 20,
+        CONN_END_SPACE = 20;
 
     ComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);
@@ -31,6 +37,15 @@ define([
         DecoratorBase.apply(this, [opts]);
 
         this.name = '';
+        this.portsInfo = {};
+        this.orderedPortsId = [];
+        this.position = {
+            x: 100,
+            y: 100
+        };
+
+        this.skinParts.$portsLHS = this.$el.find('.ports-container.lhs');
+        this.skinParts.$portsRHS = this.$el.find('.ports-container.lhs');
 
         this.logger.debug('ComponentTypeDecorator ctor');
     };
@@ -44,9 +59,11 @@ define([
 
     ComponentTypeDecorator.prototype.on_addTo = function () {
         var self = this,
-            ports;
+            client = this._control._client,
+            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
         this._renderName();
+        this.position = nodeObj.getRegistry('position');
 
         // set title editable on double-click
         this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
@@ -64,10 +81,29 @@ define([
 
         //let the parent decorator class do its job first
         DecoratorBase.prototype.on_addTo.apply(this, arguments);
-        ports = this.listPorts();
+        this.addPortsInfo();
 
-        Object.keys(ports).forEach(function (id) {
-            self.$el.append($('<div/>', {class: 'port', text: ports[id].name + ' :: ' + ports[id].n}));
+        this.orderedPortsId.forEach(function (id) {
+            var info = self.portsInfo[id],
+                portEl = $('<div/>', {
+                    class: 'port',
+                    text: self.portsInfo[id].name
+                });
+
+            portEl.css('height', function () {
+                var n = Object.keys(info.connEnds).length;
+                if (n === 0) {
+                    return PORT_HEIGHT;
+                } else {
+                    return PORT_HEIGHT * n;
+                }
+            });
+
+            if (info.position.x === 'lhs') {
+                self.skinParts.$portsLHS.append(portEl);
+            } else {
+                self.skinParts.$portsRHS.append(portEl);
+            }
         });
     };
 
@@ -101,45 +137,146 @@ define([
             }
         }
 
-        this.listPorts();
+        //this.updatePortsInfo();
     };
 
-    ComponentTypeDecorator.prototype.listPorts = function () {
+    ComponentTypeDecorator.prototype.addPortsInfo = function () {
         var self = this,
             client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
-            childrenIds = nodeObj.getChildrenIds(),
-            result = {};
+            childrenIds = nodeObj.getChildrenIds();
 
-        childrenIds.forEach(function (childId) {
-            var childNode = client.getNode(childId);
-            if (childNode) {
-                if (GMEConcepts.isPort(childId)) {
-                    console.log('Found port:', childNode.getAttribute('name'));
-                    result[childId] = {
-                        id: childId,
-                        name: childNode.getAttribute('name'),
-                        n: 0
+        childrenIds.forEach(function (enfTransId) {
+            var enfTransNode = client.getNode(enfTransId);
+            if (enfTransNode) {
+                if (GMEConcepts.isPort(enfTransId) &&
+                    self.isOfMetaTypeName(enfTransNode.getMetaTypeId(), 'EnforceableTransition')) {
+
+                    //console.log('Found EnforceableTransition:', enfTransNode.getAttribute('name'));
+
+                    self.portsInfo[enfTransId] = {
+                        id: enfTransId,
+                        name: enfTransNode.getAttribute('name'),
+                        position: {
+                            x: 'lhs',
+                            y: 0
+                        },
+                        connEnds: {}
                     };
 
-                    childNode.getCollectionPaths('dst').forEach(function (connectionId) {
-                        var connNode = client.getNode(connectionId);
+                    enfTransNode.getCollectionPaths('dst').forEach(function (connectionId) {
+                        var connNode = client.getNode(connectionId),
+                            connEndNode;
 
-                        if (connNode) {
-                            console.log('Found Connection: ', connectionId, 'src:', connNode.getPointerId('src'));
+                        if (connNode && connNode.getPointerId('src')) {
+                            connEndNode = client.getNode(connNode.getPointerId('src'));
+                            if (self.isOfMetaTypeName(connEndNode.getMetaTypeId(), 'ConnectorEnd')) {
+                                self.portsInfo[enfTransId].connEnds[connEndNode.getId()] = {
+                                    id: connEndNode.getId(),
+                                    name: connEndNode.getAttribute('name'),
+                                    pos: connEndNode.getEditableRegistry('position'),
+                                    dispPos: connEndNode.getEditableRegistry('position')
+                                };
+                            }
+
                         } else {
                             console.warn('connection not available', connectionId);
                         }
-
-                        result[childId].n += 1;
                     });
                 }
             } else {
-                console.warn('Child not available', childId);
+                console.warn('Child not available', enfTransId);
             }
         });
 
-        return result;
+        //console.log(JSON.stringify(this.portsInfo, null, 2));
+    };
+
+    ComponentTypeDecorator.prototype._orderPortsInfoAndCalcPositions = function () {
+        var self = this,
+            portId,
+            weightedPosX,
+            weightedPosY,
+            x,
+            y,
+            connEndId,
+            relY,
+            lhsOrdered = [],
+            rhsOrdered = [];
+
+        function sorter(a, b) {
+            if (a.y === b.y) {
+                return 0;
+            } else if (a.y === null || a.y < b.y) {
+                return 1;
+            } else if (b.y === null || b.y < a.y) {
+                return -1;
+            }
+        }
+
+        function calcConnEndPositions(heightPortInfo) {
+            var connEndIds = Object.keys(self.portsInfo[portId].connEnds),
+                i;
+
+            portId = heightPortInfo.id;
+            self.orderedPortsId.push(portId);
+
+            for (i = 0; i < connEndIds.length; i += 1) {
+                connEndId = connEndIds[i];
+                self.portsInfo[portId].connEnds[connEndId].dispPos.y = relY + self.position.y;
+                if (self.portsInfo[portId].position.x === 'rhs') {
+                    self.portsInfo[portId].connEnds[connEndId].dispPos.x =
+                        self.position.x - CONN_END_SPACE - CONN_END_WIDTH;
+                } else {
+                    self.portsInfo[portId].connEnds[connEndId].dispPos.x =
+                        self.position.x + CONN_END_SPACE;
+                }
+
+                relY += PORT_HEIGHT;
+            }
+
+            if (connEndIds.length === 0) {
+                relY += PORT_HEIGHT;
+            }
+        }
+
+        this.orderedPortsId = [];
+
+        for (portId in this.portsInfo) {
+            weightedPosX = null;
+            weightedPosY = null;
+            for (connEndId in this.portsInfo[portId].connEnds) {
+                x = this.portsInfo[portId].connEnds[connEndId].pos.x;
+                y = this.portsInfo[portId].connEnds[connEndId].pos.y;
+                weightedPosX = typeof weightedPosX === 'number' ? Math.floor((weightedPosX + x) / 2) : x;
+                weightedPosX = typeof weightedPosY === 'number' ? Math.floor((weightedPosY + x) / 2) : y;
+            }
+
+            if (typeof weightedPosX === 'number' && weightedPosX > this.position.x + DECORATOR_WIDTH / 2) {
+                this.portsInfo[portId].position.x = 'rhs';
+                rhsOrdered.push({
+                    id: portId,
+                    y: weightedPosY
+                });
+            } else {
+                this.portsInfo[portId].position.x = 'lhs';
+                lhsOrdered.push({
+                    id: portId,
+                    y: weightedPosY
+                });
+            }
+        }
+
+        // Sort the ports based on y-position
+        rhsOrdered.sort(sorter);
+        lhsOrdered.sort(sorter);
+
+        // Calculate the display-positions for the connector-ends.
+        relY = PORTS_TOP_MARGIN;
+        lhsOrdered.forEach(calcConnEndPositions);
+
+        relY = PORTS_TOP_MARGIN;
+        rhsOrdered.forEach(calcConnEndPositions);
     };
 
     ComponentTypeDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
@@ -214,6 +351,31 @@ define([
 
         return (this.name && this.name.toLowerCase().indexOf(searchText.toLowerCase()) !== -1) ||
             (gmeId.indexOf(searchText) > -1);
+    };
+
+    ComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeName) {
+        var metaNode = this._control._client.getNode(metaNodeId),
+            baseId;
+
+        while (metaNode) {
+            if (metaNode.getAttribute('name') === metaTypeName) {
+                return true;
+            }
+
+            baseId = metaNode.getBaseId();
+            if (!baseId) {
+                return false;
+            }
+
+            metaNode = this._control._client.getNode(baseId);
+        }
+    };
+
+    ComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
+        console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId], this.dispPos);
+        if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
+            return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
+        }
     };
 
     return ComponentTypeDecorator;
