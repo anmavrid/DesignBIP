@@ -19,7 +19,12 @@
         "src": "src/seeds/BIP"
       }
     },
-    "visualizers": {}
+    "visualizers": {},
+    "decorators": {
+      "ComponentTypeDecorator": {
+        "src": "src/decorators/ComponentTypeDecorator"
+      }
+    }
   },
   "dependencies": {
     "plugins": {},
@@ -33,6 +38,7 @@
         "widget": "src/visualizers/widgets/CodeEditor",
         "project": "webgme-codeeditor"
       }
-    }
+    },
+    "decorators": {}
   }
 }
