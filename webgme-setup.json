@@ -37,6 +37,14 @@
         "secondary": false,
         "widget": "src/visualizers/widgets/CodeEditor",
         "project": "webgme-codeeditor"
+      },
+      "ModelEditorDD": {
+        "src": "panels/ModelEditor/ModelEditorPanel",
+        "title": "ModelEditorDD",
+        "panel": "src/visualizers/panels/ModelEditor",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/ModelEditor",
+        "project": "diagram-designers"
       }
     },
     "decorators": {}
