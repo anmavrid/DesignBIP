@@ -7,17 +7,24 @@
   text-align: center;
   .ports-container {
     width: 160px;
+    min-height: 1px;
+    display: inline-flex;
     .lhs {
+      min-height: 1px;
       width: 60px;
       display: inline-block;
+      text-align: left;
     }
     .center {
+      min-height: 1px;
       width: 40px;
       display: inline-block;
     }
     .rhs {
+      min-height: 1px;
       width: 60px;
       display: inline-block;
+      text-align: right;
     }
   }
   .name {

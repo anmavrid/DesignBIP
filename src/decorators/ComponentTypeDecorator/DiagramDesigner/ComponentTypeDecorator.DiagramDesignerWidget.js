@@ -26,7 +26,7 @@ define([
         DECORATOR_ID = 'ComponentTypeDecorator',
         DECORATOR_WIDTH = 164,
         PORTS_TOP_MARGIN = 10,
-        PORT_HEIGHT = 12,
+        PORT_HEIGHT = 50,
         MULTI_PORT_HEIGHT = 10,
         CONN_END_WIDTH = 20,
         CONN_END_SPACE = 20;
@@ -44,8 +44,8 @@ define([
             y: 100
         };
 
-        this.skinParts.$portsLHS = this.$el.find('.ports-container.lhs');
-        this.skinParts.$portsRHS = this.$el.find('.ports-container.lhs');
+        this.skinParts.$portsLHS = this.$el.find('.lhs');
+        this.skinParts.$portsRHS = this.$el.find('.rhs');
 
         this.logger.debug('ComponentTypeDecorator ctor');
     };
@@ -190,6 +190,7 @@ define([
         });
 
         //console.log(JSON.stringify(this.portsInfo, null, 2));
+        this._orderPortsInfoAndCalcPositions()
     };
 
     ComponentTypeDecorator.prototype._orderPortsInfoAndCalcPositions = function () {
@@ -208,28 +209,30 @@ define([
             if (a.y === b.y) {
                 return 0;
             } else if (a.y === null || a.y < b.y) {
-                return 1;
-            } else if (b.y === null || b.y < a.y) {
                 return -1;
+            } else if (b.y === null || b.y < a.y) {
+                return 1;
             }
         }
 
         function calcConnEndPositions(heightPortInfo) {
-            var connEndIds = Object.keys(self.portsInfo[portId].connEnds),
+            var connEndIds,
                 i;
 
             portId = heightPortInfo.id;
             self.orderedPortsId.push(portId);
 
+            connEndIds = Object.keys(self.portsInfo[portId].connEnds);
+
             for (i = 0; i < connEndIds.length; i += 1) {
                 connEndId = connEndIds[i];
                 self.portsInfo[portId].connEnds[connEndId].dispPos.y = relY + self.position.y;
-                if (self.portsInfo[portId].position.x === 'rhs') {
+                if (self.portsInfo[portId].position.x === 'lhs') {
                     self.portsInfo[portId].connEnds[connEndId].dispPos.x =
                         self.position.x - CONN_END_SPACE - CONN_END_WIDTH;
                 } else {
                     self.portsInfo[portId].connEnds[connEndId].dispPos.x =
-                        self.position.x + CONN_END_SPACE;
+                        self.position.x + DECORATOR_WIDTH + CONN_END_SPACE;
                 }
 
                 relY += PORT_HEIGHT;
@@ -249,7 +252,7 @@ define([
                 x = this.portsInfo[portId].connEnds[connEndId].pos.x;
                 y = this.portsInfo[portId].connEnds[connEndId].pos.y;
                 weightedPosX = typeof weightedPosX === 'number' ? Math.floor((weightedPosX + x) / 2) : x;
-                weightedPosX = typeof weightedPosY === 'number' ? Math.floor((weightedPosY + x) / 2) : y;
+                weightedPosY = typeof weightedPosY === 'number' ? Math.floor((weightedPosY + y) / 2) : y;
             }
 
             if (typeof weightedPosX === 'number' && weightedPosX > this.position.x + DECORATOR_WIDTH / 2) {

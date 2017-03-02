@@ -6,16 +6,23 @@
   padding: 3px;
   text-align: center; }
   .ComponentType-decorator .ports-container {
-    width: 160px; }
+    width: 160px;
+    min-height: 1px;
+    display: inline-flex; }
     .ComponentType-decorator .ports-container .lhs {
+      min-height: 1px;
       width: 60px;
-      display: inline-block; }
+      display: inline-block;
+      text-align: left; }
     .ComponentType-decorator .ports-container .center {
+      min-height: 1px;
       width: 40px;
       display: inline-block; }
     .ComponentType-decorator .ports-container .rhs {
+      min-height: 1px;
       width: 60px;
-      display: inline-block; }
+      display: inline-block;
+      text-align: right; }
   .ComponentType-decorator .name {
     margin-top: 10px;
     white-space: nowrap;
