@@ -63,7 +63,9 @@ define([
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
         this._renderName();
-        this.position = nodeObj.getRegistry('position');
+        if (nodeObj) {
+            this.position = nodeObj.getRegistry('position');
+        }
 
         // set title editable on double-click
         this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
@@ -82,6 +84,27 @@ define([
         //let the parent decorator class do its job first
         DecoratorBase.prototype.on_addTo.apply(this, arguments);
         this.addPortsInfo();
+        this._renderPorts();
+    };
+
+    ComponentTypeDecorator.prototype._renderName = function () {
+        var client = this._control._client,
+            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
+
+        //render GME-ID in the DOM, for debugging
+        this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
+
+        if (nodeObj) {
+            this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
+        }
+
+        //find name placeholder
+        this.skinParts.$name = this.$el.find('.name');
+        this.skinParts.$name.text(this.name);
+    };
+
+    ComponentTypeDecorator.prototype._renderPorts = function () {
+        var self = this;
 
         this.orderedPortsId.forEach(function (id) {
             var info = self.portsInfo[id],
@@ -107,22 +130,6 @@ define([
         });
     };
 
-    ComponentTypeDecorator.prototype._renderName = function () {
-        var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
-
-        //render GME-ID in the DOM, for debugging
-        this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
-
-        if (nodeObj) {
-            this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
-        }
-
-        //find name placeholder
-        this.skinParts.$name = this.$el.find('.name');
-        this.skinParts.$name.text(this.name);
-    };
-
     ComponentTypeDecorator.prototype.update = function () {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
@@ -130,14 +137,19 @@ define([
 
         if (nodeObj) {
             newName = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
-
+            this.position = nodeObj.getRegistry('position');
             if (this.name !== newName) {
                 this.name = newName;
                 this.skinParts.$name.text(this.name);
             }
         }
 
-        //this.updatePortsInfo();
+        this.addPortsInfo();
+
+        // FIXME: This might be slow for larger models..
+        this.skinParts.$portsLHS.empty();
+        this.skinParts.$portsRHS.empty();
+        this._renderPorts();
     };
 
     ComponentTypeDecorator.prototype.addPortsInfo = function () {
@@ -145,6 +157,8 @@ define([
             client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
             childrenIds = nodeObj.getChildrenIds();
+
+        this.portsInfo = {};
 
         childrenIds.forEach(function (enfTransId) {
             var enfTransNode = client.getNode(enfTransId);
@@ -190,7 +204,7 @@ define([
         });
 
         //console.log(JSON.stringify(this.portsInfo, null, 2));
-        this._orderPortsInfoAndCalcPositions()
+        this._orderPortsInfoAndCalcPositions();
     };
 
     ComponentTypeDecorator.prototype._orderPortsInfoAndCalcPositions = function () {
@@ -356,6 +370,12 @@ define([
             (gmeId.indexOf(searchText) > -1);
     };
 
+    /**
+     * Helper methods to figure out meta-type.
+     * @param metaNodeId
+     * @param metaTypeName
+     * @returns {boolean}
+     */
     ComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeName) {
         var metaNode = this._control._client.getNode(metaNodeId),
             baseId;
@@ -374,8 +394,14 @@ define([
         }
     };
 
+    /**
+     * Called by the Visualizer when requesting the position of the connectorEnds.
+     * @param portId
+     * @param connectorEndId
+     * @returns {*}
+     */
     ComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
-        console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId], this.dispPos);
+        //console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId]);
         if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
             return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
         }
