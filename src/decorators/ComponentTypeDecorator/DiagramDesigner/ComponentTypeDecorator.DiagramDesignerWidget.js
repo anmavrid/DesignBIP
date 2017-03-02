@@ -11,6 +11,7 @@ define([
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.DecoratorBase',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.DecoratorBaseWithDragPointerHelpers',
     'js/Utils/GMEConcepts',
+    'js/Widgets/DiagramDesigner/DiagramDesignerWidget.Constants',
     'text!./ComponentTypeDecorator.DiagramDesignerWidget.html',
     'css!./ComponentTypeDecorator.DiagramDesignerWidget.css'
 ], function (CONSTANTS,
@@ -18,6 +19,7 @@ define([
              DecoratorBase,
              PointerAndSetHelpers,
              GMEConcepts,
+             DD_CONSTANTS,
              ComponentTypeDecoratorTemplate) {
 
     'use strict';
@@ -121,6 +123,10 @@ define([
                     return PORT_HEIGHT * n;
                 }
             });
+
+            portEl.append($('<div/>', {
+                class: DD_CONSTANTS.CONNECTOR_CLASS + ' trans-connector'
+            }));
 
             if (info.position.x === 'lhs') {
                 self.skinParts.$portsLHS.append(portEl);
@@ -405,6 +411,32 @@ define([
         if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
             return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
         }
+    };
+
+    ComponentTypeDecorator.prototype.getConnectionAreas = function (id, isEnd, connectionMetaInfo) {
+        var result = [];
+
+        //by default return the center point of the item
+        //canvas will draw the connection to / from this coordinate
+        result.push({
+            id: '0',
+            x1: this.hostDesignerItem.getWidth() / 2,
+            y1: this.hostDesignerItem.getHeight() / 2,
+            x2: this.hostDesignerItem.getWidth() / 2,
+            y2: this.hostDesignerItem.getHeight() / 2,
+            angle1: 270,
+            angle2: 270,
+            len: 10
+        });
+
+        console.log('getConnectionAreas', id, isEnd, connectionMetaInfo);
+
+        return result;
+    };
+
+    ComponentTypeDecorator.prototype.getConnectorMetaInfo = function (id) {
+        console.log('getConnectorMetaInfo', id);
+        return undefined;
     };
 
     return ComponentTypeDecorator;
