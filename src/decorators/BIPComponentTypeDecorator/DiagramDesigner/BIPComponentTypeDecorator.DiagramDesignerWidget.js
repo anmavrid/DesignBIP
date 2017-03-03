@@ -34,6 +34,9 @@ define([
         CONN_END_WIDTH = 20,
         CONN_END_SPACE = 20;
 
+    nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
+    nodePropertyNames.Attributes.cardinality = 'Cardinality';
+
     BIPComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);
 
@@ -66,13 +69,9 @@ define([
 
     BIPComponentTypeDecorator.prototype.on_addTo = function () {
         var self = this,
-            client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
+            client = this._control._client;
 
         this._renderNameAndCardinality();
-        if (nodeObj) {
-            this.position = nodeObj.getRegistry('position');
-        }
 
         // set title editable on double-click
         this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
@@ -103,7 +102,8 @@ define([
 
         if (nodeObj) {
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
-            this.cardinality = nodeObj.getAttribute('Cardinality') || '';
+            this.cardinality = nodeObj.getAttribute(nodePropertyNames.Attributes.cardinality) || '';
+            this.position = nodeObj.getEditableRegistry('position');
         }
 
         //find name placeholder
@@ -340,6 +340,12 @@ define([
         client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.name, newValue);
     };
 
+    BIPComponentTypeDecorator.prototype._onCardinalityChanged = function (oldValue, newValue) {
+        var client = this._control._client;
+
+        client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.cardinality, newValue);
+    };
+
     BIPComponentTypeDecorator.prototype.doSearch = function (searchDesc) {
         var searchText = searchDesc.toString(),
             gmeId = (this._metaInfo && this._metaInfo[CONSTANTS.GME_ID]) || '';
@@ -512,8 +518,6 @@ define([
             params.connectors.forEach(function (portId) {
                 self.portsInfo[portId].$el.find('.trans-connector').addClass('show-connectors');
             });
-        } else {
-            //TODO: Hide box's connectors
         }
     };
 
