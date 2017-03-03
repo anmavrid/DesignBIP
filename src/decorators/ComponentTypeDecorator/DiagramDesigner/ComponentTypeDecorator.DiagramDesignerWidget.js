@@ -27,9 +27,10 @@ define([
     var ComponentTypeDecorator,
         DECORATOR_ID = 'ComponentTypeDecorator',
         DECORATOR_WIDTH = 164,
-        PORTS_TOP_MARGIN = 10,
+        PORTS_TOP_MARGIN = 40,
         PORT_HEIGHT = 50,
         MULTI_PORT_HEIGHT = 10,
+        CONN_AREA_WIDTH = 5,
         CONN_END_WIDTH = 20,
         CONN_END_SPACE = 20;
 
@@ -40,6 +41,7 @@ define([
 
         this.name = '';
         this.portsInfo = {};
+        this.registeredPorts = {};
         this.orderedPortsId = [];
         this.position = {
             x: 100,
@@ -108,30 +110,49 @@ define([
     ComponentTypeDecorator.prototype._renderPorts = function () {
         var self = this;
 
-        this.orderedPortsId.forEach(function (id) {
-            var info = self.portsInfo[id],
+        this.orderedPortsId.forEach(function (portId) {
+            var info = self.portsInfo[portId],
+                height = Object.keys(info.connEnds).length === 0 ?
+                    PORT_HEIGHT : Object.keys(info.connEnds).length * PORT_HEIGHT,
+
                 portEl = $('<div/>', {
                     class: 'port',
-                    text: self.portsInfo[id].name
-                });
+                })
+                    .css('height', height),
 
-            portEl.css('height', function () {
-                var n = Object.keys(info.connEnds).length;
-                if (n === 0) {
-                    return PORT_HEIGHT;
-                } else {
-                    return PORT_HEIGHT * n;
-                }
-            });
+                connectorEl = $('<div/>', {
+                    class: DD_CONSTANTS.CONNECTOR_CLASS + ' trans-connector',
+                    text: self.portsInfo[portId].name
+                }).attr({
+                    id: portId,
+                    'data-id': portId
+                })
+                    .css('height', height - 4)
+                    .css('font-weight', 'normal');
 
-            portEl.append($('<div/>', {
-                class: DD_CONSTANTS.CONNECTOR_CLASS + ' trans-connector'
-            }));
+            portEl.append(connectorEl);
+
+            self.portsInfo[portId].$el = portEl;
 
             if (info.position.x === 'lhs') {
                 self.skinParts.$portsLHS.append(portEl);
             } else {
                 self.skinParts.$portsRHS.append(portEl);
+            }
+
+            self.hostDesignerItem.registerConnectors(connectorEl, portId);
+
+            // The port was not registered before
+            if (self.registeredPorts.hasOwnProperty(portId) === false) {
+                self.hostDesignerItem.registerSubcomponent(portId, {GME_ID: portId});
+                self.registeredPorts[portId] = true;
+            }
+        });
+
+        // Unregister removed ports
+        Object.keys(self.registeredPorts).forEach(function (portId) {
+            if (self.portsInfo.hasOwnProperty(portId) === false) {
+                self.hostDesignerItem.unregisterSubcomponent(portId);
             }
         });
     };
@@ -181,6 +202,13 @@ define([
                             x: 'lhs',
                             y: 0
                         },
+                        connArea: {
+                            x1: 0,
+                            x2: 0,
+                            y1: 0,
+                            y2: 0
+                        },
+                        $el: null,
                         connEnds: {}
                     };
 
@@ -237,6 +265,7 @@ define([
 
         function calcConnEndPositions(heightPortInfo) {
             var connEndIds,
+                n = 0,
                 i;
 
             portId = heightPortInfo.id;
@@ -256,11 +285,16 @@ define([
                 }
 
                 relY += PORT_HEIGHT;
+                n += 1;
             }
 
             if (connEndIds.length === 0) {
                 relY += PORT_HEIGHT;
+                n = 1;
             }
+
+            self.portsInfo[portId].connArea.y1 = relY - PORT_HEIGHT * n;
+            self.portsInfo[portId].connArea.y2 = relY - PORT_HEIGHT * n + CONN_AREA_WIDTH;
         }
 
         this.orderedPortsId = [];
@@ -281,12 +315,18 @@ define([
                     id: portId,
                     y: weightedPosY
                 });
+
+                this.portsInfo[portId].connArea.x1 = DECORATOR_WIDTH - CONN_AREA_WIDTH;
+                this.portsInfo[portId].connArea.x2 = DECORATOR_WIDTH;
             } else {
                 this.portsInfo[portId].position.x = 'lhs';
                 lhsOrdered.push({
                     id: portId,
                     y: weightedPosY
                 });
+
+                this.portsInfo[portId].connArea.x1 = 0;
+                this.portsInfo[portId].connArea.x2 = CONN_AREA_WIDTH;
             }
         }
 
@@ -301,6 +341,59 @@ define([
         relY = PORTS_TOP_MARGIN;
         rhsOrdered.forEach(calcConnEndPositions);
     };
+
+    ComponentTypeDecorator.prototype._onNodeTitleChanged = function (oldValue, newValue) {
+        var client = this._control._client;
+
+        client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.name, newValue);
+    };
+
+    ComponentTypeDecorator.prototype.doSearch = function (searchDesc) {
+        var searchText = searchDesc.toString(),
+            gmeId = (this._metaInfo && this._metaInfo[CONSTANTS.GME_ID]) || '';
+
+        return (this.name && this.name.toLowerCase().indexOf(searchText.toLowerCase()) !== -1) ||
+            (gmeId.indexOf(searchText) > -1);
+    };
+
+    /**
+     * Helper methods to figure out meta-type.
+     * @param metaNodeId
+     * @param metaTypeName
+     * @returns {boolean}
+     */
+    ComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeName) {
+        var metaNode = this._control._client.getNode(metaNodeId),
+            baseId;
+
+        while (metaNode) {
+            if (metaNode.getAttribute('name') === metaTypeName) {
+                return true;
+            }
+
+            baseId = metaNode.getBaseId();
+            if (!baseId) {
+                return false;
+            }
+
+            metaNode = this._control._client.getNode(baseId);
+        }
+    };
+
+    /**
+     * Called by the Visualizer when requesting the position of the connectorEnds.
+     * @param portId
+     * @param connectorEndId
+     * @returns {*}
+     */
+    ComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
+        //console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId]);
+        if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
+            return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
+        }
+    };
+
+    // DiagramDesigner Decorator API
 
     ComponentTypeDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
         var result = [],
@@ -357,79 +450,19 @@ define([
                 angle2: 180,
                 len: LEN
             });
+        } else if (this.portsInfo.hasOwnProperty(id)) {
+            // Port connection area was asked for.
+            result.push({
+                id: this.orderedPortsId.indexOf(id),
+                x1: this.portsInfo[id].connArea.x1,
+                y1: this.portsInfo[id].connArea.y1,
+                x2: this.portsInfo[id].connArea.x2,
+                y2: this.portsInfo[id].connArea.y2,
+                angle1: 0,
+                angle2: 0,
+                len: LEN
+            });
         }
-
-        return result;
-    };
-
-    ComponentTypeDecorator.prototype._onNodeTitleChanged = function (oldValue, newValue) {
-        var client = this._control._client;
-
-        client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.name, newValue);
-    };
-
-    ComponentTypeDecorator.prototype.doSearch = function (searchDesc) {
-        var searchText = searchDesc.toString(),
-            gmeId = (this._metaInfo && this._metaInfo[CONSTANTS.GME_ID]) || '';
-
-        return (this.name && this.name.toLowerCase().indexOf(searchText.toLowerCase()) !== -1) ||
-            (gmeId.indexOf(searchText) > -1);
-    };
-
-    /**
-     * Helper methods to figure out meta-type.
-     * @param metaNodeId
-     * @param metaTypeName
-     * @returns {boolean}
-     */
-    ComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeName) {
-        var metaNode = this._control._client.getNode(metaNodeId),
-            baseId;
-
-        while (metaNode) {
-            if (metaNode.getAttribute('name') === metaTypeName) {
-                return true;
-            }
-
-            baseId = metaNode.getBaseId();
-            if (!baseId) {
-                return false;
-            }
-
-            metaNode = this._control._client.getNode(baseId);
-        }
-    };
-
-    /**
-     * Called by the Visualizer when requesting the position of the connectorEnds.
-     * @param portId
-     * @param connectorEndId
-     * @returns {*}
-     */
-    ComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
-        //console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId]);
-        if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
-            return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
-        }
-    };
-
-    ComponentTypeDecorator.prototype.getConnectionAreas = function (id, isEnd, connectionMetaInfo) {
-        var result = [];
-
-        //by default return the center point of the item
-        //canvas will draw the connection to / from this coordinate
-        result.push({
-            id: '0',
-            x1: this.hostDesignerItem.getWidth() / 2,
-            y1: this.hostDesignerItem.getHeight() / 2,
-            x2: this.hostDesignerItem.getWidth() / 2,
-            y2: this.hostDesignerItem.getHeight() / 2,
-            angle1: 270,
-            angle2: 270,
-            len: 10
-        });
-
-        console.log('getConnectionAreas', id, isEnd, connectionMetaInfo);
 
         return result;
     };
@@ -437,6 +470,69 @@ define([
     ComponentTypeDecorator.prototype.getConnectorMetaInfo = function (id) {
         console.log('getConnectorMetaInfo', id);
         return undefined;
+    };
+
+    // Port handling for control
+    ComponentTypeDecorator.prototype.getTerritoryQuery = function () {
+        var territoryRule = {},
+            gmeID = this._metaInfo[CONSTANTS.GME_ID],
+            client = this._control._client,
+            nodeObj =  client.getNode(gmeID),
+            hasAspect = this._aspect && this._aspect !== CONSTANTS.ASPECT_ALL && nodeObj &&
+                nodeObj.getValidAspectNames().indexOf(this._aspect) !== -1;
+
+        if (hasAspect) {
+            territoryRule[gmeID] = client.getAspectTerritoryPattern(gmeID, this._aspect);
+            territoryRule[gmeID].children = 1;
+        } else {
+            territoryRule[gmeID] = {children: 1};
+        }
+
+        return territoryRule;
+    };
+
+    ComponentTypeDecorator.prototype.showSourceConnectors = function (params) {
+        console.log('showSourceConnector', params);
+        // var self = this;
+        // if (params) {
+        //     params.connectors.forEach(function (portId) {
+        //         self.portsInfo[portId].$el.find('.trans-connector').addClass('show-connectors');
+        //     });
+        // } else {
+        //     //TODO: Hide box's connectors
+        // }
+    };
+
+    ComponentTypeDecorator.prototype.hideSourceConnectors = function (ss) {
+        console.log('hideSourceConnectors', ss);
+        // var self = this;
+        // if (self.portsInfo) {
+        //     Object.keys(self.portsInfo).forEach(function (portId) {
+        //         self.portsInfo[portId].$el.find('.trans-connector').removeClass('show-connectors');
+        //     });
+        // }
+    };
+
+    ComponentTypeDecorator.prototype.showEndConnectors = function (params) {
+        console.log('showEndConnectors', params);
+        var self = this;
+        if (params) {
+            params.connectors.forEach(function (portId) {
+                self.portsInfo[portId].$el.find('.trans-connector').addClass('show-connectors');
+            });
+        } else {
+            //TODO: Hide box's connectors
+        }
+    };
+
+    ComponentTypeDecorator.prototype.hideEndConnectors = function (ss) {
+        console.log('hideEndConnectors', ss);
+        var self = this;
+        if (self.portsInfo) {
+            Object.keys(self.portsInfo).forEach(function (portId) {
+                self.portsInfo[portId].$el.find('.trans-connector').removeClass('show-connectors');
+            });
+        }
     };
 
     return ComponentTypeDecorator;
