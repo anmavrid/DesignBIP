@@ -1,0 +1,8 @@
+.part-browser .bip-component-type-decorator {
+  width: 130px; }
+  .part-browser .bip-component-type-decorator .name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis; }
+
+/*# sourceMappingURL=BIPComponentTypeDecorator.PartBrowserWidget.css.map */

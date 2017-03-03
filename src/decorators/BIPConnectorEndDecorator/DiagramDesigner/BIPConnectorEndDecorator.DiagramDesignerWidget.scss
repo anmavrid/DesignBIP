@@ -1,0 +1,19 @@
+.bip-connector-end-decorator {
+  width: 20px;
+  height: 20px;
+  .cardinality {
+    position: absolute;
+    min-width: 30px;
+    max-width: 50px;
+    width: auto;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-weight: bold;
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-bottom: black solid 1px;
+    border-right: black solid 1px;
+    border-bottom-right-radius: 6px;
+  }
+}

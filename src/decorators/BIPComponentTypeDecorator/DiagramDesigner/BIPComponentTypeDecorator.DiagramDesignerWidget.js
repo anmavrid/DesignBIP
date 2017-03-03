@@ -2,7 +2,7 @@
 /*jshint browser: true, camelcase: false*/
 
 /**
- * @author rkereskenyi / https://github.com/rkereskenyi
+ * @author pmeijer / https://github.com/pmeijer
  */
 
 define([
@@ -12,20 +12,20 @@ define([
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.DecoratorBaseWithDragPointerHelpers',
     'js/Utils/GMEConcepts',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.Constants',
-    'text!./ComponentTypeDecorator.DiagramDesignerWidget.html',
-    'css!./ComponentTypeDecorator.DiagramDesignerWidget.css'
+    'text!./BIPComponentTypeDecorator.DiagramDesignerWidget.html',
+    'css!./BIPComponentTypeDecorator.DiagramDesignerWidget.css'
 ], function (CONSTANTS,
              nodePropertyNames,
              DecoratorBase,
              PointerAndSetHelpers,
              GMEConcepts,
              DD_CONSTANTS,
-             ComponentTypeDecoratorTemplate) {
+             BIPComponentTypeDecoratorTemplate) {
 
     'use strict';
 
-    var ComponentTypeDecorator,
-        DECORATOR_ID = 'ComponentTypeDecorator',
+    var BIPComponentTypeDecorator,
+        DECORATOR_ID = 'BIPComponentTypeDecorator',
         DECORATOR_WIDTH = 164,
         PORTS_TOP_MARGIN = 40,
         PORT_HEIGHT = 50,
@@ -34,12 +34,13 @@ define([
         CONN_END_WIDTH = 20,
         CONN_END_SPACE = 20;
 
-    ComponentTypeDecorator = function (options) {
+    BIPComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);
 
         DecoratorBase.apply(this, [opts]);
 
         this.name = '';
+        this.cardinality = 'n';
         this.portsInfo = {};
         this.registeredPorts = {};
         this.orderedPortsId = [];
@@ -48,25 +49,27 @@ define([
             y: 100
         };
 
+        this.skinParts.$name = this.$el.find('.name');
+        this.skinParts.$cardinality = this.$el.find('.cardinality');
         this.skinParts.$portsLHS = this.$el.find('.lhs');
         this.skinParts.$portsRHS = this.$el.find('.rhs');
 
-        this.logger.debug('ComponentTypeDecorator ctor');
+        this.logger.debug('BIPComponentTypeDecorator ctor');
     };
 
-    _.extend(ComponentTypeDecorator.prototype, DecoratorBase.prototype);
-    ComponentTypeDecorator.prototype.DECORATORID = DECORATOR_ID;
+    _.extend(BIPComponentTypeDecorator.prototype, DecoratorBase.prototype);
+    BIPComponentTypeDecorator.prototype.DECORATORID = DECORATOR_ID;
 
     /*********************** OVERRIDE DecoratorBaseWithDragPointerHelpers MEMBERS **************************/
 
-    ComponentTypeDecorator.prototype.$DOMBase = $(ComponentTypeDecoratorTemplate);
+    BIPComponentTypeDecorator.prototype.$DOMBase = $(BIPComponentTypeDecoratorTemplate);
 
-    ComponentTypeDecorator.prototype.on_addTo = function () {
+    BIPComponentTypeDecorator.prototype.on_addTo = function () {
         var self = this,
             client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
-        this._renderName();
+        this._renderNameAndCardinality();
         if (nodeObj) {
             this.position = nodeObj.getRegistry('position');
         }
@@ -91,7 +94,7 @@ define([
         this._renderPorts();
     };
 
-    ComponentTypeDecorator.prototype._renderName = function () {
+    BIPComponentTypeDecorator.prototype._renderNameAndCardinality = function () {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
@@ -100,14 +103,15 @@ define([
 
         if (nodeObj) {
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
+            this.cardinality = nodeObj.getAttribute('Cardinality') || '';
         }
 
         //find name placeholder
-        this.skinParts.$name = this.$el.find('.name');
         this.skinParts.$name.text(this.name);
+        this.skinParts.$cardinality.text(this.cardinality);
     };
 
-    ComponentTypeDecorator.prototype._renderPorts = function () {
+    BIPComponentTypeDecorator.prototype._renderPorts = function () {
         var self = this;
 
         this.orderedPortsId.forEach(function (portId) {
@@ -157,20 +161,8 @@ define([
         });
     };
 
-    ComponentTypeDecorator.prototype.update = function () {
-        var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
-            newName = '';
-
-        if (nodeObj) {
-            newName = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
-            this.position = nodeObj.getRegistry('position');
-            if (this.name !== newName) {
-                this.name = newName;
-                this.skinParts.$name.text(this.name);
-            }
-        }
-
+    BIPComponentTypeDecorator.prototype.update = function () {
+        this._renderNameAndCardinality();
         this.addPortsInfo();
 
         // FIXME: This might be slow for larger models..
@@ -179,7 +171,7 @@ define([
         this._renderPorts();
     };
 
-    ComponentTypeDecorator.prototype.addPortsInfo = function () {
+    BIPComponentTypeDecorator.prototype.addPortsInfo = function () {
         var self = this,
             client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
@@ -241,7 +233,7 @@ define([
         this._orderPortsInfoAndCalcPositions();
     };
 
-    ComponentTypeDecorator.prototype._orderPortsInfoAndCalcPositions = function () {
+    BIPComponentTypeDecorator.prototype._orderPortsInfoAndCalcPositions = function () {
         var self = this,
             portId,
             weightedPosX,
@@ -342,13 +334,13 @@ define([
         rhsOrdered.forEach(calcConnEndPositions);
     };
 
-    ComponentTypeDecorator.prototype._onNodeTitleChanged = function (oldValue, newValue) {
+    BIPComponentTypeDecorator.prototype._onNodeTitleChanged = function (oldValue, newValue) {
         var client = this._control._client;
 
         client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.name, newValue);
     };
 
-    ComponentTypeDecorator.prototype.doSearch = function (searchDesc) {
+    BIPComponentTypeDecorator.prototype.doSearch = function (searchDesc) {
         var searchText = searchDesc.toString(),
             gmeId = (this._metaInfo && this._metaInfo[CONSTANTS.GME_ID]) || '';
 
@@ -362,7 +354,7 @@ define([
      * @param metaTypeName
      * @returns {boolean}
      */
-    ComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeName) {
+    BIPComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeName) {
         var metaNode = this._control._client.getNode(metaNodeId),
             baseId;
 
@@ -386,7 +378,7 @@ define([
      * @param connectorEndId
      * @returns {*}
      */
-    ComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
+    BIPComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
         //console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId]);
         if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
             return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
@@ -395,7 +387,7 @@ define([
 
     // DiagramDesigner Decorator API
 
-    ComponentTypeDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
+    BIPComponentTypeDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
         var result = [],
             edge = 10,
             LEN = 20;
@@ -467,13 +459,13 @@ define([
         return result;
     };
 
-    ComponentTypeDecorator.prototype.getConnectorMetaInfo = function (id) {
+    BIPComponentTypeDecorator.prototype.getConnectorMetaInfo = function (id) {
         console.log('getConnectorMetaInfo', id);
         return undefined;
     };
 
     // Port handling for control
-    ComponentTypeDecorator.prototype.getTerritoryQuery = function () {
+    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
         var territoryRule = {},
             gmeID = this._metaInfo[CONSTANTS.GME_ID],
             client = this._control._client,
@@ -491,7 +483,7 @@ define([
         return territoryRule;
     };
 
-    ComponentTypeDecorator.prototype.showSourceConnectors = function (params) {
+    BIPComponentTypeDecorator.prototype.showSourceConnectors = function (params) {
         console.log('showSourceConnector', params);
         // var self = this;
         // if (params) {
@@ -503,7 +495,7 @@ define([
         // }
     };
 
-    ComponentTypeDecorator.prototype.hideSourceConnectors = function (ss) {
+    BIPComponentTypeDecorator.prototype.hideSourceConnectors = function (ss) {
         console.log('hideSourceConnectors', ss);
         // var self = this;
         // if (self.portsInfo) {
@@ -513,7 +505,7 @@ define([
         // }
     };
 
-    ComponentTypeDecorator.prototype.showEndConnectors = function (params) {
+    BIPComponentTypeDecorator.prototype.showEndConnectors = function (params) {
         console.log('showEndConnectors', params);
         var self = this;
         if (params) {
@@ -525,7 +517,7 @@ define([
         }
     };
 
-    ComponentTypeDecorator.prototype.hideEndConnectors = function (ss) {
+    BIPComponentTypeDecorator.prototype.hideEndConnectors = function (ss) {
         console.log('hideEndConnectors', ss);
         var self = this;
         if (self.portsInfo) {
@@ -535,5 +527,5 @@ define([
         }
     };
 
-    return ComponentTypeDecorator;
+    return BIPComponentTypeDecorator;
 });

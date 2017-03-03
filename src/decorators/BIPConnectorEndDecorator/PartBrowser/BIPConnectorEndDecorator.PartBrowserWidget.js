@@ -2,7 +2,7 @@
 /*jshint browser: true*/
 
 /**
- * @author rkereskenyi / https://github.com/rkereskenyi
+ * @author pmeijer / https://github.com/pmeijer
  */
 
 
@@ -11,42 +11,42 @@ define([
     'js/NodePropertyNames',
     'js/Widgets/PartBrowser/PartBrowserWidget.DecoratorBase',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.Constants',
-    'text!../DiagramDesigner/ComponentTypeDecorator.DiagramDesignerWidget.html',
-    'css!../DiagramDesigner/ComponentTypeDecorator.DiagramDesignerWidget.css',
-    'css!./ComponentTypeDecorator.PartBrowserWidget.css'
+    'text!../DiagramDesigner/BIPConnectorEndDecorator.DiagramDesignerWidget.html',
+    'css!../DiagramDesigner/BIPConnectorEndDecorator.DiagramDesignerWidget.css',
+    'css!./BIPConnectorEndDecorator.PartBrowserWidget.css'
 ], function (CONSTANTS,
              nodePropertyNames,
              PartBrowserWidgetDecoratorBase,
              DiagramDesignerWidgetConstants,
-             ComponentTypeDecoratorDiagramDesignerWidgetTemplate) {
+             BIPConnectorEndDecoratorDiagramDesignerWidgetTemplate) {
 
     'use strict';
 
-    var ComponentTypeDecoratorPartBrowserWidget,
-        DECORATOR_ID = 'ComponentTypeDecoratorPartBrowserWidget';
+    var BIPConnectorEndDecoratorPartBrowserWidget,
+        DECORATOR_ID = 'BIPConnectorEndDecoratorPartBrowserWidget';
 
-    ComponentTypeDecoratorPartBrowserWidget = function (options) {
+    BIPConnectorEndDecoratorPartBrowserWidget = function (options) {
         var opts = _.extend({}, options);
 
         PartBrowserWidgetDecoratorBase.apply(this, [opts]);
 
-        this.logger.debug('ComponentTypeDecoratorPartBrowserWidget ctor');
+        this.logger.debug('BIPConnectorEndDecoratorPartBrowserWidget ctor');
     };
 
-    _.extend(ComponentTypeDecoratorPartBrowserWidget.prototype, PartBrowserWidgetDecoratorBase.prototype);
-    ComponentTypeDecoratorPartBrowserWidget.prototype.DECORATORID = DECORATOR_ID;
+    _.extend(BIPConnectorEndDecoratorPartBrowserWidget.prototype, PartBrowserWidgetDecoratorBase.prototype);
+    BIPConnectorEndDecoratorPartBrowserWidget.prototype.DECORATORID = DECORATOR_ID;
 
     /*********************** OVERRIDE DiagramDesignerWidgetDecoratorBase MEMBERS **************************/
 
-    ComponentTypeDecoratorPartBrowserWidget.prototype.$DOMBase = (function () {
-        var el = $(ComponentTypeDecoratorDiagramDesignerWidgetTemplate);
-        //use the same HTML template as the ComponentTypeDecorator.DiagramDesignerWidget
+    BIPConnectorEndDecoratorPartBrowserWidget.prototype.$DOMBase = (function () {
+        var el = $(BIPConnectorEndDecoratorDiagramDesignerWidgetTemplate);
+        //use the same HTML template as the BIPConnectorEndDecorator.DiagramDesignerWidget
         //but remove the connector DOM elements since they are not needed in the PartBrowser
         el.find('.' + DiagramDesignerWidgetConstants.CONNECTOR_CLASS).remove();
         return el;
     })();
 
-    ComponentTypeDecoratorPartBrowserWidget.prototype.beforeAppend = function () {
+    BIPConnectorEndDecoratorPartBrowserWidget.prototype.beforeAppend = function () {
         this.$el = this.$DOMBase.clone();
 
         //find name placeholder
@@ -55,10 +55,10 @@ define([
         this._renderContent();
     };
 
-    ComponentTypeDecoratorPartBrowserWidget.prototype.afterAppend = function () {
+    BIPConnectorEndDecoratorPartBrowserWidget.prototype.afterAppend = function () {
     };
 
-    ComponentTypeDecoratorPartBrowserWidget.prototype._renderContent = function () {
+    BIPConnectorEndDecoratorPartBrowserWidget.prototype._renderContent = function () {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
@@ -72,9 +72,9 @@ define([
         }
     };
 
-    ComponentTypeDecoratorPartBrowserWidget.prototype.update = function () {
+    BIPConnectorEndDecoratorPartBrowserWidget.prototype.update = function () {
         this._renderContent();
     };
 
-    return ComponentTypeDecoratorPartBrowserWidget;
+    return BIPConnectorEndDecoratorPartBrowserWidget;
 });

@@ -1,0 +1,10 @@
+.part-browser {
+  .bip-component-type-decorator {
+    width: 130px;
+    .name {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}

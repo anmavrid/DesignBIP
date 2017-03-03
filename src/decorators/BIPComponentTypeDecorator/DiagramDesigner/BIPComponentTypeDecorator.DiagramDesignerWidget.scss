@@ -1,12 +1,12 @@
-.ComponentType-decorator {
+.bip-component-type-decorator {
   width: 164px;
   min-height: 40px;
   border: 1px solid black;
   background-color: #dedede;
-  padding: 3px;
+  padding: 0;
   text-align: center;
   .ports-container {
-    width: 160px;
+    width: 163px;
     min-height: 1px;
     display: inline-flex;
     .lhs {
@@ -17,7 +17,7 @@
     }
     .center {
       min-height: 1px;
-      width: 40px;
+      width: 43px;
       display: inline-block;
     }
     .rhs {
@@ -38,7 +38,7 @@
       text-align: center;
       font-size: 10px;
       padding: 1px;
-      margin-left: -4px;
+      margin-left: -1px;
       border: black solid 1px;
       font-weight: normal;
       cursor: pointer;
@@ -55,11 +55,29 @@
       }
     }
   }
+  .cardinality {
+    position: absolute;
+    min-width: 30px;
+    max-width: 50px;
+    width: auto;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-weight: bold;
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-bottom: black solid 1px;
+    border-right: black solid 1px;
+    border-bottom-right-radius: 6px;
+  }
   .name {
-    margin-top: 10px;
+    margin: 20px 3px 3px 5px;
+    overflow-x: hidden;
     white-space: nowrap;
     font-size: 11px;
     font-weight: bold;
+    width: auto;
+    text-overflow: ellipsis;
     font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
     text-align: center;
   }
