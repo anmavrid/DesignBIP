@@ -1,6 +1,10 @@
 .bip-connector-end-decorator {
   width: 20px;
-  height: 20px; }
+  height: 20px;
+  line-height: 0; }
+  .bip-connector-end-decorator.join {
+    width: 8px;
+    height: 8px; }
   .bip-connector-end-decorator .cardinality {
     position: absolute;
     min-width: 30px;
@@ -15,5 +19,7 @@
     border-bottom: black solid 1px;
     border-right: black solid 1px;
     border-bottom-right-radius: 6px; }
+  .bip-connector-end-decorator .name {
+    display: none; }
 
 /*# sourceMappingURL=BIPConnectorEndDecorator.DiagramDesignerWidget.css.map */

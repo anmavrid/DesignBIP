@@ -82,9 +82,24 @@ define([
                         self._onNodeTitleChanged(oldValue, newValue);
                     }
                 });
+
+                event.stopPropagation();
+                event.preventDefault();
             }
-            event.stopPropagation();
-            event.preventDefault();
+        });
+
+        this.skinParts.$cardinality.on('dblclick.editOnDblClick', null, function (event) {
+            if (self.hostDesignerItem.canvas.getIsReadOnlyMode() !== true) {
+                $(this).editInPlace({
+                    class: '',
+                    onChange: function (oldValue, newValue) {
+                        self._onCardinalityChanged(oldValue, newValue);
+                    }
+                });
+
+                event.stopPropagation();
+                event.preventDefault();
+            }
         });
 
         //let the parent decorator class do its job first

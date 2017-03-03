@@ -30,7 +30,6 @@ define([
         BIPConnectorEndDecoratorCore.apply(this, [opts]);
 
         this.name = '';
-        this.metaTypeName = 'Unknown';
 
         this.logger.debug('BIPConnectorEndDecorator ctor');
     };
@@ -87,6 +86,12 @@ define([
         this.skinParts.$name = this.$el.find('.name');
         this.skinParts.$name.text(this.name);
         this.updateSvg();
+
+        if (this.metaTypeName === 'Join') {
+            this.$el.addClass('join');
+        } else {
+            this.$el.removeClass('join');
+        }
     };
 
     BIPConnectorEndDecorator.prototype.update = function () {

@@ -1,4 +1,4 @@
-/*globals define, _, DEBUG, $*/
+/*globals define, _, $*/
 /*jshint browser: true*/
 
 /**
@@ -10,6 +10,7 @@ define([
     'js/Constants',
     'js/NodePropertyNames',
     'js/Widgets/PartBrowser/PartBrowserWidget.DecoratorBase',
+    '../Core/BIPConnectorEndDecorator.Core',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.Constants',
     'text!../DiagramDesigner/BIPConnectorEndDecorator.DiagramDesignerWidget.html',
     'css!../DiagramDesigner/BIPConnectorEndDecorator.DiagramDesignerWidget.css',
@@ -17,6 +18,7 @@ define([
 ], function (CONSTANTS,
              nodePropertyNames,
              PartBrowserWidgetDecoratorBase,
+             BIPConnectorEndDecoratorCore,
              DiagramDesignerWidgetConstants,
              BIPConnectorEndDecoratorDiagramDesignerWidgetTemplate) {
 
@@ -29,11 +31,14 @@ define([
         var opts = _.extend({}, options);
 
         PartBrowserWidgetDecoratorBase.apply(this, [opts]);
+        BIPConnectorEndDecoratorCore.apply(this, [opts]);
 
         this.logger.debug('BIPConnectorEndDecoratorPartBrowserWidget ctor');
     };
 
     _.extend(BIPConnectorEndDecoratorPartBrowserWidget.prototype, PartBrowserWidgetDecoratorBase.prototype);
+    _.extend(BIPConnectorEndDecoratorPartBrowserWidget.prototype, BIPConnectorEndDecoratorCore.prototype);
+
     BIPConnectorEndDecoratorPartBrowserWidget.prototype.DECORATORID = DECORATOR_ID;
 
     /*********************** OVERRIDE DiagramDesignerWidgetDecoratorBase MEMBERS **************************/
@@ -60,16 +65,18 @@ define([
 
     BIPConnectorEndDecoratorPartBrowserWidget.prototype._renderContent = function () {
         var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
-
-        //render GME-ID in the DOM, for debugging
-        if (DEBUG) {
-            this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
-        }
+            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
+            metaNode;
 
         if (nodeObj) {
             this.skinParts.$name.text(nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '');
+            metaNode = client.getNode(nodeObj.getMetaTypeId());
+            if (metaNode) {
+                this.metaTypeName = metaNode.getAttribute('name');
+            }
         }
+
+        this.updateSvg();
     };
 
     BIPConnectorEndDecoratorPartBrowserWidget.prototype.update = function () {

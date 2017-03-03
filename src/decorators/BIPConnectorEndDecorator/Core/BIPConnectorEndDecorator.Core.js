@@ -26,15 +26,23 @@ define([
     function BIPConnectorEndCore () {
         this.skinParts.$svg = null;
         this.skinParts.$svgContainer = null;
+        this.prevMetaTypeName = null;
+        this.metaTypeName = null;
     }
 
     BIPConnectorEndCore.prototype.updateSvg = function (text) {
         var template = META_TO_TEMPLATE[this.metaTypeName] || EXPORT_PORT_SVG; // TODO: Make a fall back svg.
 
-        this.skinParts.$svg = $(template);
-        this.skinParts.$svgContainer = this.$el.find('.svg-container');
-        this.skinParts.$svgContainer.empty();
-        this.skinParts.$svgContainer.append(this.skinParts.$svg);
+        if (this.prevMetaTypeName !== this.metaTypeName) {
+            this.skinParts.$svgContainer = this.$el.find('.svg-container');
+            this.skinParts.$svgContainer.empty();
+
+            this.skinParts.$svg = $(template);
+            this.skinParts.$svgContainer.append(this.skinParts.$svg);
+        }
+
+        // Store the current one as previous for next iteration.
+        this.prevMetaTypeName = this.metaTypeName;
     };
 
     return BIPConnectorEndCore;
