@@ -23,6 +23,10 @@ define([
     var BIPConnectorEndDecorator,
         DECORATOR_ID = 'BIPConnectorEndDecorator';
 
+    nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
+    nodePropertyNames.Attributes.degree = 'Degree';
+    nodePropertyNames.Attributes.multiplicity = 'Multiplicity';
+
     BIPConnectorEndDecorator = function (options) {
         var opts = _.extend({}, options);
 
@@ -44,35 +48,19 @@ define([
     BIPConnectorEndDecorator.prototype.$DOMBase = $(BIPConnectorEndDecoratorTemplate);
 
     BIPConnectorEndDecorator.prototype.on_addTo = function () {
-        var self = this;
-
-        this._renderNameAndCardinality();
-
-        // set title editable on double-click
-        this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
-            if (self.hostDesignerItem.canvas.getIsReadOnlyMode() !== true) {
-                $(this).editInPlace({
-                    class: '',
-                    onChange: function (oldValue, newValue) {
-                        self._onNodeTitleChanged(oldValue, newValue);
-                    }
-                });
-            }
-            event.stopPropagation();
-            event.preventDefault();
-        });
-
+        this._render();
         //let the parent decorator class do its job first
         DiagramDesignerWidgetDecoratorBase.prototype.on_addTo.apply(this, arguments);
     };
 
-    BIPConnectorEndDecorator.prototype._renderNameAndCardinality = function () {
+    BIPConnectorEndDecorator.prototype.update = function () {
+        this._render();
+    };
+
+    BIPConnectorEndDecorator.prototype._render = function () {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
             metaNode;
-
-        //render GME-ID in the DOM, for debugging
-        this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
 
         if (nodeObj) {
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
@@ -85,17 +73,33 @@ define([
         //find name placeholder
         this.skinParts.$name = this.$el.find('.name');
         this.skinParts.$name.text(this.name);
-        this.updateSvg();
 
-        if (this.metaTypeName === 'Join') {
-            this.$el.addClass('join');
-        } else {
-            this.$el.removeClass('join');
+        this.$el.removeClass('join invalid-meta-type');
+
+        switch (this.metaTypeName) {
+            case 'Synchron':
+            case 'Trigger':
+                this.updateSvg({
+                    multiplicity: nodeObj.getAttribute(nodePropertyNames.Attributes.multiplicity) || '?',
+                    degree: nodeObj.getAttribute(nodePropertyNames.Attributes.degree) || '?'
+                });
+                break;
+            case 'Join':
+                this.$el.addClass('join');
+                this.updateSvg();
+                break;
+            case 'ExportPort':
+                this.updateSvg();
+                break;
+            default:
+                this.updateSvg();
+                this.$el.addClass('invalid-meta-type');
+                break;
         }
     };
 
-    BIPConnectorEndDecorator.prototype.update = function () {
-        this.updateSvg();
+    BIPConnectorEndDecorator.prototype._onTextHover = function () {
+        
     };
 
     BIPConnectorEndDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {

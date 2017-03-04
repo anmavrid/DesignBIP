@@ -2,4 +2,6 @@
 <g>
  <circle cx="50" cy="50" r="50" fill="#498a44"/>
 </g>
+ <text class="cardinalities" x="11" y="60" font-family="Lucida Console" font-size="40" fill="white">
+ </text>
 </svg>

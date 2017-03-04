@@ -27,12 +27,14 @@ define([
     var BIPComponentTypeDecorator,
         DECORATOR_ID = 'BIPComponentTypeDecorator',
         DECORATOR_WIDTH = 164,
-        PORTS_TOP_MARGIN = 40,
-        PORT_HEIGHT = 50,
-        MULTI_PORT_HEIGHT = 10,
+        PORTS_TOP_MARGIN = 48,
+        PORT_HEIGHT = 30,
+        CONN_HEIGHT = 20,
+        CONN_MARGIN = 5,
+        PORT_MARGIN = 4,
         CONN_AREA_WIDTH = 5,
         CONN_END_WIDTH = 20,
-        CONN_END_SPACE = 20;
+        CONN_END_SPACE = 4;
 
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'Cardinality';
@@ -71,7 +73,7 @@ define([
         var self = this,
             client = this._control._client;
 
-        this._renderNameAndCardinality();
+        this._render();
 
         // set title editable on double-click
         this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
@@ -108,7 +110,7 @@ define([
         this._renderPorts();
     };
 
-    BIPComponentTypeDecorator.prototype._renderNameAndCardinality = function () {
+    BIPComponentTypeDecorator.prototype._render = function () {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
@@ -131,13 +133,12 @@ define([
 
         this.orderedPortsId.forEach(function (portId) {
             var info = self.portsInfo[portId],
-                height = Object.keys(info.connEnds).length === 0 ?
-                    PORT_HEIGHT : Object.keys(info.connEnds).length * PORT_HEIGHT,
+                height = self.portsInfo[portId].position.height,
 
                 portEl = $('<div/>', {
                     class: 'port',
                 })
-                    .css('height', height),
+                    .css('height', height + PORT_MARGIN),
 
                 connectorEl = $('<div/>', {
                     class: DD_CONSTANTS.CONNECTOR_CLASS + ' trans-connector',
@@ -146,7 +147,7 @@ define([
                     id: portId,
                     'data-id': portId
                 })
-                    .css('height', height - 4)
+                    .css('height', height)
                     .css('font-weight', 'normal');
 
             portEl.append(connectorEl);
@@ -177,7 +178,7 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype.update = function () {
-        this._renderNameAndCardinality();
+        this._render();
         this.addPortsInfo();
 
         // FIXME: This might be slow for larger models..
@@ -207,7 +208,8 @@ define([
                         name: enfTransNode.getAttribute('name'),
                         position: {
                             x: 'lhs',
-                            y: 0
+                            y: 0,
+                            height: 0
                         },
                         connArea: {
                             x1: 0,
@@ -272,7 +274,6 @@ define([
 
         function calcConnEndPositions(heightPortInfo) {
             var connEndIds,
-                n = 0,
                 i;
 
             portId = heightPortInfo.id;
@@ -280,28 +281,33 @@ define([
 
             connEndIds = Object.keys(self.portsInfo[portId].connEnds);
 
-            for (i = 0; i < connEndIds.length; i += 1) {
-                connEndId = connEndIds[i];
-                self.portsInfo[portId].connEnds[connEndId].dispPos.y = relY + self.position.y;
-                if (self.portsInfo[portId].position.x === 'lhs') {
-                    self.portsInfo[portId].connEnds[connEndId].dispPos.x =
-                        self.position.x - CONN_END_SPACE - CONN_END_WIDTH;
-                } else {
-                    self.portsInfo[portId].connEnds[connEndId].dispPos.x =
-                        self.position.x + DECORATOR_WIDTH + CONN_END_SPACE;
-                }
-
-                relY += PORT_HEIGHT;
-                n += 1;
-            }
-
             if (connEndIds.length === 0) {
                 relY += PORT_HEIGHT;
-                n = 1;
+                self.portsInfo[portId].position.height = PORT_HEIGHT;
+            } else {
+                for (i = 0; i < connEndIds.length; i += 1) {
+
+                    connEndId = connEndIds[i];
+                    self.portsInfo[portId].connEnds[connEndId].dispPos.y = relY + self.position.y;
+                    if (self.portsInfo[portId].position.x === 'lhs') {
+                        self.portsInfo[portId].connEnds[connEndId].dispPos.x =
+                            self.position.x - CONN_END_SPACE - CONN_END_WIDTH;
+                    } else {
+                        self.portsInfo[portId].connEnds[connEndId].dispPos.x =
+                            self.position.x + DECORATOR_WIDTH + CONN_END_SPACE;
+                    }
+                    relY += CONN_MARGIN;
+                    relY += CONN_HEIGHT;
+                    self.portsInfo[portId].position.height += (CONN_HEIGHT + CONN_MARGIN);
+                }
+
+                relY += CONN_MARGIN + PORT_MARGIN;
+                self.portsInfo[portId].position.height += CONN_MARGIN;
             }
 
-            self.portsInfo[portId].connArea.y1 = relY - PORT_HEIGHT * n;
-            self.portsInfo[portId].connArea.y2 = relY - PORT_HEIGHT * n + CONN_AREA_WIDTH;
+
+            self.portsInfo[portId].connArea.y1 = relY - self.portsInfo[portId].position.height / 2;
+            self.portsInfo[portId].connArea.y2 = relY - self.portsInfo[portId].position.height / 2 + CONN_AREA_WIDTH;
         }
 
         this.orderedPortsId = [];
@@ -400,7 +406,7 @@ define([
      * @returns {*}
      */
     BIPComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
-        //console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId]);
+        console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId].dispPos.y);
         if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
             return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
         }

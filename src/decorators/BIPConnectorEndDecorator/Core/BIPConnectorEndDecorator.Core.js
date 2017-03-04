@@ -30,7 +30,7 @@ define([
         this.metaTypeName = null;
     }
 
-    BIPConnectorEndCore.prototype.updateSvg = function (text) {
+    BIPConnectorEndCore.prototype.updateSvg = function (cardinalities) {
         var template = META_TO_TEMPLATE[this.metaTypeName] || EXPORT_PORT_SVG; // TODO: Make a fall back svg.
 
         if (this.prevMetaTypeName !== this.metaTypeName) {
@@ -38,7 +38,30 @@ define([
             this.skinParts.$svgContainer.empty();
 
             this.skinParts.$svg = $(template);
+
+            if (cardinalities) {
+                this.skinParts.$cardinalities = this.skinParts.$svg.find('.cardinalities');
+                this.skinParts.$svgContainer.popover({
+                    delay: {
+                        show: 150,
+                        hide: 0
+                    },
+                    animation: false,
+                    trigger: 'hover',
+                    title: 'Multiplicity: ' + cardinalities.multiplicity,
+                    content: 'Degree : ' + cardinalities.degree
+                });
+            }
+
             this.skinParts.$svgContainer.append(this.skinParts.$svg);
+        }
+
+        if (cardinalities) {
+            if (cardinalities.multiplicity.length === 1 && cardinalities.degree.length === 1) {
+                this.skinParts.$cardinalities.text(cardinalities.multiplicity + ':' + cardinalities.degree);
+            } else {
+                this.skinParts.$cardinalities.text('...');
+            }
         }
 
         // Store the current one as previous for next iteration.

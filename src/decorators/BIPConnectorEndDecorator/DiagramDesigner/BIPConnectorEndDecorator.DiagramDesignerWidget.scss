@@ -2,6 +2,9 @@
   width: 20px;
   height: 20px;
   line-height: 0;
+  font-weight: normal;
+  .svg-container {
+  }
   &.join {
     width: 8px;
     height: 8px;
@@ -23,5 +26,22 @@
   }
   .name {
     display: none;
+  }
+  .popover {
+    white-space: nowrap;
+    .popover-title {
+      padding: 8px 14px;
+      margin: 0;
+      font-size: 12px;
+      background-color: white;
+      border-radius: 5px 5px 0 0;
+    }
+    .popover-content {
+      padding: 8px 14px;
+      margin: 0;
+      font-size: 12px;
+      background-color: white;
+      border-radius: 5px 5px 0 0;
+    }
   }
 }
