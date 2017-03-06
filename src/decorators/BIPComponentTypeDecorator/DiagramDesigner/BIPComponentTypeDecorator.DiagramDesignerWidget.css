@@ -11,7 +11,7 @@
     display: inline-flex; }
     .bip-component-type-decorator .ports-container .lhs {
       min-height: 1px;
-      width: 60px;
+      width: 65px;
       display: inline-block;
       text-align: left; }
       .bip-component-type-decorator .ports-container .lhs .trans-connector {
@@ -19,11 +19,11 @@
         border-top-right-radius: 2px; }
     .bip-component-type-decorator .ports-container .center {
       min-height: 1px;
-      width: 43px;
+      width: 33px;
       display: inline-block; }
     .bip-component-type-decorator .ports-container .rhs {
       min-height: 1px;
-      width: 60px;
+      width: 65px;
       display: inline-block;
       text-align: right; }
       .bip-component-type-decorator .ports-container .rhs .trans-connector {
@@ -31,17 +31,17 @@
         border-top-left-radius: 2px; }
     .bip-component-type-decorator .ports-container .trans-connector {
       display: inline-block;
-      background-color: #ffffb9;
+      background-color: rgba(255, 187, 70, 0.91);
       position: static;
-      min-width: 26px;
-      max-width: 50px;
+      min-width: 30px;
+      max-width: 60px;
       width: auto;
       overflow-wrap: break-word;
       text-overflow: ellipsis;
       overflow-y: hidden;
       text-align: center;
       font-size: 10px;
-      padding: 1px;
+      padding: 4px;
       margin-left: -1px;
       border: black solid 1px;
       font-weight: normal;
@@ -61,15 +61,15 @@
     width: auto;
     text-overflow: ellipsis;
     overflow: hidden;
-    font-weight: bold;
-    font-size: 10px;
+    font-family: monospace;
+    font-size: 13px;
     padding-left: 2px;
     padding-right: 2px;
     border-bottom: black solid 1px;
     border-right: black solid 1px;
     border-bottom-right-radius: 6px; }
   .bip-component-type-decorator .name {
-    margin: 20px 3px 3px 5px;
+    margin: 23px 3px 3px 5px;
     overflow-x: hidden;
     white-space: nowrap;
     font-size: 11px;
@@ -78,5 +78,11 @@
     text-overflow: ellipsis;
     font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
     text-align: center; }
+  .bip-component-type-decorator.compound-type {
+    background-color: #999900; }
+    .bip-component-type-decorator.compound-type .cardinality {
+      display: none; }
+    .bip-component-type-decorator.compound-type .name {
+      margin-top: 5px; }
 
 /*# sourceMappingURL=BIPComponentTypeDecorator.DiagramDesignerWidget.css.map */

@@ -11,7 +11,7 @@
     display: inline-flex;
     .lhs {
       min-height: 1px;
-      width: 60px;
+      width: 65px;
       display: inline-block;
       text-align: left;
       .trans-connector {
@@ -21,12 +21,12 @@
     }
     .center {
       min-height: 1px;
-      width: 43px;
+      width: 33px;
       display: inline-block;
     }
     .rhs {
       min-height: 1px;
-      width: 60px;
+      width: 65px;
       display: inline-block;
       text-align: right;
       .trans-connector {
@@ -36,17 +36,17 @@
     }
     .trans-connector {
       display: inline-block;
-      background-color: #ffffb9;
+      background-color: rgba(255, 187, 70, 0.91);
       position: static;
-      min-width: 26px;
-      max-width: 50px;
+      min-width: 30px;
+      max-width: 60px;
       width: auto;
       overflow-wrap: break-word;
       text-overflow: ellipsis;
       overflow-y: hidden;
       text-align: center;
       font-size: 10px;
-      padding: 1px;
+      padding: 4px;
       margin-left: -1px;
       border: black solid 1px;
       font-weight: normal;
@@ -70,8 +70,9 @@
     width: auto;
     text-overflow: ellipsis;
     overflow: hidden;
-    font-weight: bold;
-    font-size: 10px;
+    //font-weight: bold;
+    font-family: monospace;
+    font-size: 13px;
     padding-left: 2px;
     padding-right: 2px;
     border-bottom: black solid 1px;
@@ -79,7 +80,7 @@
     border-bottom-right-radius: 6px;
   }
   .name {
-    margin: 20px 3px 3px 5px;
+    margin: 23px 3px 3px 5px;
     overflow-x: hidden;
     white-space: nowrap;
     font-size: 11px;
@@ -88,5 +89,16 @@
     text-overflow: ellipsis;
     font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
     text-align: center;
+  }
+
+  // Changes when the type is compound-type
+  &.compound-type {
+    background-color: #999900;
+    .cardinality {
+      display: none;
+    }
+    .name {
+      margin-top: 5px;
+    }
   }
 }

@@ -27,7 +27,8 @@ define([
     var BIPComponentTypeDecorator,
         DECORATOR_ID = 'BIPComponentTypeDecorator',
         DECORATOR_WIDTH = 164,
-        PORTS_TOP_MARGIN = 45,
+        PORTS_TOP_MARGIN = 47,
+        COMPOUND_PORTS_TOP_MARGIN = 29,
         PORT_HEIGHT = 30,
         CONN_HEIGHT = 20,
         CONN_MARGIN = 5,
@@ -46,6 +47,7 @@ define([
 
         this.name = '';
         this.cardinality = 'n';
+        this.isCompound = false;
         this.portsInfo = {};
         this.registeredPorts = {};
         this.orderedPortsId = [];
@@ -70,8 +72,7 @@ define([
     BIPComponentTypeDecorator.prototype.$DOMBase = $(BIPComponentTypeDecoratorTemplate);
 
     BIPComponentTypeDecorator.prototype.on_addTo = function () {
-        var self = this,
-            client = this._control._client;
+        var self = this;
 
         this._render();
 
@@ -124,10 +125,17 @@ define([
             // Use hostDesignerItem's position instead.
             this.position.x = this.hostDesignerItem.positionX;
             this.position.y = this.hostDesignerItem.positionY;
+            this.isCompound = this.isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
         }
 
         //find name placeholder
         this.skinParts.$name.text(this.name);
+        this.$el.removeClass('compound-type');
+
+        if (this.isCompound) {
+            this.$el.addClass('compound-type');
+        }
+
         this.skinParts.$cardinality.text(this.cardinality);
     };
 
@@ -202,7 +210,7 @@ define([
             var enfTransNode = client.getNode(enfTransId);
             if (enfTransNode) {
                 if (GMEConcepts.isPort(enfTransId) &&
-                    self.isOfMetaTypeName(enfTransNode.getMetaTypeId(), 'EnforceableTransition')) {
+                    self.isOfMetaTypeName(enfTransNode.getMetaTypeId(), ['EnforceableTransition', 'ExportPort'])) {
 
                     //console.log('Found EnforceableTransition:', enfTransNode.getAttribute('name'));
 
@@ -230,7 +238,8 @@ define([
 
                         if (connNode && connNode.getPointerId('src')) {
                             connEndNode = client.getNode(connNode.getPointerId('src'));
-                            if (self.isOfMetaTypeName(connEndNode.getMetaTypeId(), 'ConnectorEnd')) {
+                            if (self.isOfMetaTypeName(connEndNode.getMetaTypeId(), 'ConnectorEnd') &&
+                                connEndNode.getParentId() === nodeObj.getParentId()) {
                                 self.portsInfo[enfTransId].connEnds[connEndNode.getId()] = {
                                     id: connEndNode.getId(),
                                     name: connEndNode.getAttribute('name'),
@@ -351,10 +360,10 @@ define([
         lhsOrdered.sort(sorter);
 
         // Calculate the display-positions for the connector-ends.
-        relY = PORTS_TOP_MARGIN;
+        relY = this.isCompound ? COMPOUND_PORTS_TOP_MARGIN : PORTS_TOP_MARGIN;
         lhsOrdered.forEach(calcConnEndPositions);
 
-        relY = PORTS_TOP_MARGIN;
+        relY = this.isCompound ? COMPOUND_PORTS_TOP_MARGIN : PORTS_TOP_MARGIN;
         rhsOrdered.forEach(calcConnEndPositions);
     };
 
@@ -384,12 +393,14 @@ define([
      * @param metaTypeName
      * @returns {boolean}
      */
-    BIPComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeName) {
+    BIPComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeNames) {
         var metaNode = this._control._client.getNode(metaNodeId),
             baseId;
 
+        metaTypeNames = metaTypeNames instanceof Array ? metaTypeNames : [metaTypeNames];
+
         while (metaNode) {
-            if (metaNode.getAttribute('name') === metaTypeName) {
+            if (metaTypeNames.indexOf(metaNode.getAttribute('name')) > -1) {
                 return true;
             }
 
