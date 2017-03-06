@@ -27,15 +27,15 @@ define([
     var BIPComponentTypeDecorator,
         DECORATOR_ID = 'BIPComponentTypeDecorator',
         DECORATOR_WIDTH = 164,
-        PORTS_TOP_MARGIN = 48,
+        PORTS_TOP_MARGIN = 45,
         PORT_HEIGHT = 30,
         CONN_HEIGHT = 20,
         CONN_MARGIN = 5,
         PORT_MARGIN = 4,
         CONN_AREA_WIDTH = 5,
         CONN_END_WIDTH = 20,
-        CONN_END_SPACE_RHS = 2,
-        CONN_END_SPACE_LHS = 6;
+        CONN_END_SPACE_RHS = 1,
+        CONN_END_SPACE_LHS = 2;
 
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'Cardinality';
@@ -410,7 +410,8 @@ define([
      * @returns {*}
      */
     BIPComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
-        console.log('Requested:', this.portsInfo[portId].connEnds[connectorEndId].dispPos.y);
+        console.log('From ComponentType:', this.portsInfo[portId].connEnds[connectorEndId].dispPos.x,
+            this.portsInfo[portId].connEnds[connectorEndId].dispPos.y);
         if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
             return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
         }
@@ -491,7 +492,7 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype.getConnectorMetaInfo = function (id) {
-        console.log('getConnectorMetaInfo', id);
+        //console.log('getConnectorMetaInfo', id);
         return undefined;
     };
 
@@ -515,7 +516,7 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype.showSourceConnectors = function (params) {
-        console.log('showSourceConnector', params);
+        //console.log('showSourceConnector', params);
         // var self = this;
         // if (params) {
         //     params.connectors.forEach(function (portId) {
@@ -527,7 +528,7 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype.hideSourceConnectors = function (ss) {
-        console.log('hideSourceConnectors', ss);
+        //console.log('hideSourceConnectors', ss);
         // var self = this;
         // if (self.portsInfo) {
         //     Object.keys(self.portsInfo).forEach(function (portId) {
@@ -537,7 +538,7 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype.showEndConnectors = function (params) {
-        console.log('showEndConnectors', params);
+        //console.log('showEndConnectors', params);
         var self = this;
         if (params) {
             params.connectors.forEach(function (portId) {
@@ -547,7 +548,7 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype.hideEndConnectors = function (ss) {
-        console.log('hideEndConnectors', ss);
+        //console.log('hideEndConnectors', ss);
         var self = this;
         if (self.portsInfo) {
             Object.keys(self.portsInfo).forEach(function (portId) {

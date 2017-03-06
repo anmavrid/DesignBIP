@@ -96,6 +96,8 @@ define([
                 this.$el.addClass('invalid-meta-type');
                 break;
         }
+
+        console.log('In ConnEndDec', this.hostDesignerItem.positionX, this.hostDesignerItem.positionY);
     };
 
     BIPConnectorEndDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
