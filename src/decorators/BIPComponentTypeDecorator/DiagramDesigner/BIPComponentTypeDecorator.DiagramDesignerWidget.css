@@ -14,6 +14,9 @@
       width: 60px;
       display: inline-block;
       text-align: left; }
+      .bip-component-type-decorator .ports-container .lhs .trans-connector {
+        border-bottom-right-radius: 2px;
+        border-top-right-radius: 2px; }
     .bip-component-type-decorator .ports-container .center {
       min-height: 1px;
       width: 43px;
@@ -23,8 +26,12 @@
       width: 60px;
       display: inline-block;
       text-align: right; }
+      .bip-component-type-decorator .ports-container .rhs .trans-connector {
+        border-bottom-left-radius: 2px;
+        border-top-left-radius: 2px; }
     .bip-component-type-decorator .ports-container .trans-connector {
       display: inline-block;
+      background-color: #ffffb9;
       position: static;
       min-width: 26px;
       max-width: 50px;
@@ -42,10 +49,9 @@
       z-index: 10; }
       .bip-component-type-decorator .ports-container .trans-connector.show-connectors {
         border: blue solid 1px;
-        background-color: #fefefe;
-        box-shadow: inset 0 1px 1px darkgrey, 0 0 8px rgba(82, 168, 236, 0.6); }
+        background-color: #fefefe; }
       .bip-component-type-decorator .ports-container .trans-connector:hover {
-        border: blue solid 1px;
+        border: rgba(82, 168, 236, 0.6) solid 1px;
         background-color: #fefefe;
         box-shadow: inset 0 1px 1px darkgrey, 0 0 8px rgba(82, 168, 236, 0.6); }
   .bip-component-type-decorator .cardinality {

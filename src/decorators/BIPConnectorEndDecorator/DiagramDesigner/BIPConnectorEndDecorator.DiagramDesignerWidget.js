@@ -98,10 +98,6 @@ define([
         }
     };
 
-    BIPConnectorEndDecorator.prototype._onTextHover = function () {
-        
-    };
-
     BIPConnectorEndDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
         var result = [],
             edge = 10,

@@ -34,7 +34,8 @@ define([
         PORT_MARGIN = 4,
         CONN_AREA_WIDTH = 5,
         CONN_END_WIDTH = 20,
-        CONN_END_SPACE = 4;
+        CONN_END_SPACE_RHS = 2,
+        CONN_END_SPACE_LHS = 6;
 
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'Cardinality';
@@ -120,7 +121,10 @@ define([
         if (nodeObj) {
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
             this.cardinality = nodeObj.getAttribute(nodePropertyNames.Attributes.cardinality) || '';
-            this.position = nodeObj.getEditableRegistry('position');
+            //this.position = nodeObj.getEditableRegistry('position');
+            // Use hostDesignerItem's position instead.
+            this.position.x = this.hostDesignerItem.positionX;
+            this.position.y = this.hostDesignerItem.positionY;
         }
 
         //find name placeholder
@@ -291,10 +295,10 @@ define([
                     self.portsInfo[portId].connEnds[connEndId].dispPos.y = relY + self.position.y;
                     if (self.portsInfo[portId].position.x === 'lhs') {
                         self.portsInfo[portId].connEnds[connEndId].dispPos.x =
-                            self.position.x - CONN_END_SPACE - CONN_END_WIDTH;
+                            self.position.x - CONN_END_WIDTH - CONN_END_SPACE_LHS;
                     } else {
                         self.portsInfo[portId].connEnds[connEndId].dispPos.x =
-                            self.position.x + DECORATOR_WIDTH + CONN_END_SPACE;
+                            self.position.x + DECORATOR_WIDTH + CONN_END_SPACE_RHS;
                     }
                     relY += CONN_MARGIN;
                     relY += CONN_HEIGHT;
