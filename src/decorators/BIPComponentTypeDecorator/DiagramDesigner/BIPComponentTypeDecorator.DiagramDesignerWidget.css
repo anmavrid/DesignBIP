@@ -78,6 +78,15 @@
     text-overflow: ellipsis;
     font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
     text-align: center; }
+  .bip-component-type-decorator .popover {
+    white-space: nowrap; }
+    .bip-component-type-decorator .popover .popover-content {
+      padding: 8px 14px;
+      margin: 0;
+      font-size: 12px;
+      font-family: monospace;
+      background-color: white;
+      border-radius: 5px 5px 0 0; }
   .bip-component-type-decorator.compound-type {
     background-color: #999900; }
     .bip-component-type-decorator.compound-type .cardinality {

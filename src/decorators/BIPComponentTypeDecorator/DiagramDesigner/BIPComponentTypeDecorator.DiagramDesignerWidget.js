@@ -105,6 +105,17 @@ define([
             }
         });
 
+        this.skinParts.$cardinality.popover({
+            delay: {
+                show: 150,
+                hide: 0
+            },
+            animation: false,
+            trigger: 'hover',
+            title: '',
+            content: 'Cardinality: ' + this.cardinality
+        });
+
         //let the parent decorator class do its job first
         DecoratorBase.prototype.on_addTo.apply(this, arguments);
         this.addPortsInfo();

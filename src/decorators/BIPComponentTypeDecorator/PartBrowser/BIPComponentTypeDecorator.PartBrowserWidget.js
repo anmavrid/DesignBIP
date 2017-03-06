@@ -60,15 +60,15 @@ define([
 
     BIPComponentTypeDecoratorPartBrowserWidget.prototype._renderContent = function () {
         var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
-
-        //render GME-ID in the DOM, for debugging
-        if (DEBUG) {
-            this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
-        }
+            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
+            name;
 
         if (nodeObj) {
+            name = nodeObj.getAttribute(nodePropertyNames.Attributes.name);
             this.skinParts.$name.text(nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '');
+            if (name === 'CompoundType') {
+                this.$el.addClass('compound-type');
+            }
         }
     };
 
