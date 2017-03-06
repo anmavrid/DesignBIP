@@ -97,7 +97,7 @@ define([
                 break;
         }
 
-        console.log('In ConnEndDec', this.hostDesignerItem.positionX, this.hostDesignerItem.positionY);
+        // console.log('In ConnEndDec', this.hostDesignerItem.positionX, this.hostDesignerItem.positionY);
     };
 
     BIPConnectorEndDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {

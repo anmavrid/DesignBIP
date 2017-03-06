@@ -34,8 +34,7 @@ define([
         PORT_MARGIN = 4,
         CONN_AREA_WIDTH = 5,
         CONN_END_WIDTH = 20,
-        CONN_END_SPACE_RHS = 1,
-        CONN_END_SPACE_LHS = 2;
+        CONN_END_X_MARGIN = 1;
 
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'Cardinality';
@@ -295,10 +294,10 @@ define([
                     self.portsInfo[portId].connEnds[connEndId].dispPos.y = relY + self.position.y;
                     if (self.portsInfo[portId].position.x === 'lhs') {
                         self.portsInfo[portId].connEnds[connEndId].dispPos.x =
-                            self.position.x - CONN_END_WIDTH - CONN_END_SPACE_LHS;
+                            self.position.x - CONN_END_WIDTH - CONN_END_X_MARGIN;
                     } else {
                         self.portsInfo[portId].connEnds[connEndId].dispPos.x =
-                            self.position.x + DECORATOR_WIDTH + CONN_END_SPACE_RHS;
+                            self.position.x + DECORATOR_WIDTH + CONN_END_X_MARGIN;
                     }
                     relY += CONN_MARGIN;
                     relY += CONN_HEIGHT;
@@ -410,8 +409,8 @@ define([
      * @returns {*}
      */
     BIPComponentTypeDecorator.prototype.getConnectorEndPosition = function (portId, connectorEndId) {
-        console.log('From ComponentType:', this.portsInfo[portId].connEnds[connectorEndId].dispPos.x,
-            this.portsInfo[portId].connEnds[connectorEndId].dispPos.y);
+        // console.log('From ComponentType:', this.portsInfo[portId].connEnds[connectorEndId].dispPos.x,
+        //     this.portsInfo[portId].connEnds[connectorEndId].dispPos.y);
         if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
             return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
         }
