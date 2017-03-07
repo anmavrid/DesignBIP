@@ -33,7 +33,7 @@ define([
         CONN_HEIGHT = 20,
         CONN_MARGIN = 5,
         PORT_MARGIN = 4,
-        CONN_AREA_WIDTH = 5,
+        CONN_AREA_WIDTH = 15,
         CONN_END_WIDTH = 20,
         CONN_END_X_MARGIN = 1;
 
@@ -313,8 +313,9 @@ define([
             connEndIds = Object.keys(self.portsInfo[portId].connEnds);
             connEndIds.sort(connEndsSorter);
 
+            self.portsInfo[portId].position.height = 0;
             if (connEndIds.length === 0) {
-                relY += PORT_HEIGHT + PORT_MARGIN;
+                relY += (PORT_HEIGHT + PORT_MARGIN);
                 self.portsInfo[portId].position.height = PORT_HEIGHT;
             } else {
                 for (i = 0; i < connEndIds.length; i += 1) {
@@ -329,8 +330,7 @@ define([
                             self.position.x + DECORATOR_WIDTH + CONN_END_X_MARGIN;
                     }
 
-                    relY += CONN_MARGIN;
-                    relY += CONN_HEIGHT;
+                    relY += (CONN_HEIGHT + CONN_MARGIN);
                     self.portsInfo[portId].position.height += (CONN_HEIGHT + CONN_MARGIN);
                 }
 
@@ -339,8 +339,8 @@ define([
             }
 
 
-            self.portsInfo[portId].connArea.y1 = relY - self.portsInfo[portId].position.height / 2;
-            self.portsInfo[portId].connArea.y2 = relY - self.portsInfo[portId].position.height / 2 + CONN_AREA_WIDTH;
+            self.portsInfo[portId].connArea.y1 = relY - self.portsInfo[portId].position.height / 2 - CONN_AREA_WIDTH;
+            self.portsInfo[portId].connArea.y2 = relY - self.portsInfo[portId].position.height / 2;
         }
 
         this.orderedPortsId = [];
