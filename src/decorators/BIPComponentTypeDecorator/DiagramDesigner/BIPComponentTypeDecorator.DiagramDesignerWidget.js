@@ -74,7 +74,7 @@ define([
     BIPComponentTypeDecorator.prototype.on_addTo = function () {
         var self = this;
 
-        this._render();
+        this._renderOwnProperties();
 
         // set title editable on double-click
         this.skinParts.$name.on('dblclick.editOnDblClick', null, function (event) {
@@ -118,11 +118,20 @@ define([
 
         //let the parent decorator class do its job first
         DecoratorBase.prototype.on_addTo.apply(this, arguments);
-        this.addPortsInfo();
         this._renderPorts();
     };
 
-    BIPComponentTypeDecorator.prototype._render = function () {
+    BIPComponentTypeDecorator.prototype.update = function () {
+        this._renderOwnProperties();
+
+        // FIXME: This might be slow for larger models..
+        this.skinParts.$portsLHS.empty();
+        this.skinParts.$portsRHS.empty();
+
+        this._renderPorts();
+    };
+
+    BIPComponentTypeDecorator.prototype._renderOwnProperties = function () {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
 
@@ -136,7 +145,7 @@ define([
             // Use hostDesignerItem's position instead.
             this.position.x = this.hostDesignerItem.positionX;
             this.position.y = this.hostDesignerItem.positionY;
-            this.isCompound = this.isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
+            this.isCompound = this._isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
         }
 
         //find name placeholder
@@ -152,6 +161,8 @@ define([
 
     BIPComponentTypeDecorator.prototype._renderPorts = function () {
         var self = this;
+
+        this._retrievePortsInfo();
 
         this.orderedPortsId.forEach(function (portId) {
             var info = self.portsInfo[portId],
@@ -176,7 +187,7 @@ define([
 
             self.portsInfo[portId].$el = portEl;
 
-            if (info.position.x === 'lhs') {
+            if (info.position.x === 'left') {
                 self.skinParts.$portsLHS.append(portEl);
             } else {
                 self.skinParts.$portsRHS.append(portEl);
@@ -199,17 +210,7 @@ define([
         });
     };
 
-    BIPComponentTypeDecorator.prototype.update = function () {
-        this._render();
-        this.addPortsInfo();
-
-        // FIXME: This might be slow for larger models..
-        this.skinParts.$portsLHS.empty();
-        this.skinParts.$portsRHS.empty();
-        this._renderPorts();
-    };
-
-    BIPComponentTypeDecorator.prototype.addPortsInfo = function () {
+    BIPComponentTypeDecorator.prototype._retrievePortsInfo = function () {
         var self = this,
             client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
@@ -221,7 +222,7 @@ define([
             var enfTransNode = client.getNode(enfTransId);
             if (enfTransNode) {
                 if (GMEConcepts.isPort(enfTransId) &&
-                    self.isOfMetaTypeName(enfTransNode.getMetaTypeId(), ['EnforceableTransition', 'ExportPort'])) {
+                    self._isOfMetaTypeName(enfTransNode.getMetaTypeId(), ['EnforceableTransition', 'ExportPort'])) {
 
                     //console.log('Found EnforceableTransition:', enfTransNode.getAttribute('name'));
 
@@ -229,7 +230,7 @@ define([
                         id: enfTransId,
                         name: enfTransNode.getAttribute('name'),
                         position: {
-                            x: 'lhs',
+                            x: 'left',
                             y: 0,
                             height: 0
                         },
@@ -249,7 +250,7 @@ define([
 
                         if (connNode && connNode.getPointerId('src')) {
                             connEndNode = client.getNode(connNode.getPointerId('src'));
-                            if (self.isOfMetaTypeName(connEndNode.getMetaTypeId(), 'ConnectorEnd') &&
+                            if (self._isOfMetaTypeName(connEndNode.getMetaTypeId(), 'ConnectorEnd') &&
                                 connEndNode.getParentId() === nodeObj.getParentId()) {
                                 self.portsInfo[enfTransId].connEnds[connEndNode.getId()] = {
                                     id: connEndNode.getId(),
@@ -285,7 +286,7 @@ define([
             lhsOrdered = [],
             rhsOrdered = [];
 
-        function sorter(a, b) {
+        function yAxisSorter(a, b) {
             if (a.y === b.y) {
                 return 0;
             } else if (a.y === null || a.y < b.y) {
@@ -299,26 +300,35 @@ define([
             var connEndIds,
                 i;
 
+            function connEndsSorter(id1, id2) {
+                var a = self.portsInfo[portId].connEnds[id1].pos,
+                    b = self.portsInfo[portId].connEnds[id2].pos;
+
+                return yAxisSorter(a, b);
+            }
+
             portId = heightPortInfo.id;
             self.orderedPortsId.push(portId);
 
             connEndIds = Object.keys(self.portsInfo[portId].connEnds);
+            connEndIds.sort(connEndsSorter);
 
             if (connEndIds.length === 0) {
-                relY += PORT_HEIGHT;
+                relY += PORT_HEIGHT + PORT_MARGIN;
                 self.portsInfo[portId].position.height = PORT_HEIGHT;
             } else {
                 for (i = 0; i < connEndIds.length; i += 1) {
 
                     connEndId = connEndIds[i];
                     self.portsInfo[portId].connEnds[connEndId].dispPos.y = relY + self.position.y;
-                    if (self.portsInfo[portId].position.x === 'lhs') {
+                    if (self.portsInfo[portId].position.x === 'left') {
                         self.portsInfo[portId].connEnds[connEndId].dispPos.x =
                             self.position.x - CONN_END_WIDTH - CONN_END_X_MARGIN;
                     } else {
                         self.portsInfo[portId].connEnds[connEndId].dispPos.x =
                             self.position.x + DECORATOR_WIDTH + CONN_END_X_MARGIN;
                     }
+
                     relY += CONN_MARGIN;
                     relY += CONN_HEIGHT;
                     self.portsInfo[portId].position.height += (CONN_HEIGHT + CONN_MARGIN);
@@ -346,7 +356,7 @@ define([
             }
 
             if (typeof weightedPosX === 'number' && weightedPosX > this.position.x + DECORATOR_WIDTH / 2) {
-                this.portsInfo[portId].position.x = 'rhs';
+                this.portsInfo[portId].position.x = 'right';
                 rhsOrdered.push({
                     id: portId,
                     y: weightedPosY
@@ -355,7 +365,7 @@ define([
                 this.portsInfo[portId].connArea.x1 = DECORATOR_WIDTH - CONN_AREA_WIDTH;
                 this.portsInfo[portId].connArea.x2 = DECORATOR_WIDTH;
             } else {
-                this.portsInfo[portId].position.x = 'lhs';
+                this.portsInfo[portId].position.x = 'left';
                 lhsOrdered.push({
                     id: portId,
                     y: weightedPosY
@@ -367,8 +377,8 @@ define([
         }
 
         // Sort the ports based on y-position
-        rhsOrdered.sort(sorter);
-        lhsOrdered.sort(sorter);
+        rhsOrdered.sort(yAxisSorter);
+        lhsOrdered.sort(yAxisSorter);
 
         // Calculate the display-positions for the connector-ends.
         relY = this.isCompound ? COMPOUND_PORTS_TOP_MARGIN : PORTS_TOP_MARGIN;
@@ -390,21 +400,7 @@ define([
         client.setAttribute(this._metaInfo[CONSTANTS.GME_ID], nodePropertyNames.Attributes.cardinality, newValue);
     };
 
-    BIPComponentTypeDecorator.prototype.doSearch = function (searchDesc) {
-        var searchText = searchDesc.toString(),
-            gmeId = (this._metaInfo && this._metaInfo[CONSTANTS.GME_ID]) || '';
-
-        return (this.name && this.name.toLowerCase().indexOf(searchText.toLowerCase()) !== -1) ||
-            (gmeId.indexOf(searchText) > -1);
-    };
-
-    /**
-     * Helper methods to figure out meta-type.
-     * @param metaNodeId
-     * @param metaTypeName
-     * @returns {boolean}
-     */
-    BIPComponentTypeDecorator.prototype.isOfMetaTypeName = function (metaNodeId, metaTypeNames) {
+    BIPComponentTypeDecorator.prototype._isOfMetaTypeName = function (metaNodeId, metaTypeNames) {
         var metaNode = this._control._client.getNode(metaNodeId),
             baseId;
 
@@ -424,6 +420,7 @@ define([
         }
     };
 
+    // #### Public API functions
     /**
      * Called by the Visualizer when requesting the position of the connectorEnds.
      * @param portId
@@ -434,8 +431,20 @@ define([
         // console.log('From ComponentType:', this.portsInfo[portId].connEnds[connectorEndId].dispPos.x,
         //     this.portsInfo[portId].connEnds[connectorEndId].dispPos.y);
         if (this.portsInfo[portId] && this.portsInfo[portId].connEnds[connectorEndId]) {
-            return this.portsInfo[portId].connEnds[connectorEndId].dispPos;
+            return {
+                y: this.portsInfo[portId].connEnds[connectorEndId].dispPos.y,
+                x: this.portsInfo[portId].connEnds[connectorEndId].dispPos.x,
+                relativeOrientation: this.portsInfo[portId].position.x
+            };
         }
+    };
+
+    BIPComponentTypeDecorator.prototype.doSearch = function (searchDesc) {
+        var searchText = searchDesc.toString(),
+            gmeId = (this._metaInfo && this._metaInfo[CONSTANTS.GME_ID]) || '';
+
+        return (this.name && this.name.toLowerCase().indexOf(searchText.toLowerCase()) !== -1) ||
+            (gmeId.indexOf(searchText) > -1);
     };
 
     // DiagramDesigner Decorator API
@@ -512,12 +521,11 @@ define([
         return result;
     };
 
-    BIPComponentTypeDecorator.prototype.getConnectorMetaInfo = function (id) {
+    BIPComponentTypeDecorator.prototype.getConnectorMetaInfo = function (/*id*/) {
         //console.log('getConnectorMetaInfo', id);
         return undefined;
     };
 
-    // Port handling for control
     BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
         var territoryRule = {},
             gmeID = this._metaInfo[CONSTANTS.GME_ID],
@@ -536,26 +544,10 @@ define([
         return territoryRule;
     };
 
-    BIPComponentTypeDecorator.prototype.showSourceConnectors = function (params) {
-        //console.log('showSourceConnector', params);
-        // var self = this;
-        // if (params) {
-        //     params.connectors.forEach(function (portId) {
-        //         self.portsInfo[portId].$el.find('.trans-connector').addClass('show-connectors');
-        //     });
-        // } else {
-        //     //TODO: Hide box's connectors
-        // }
+    BIPComponentTypeDecorator.prototype.showSourceConnectors = function (/*params*/) {
     };
 
-    BIPComponentTypeDecorator.prototype.hideSourceConnectors = function (ss) {
-        //console.log('hideSourceConnectors', ss);
-        // var self = this;
-        // if (self.portsInfo) {
-        //     Object.keys(self.portsInfo).forEach(function (portId) {
-        //         self.portsInfo[portId].$el.find('.trans-connector').removeClass('show-connectors');
-        //     });
-        // }
+    BIPComponentTypeDecorator.prototype.hideSourceConnectors = function () {
     };
 
     BIPComponentTypeDecorator.prototype.showEndConnectors = function (params) {
@@ -568,8 +560,7 @@ define([
         }
     };
 
-    BIPComponentTypeDecorator.prototype.hideEndConnectors = function (ss) {
-        //console.log('hideEndConnectors', ss);
+    BIPComponentTypeDecorator.prototype.hideEndConnectors = function () {
         var self = this;
         if (self.portsInfo) {
             Object.keys(self.portsInfo).forEach(function (portId) {

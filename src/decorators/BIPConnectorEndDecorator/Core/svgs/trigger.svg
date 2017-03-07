@@ -1,5 +1,6 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
- <polygon fill="#498a44" points="0,0 0,100 100,50"/>
+ <polygon class="right-trigger" fill="#498a44" points="0,0 0,100 100,50"/>
+ <polygon class="left-trigger" fill="#498a44" points="0,50 100,100 100,0"/>
  <text class="cardinalities" x="3" y="60" font-family="Lucida Console" font-size="32" fill="white">
  </text>
 </svg>

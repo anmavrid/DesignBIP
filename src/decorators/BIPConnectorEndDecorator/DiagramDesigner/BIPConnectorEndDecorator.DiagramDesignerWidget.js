@@ -34,6 +34,7 @@ define([
         BIPConnectorEndDecoratorCore.apply(this, [opts]);
 
         this.name = '';
+        this.skinParts.$nullConnector = null;
 
         this.logger.debug('BIPConnectorEndDecorator ctor');
     };
@@ -47,19 +48,24 @@ define([
 
     BIPConnectorEndDecorator.prototype.$DOMBase = $(BIPConnectorEndDecoratorTemplate);
 
-    BIPConnectorEndDecorator.prototype.on_addTo = function () {
-        this._render();
+    BIPConnectorEndDecorator.prototype.on_addTo = function (objDesc) {
+        this.skinParts.$nullConnector = this.$el.find('.null-connector');
+        this.skinParts.$name = this.$el.find('.name');
+
+        this._render(objDesc || {});
         //let the parent decorator class do its job first
         DiagramDesignerWidgetDecoratorBase.prototype.on_addTo.apply(this, arguments);
     };
 
-    BIPConnectorEndDecorator.prototype.update = function () {
-        this._render();
+    BIPConnectorEndDecorator.prototype.update = function (objDesc) {
+        this._render(objDesc || {});
     };
 
-    BIPConnectorEndDecorator.prototype._render = function () {
+    BIPConnectorEndDecorator.prototype._render = function (objDesc) {
         var client = this._control._client,
             nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
+            hasConnectors = false,
+            connections,
             metaNode;
 
         if (nodeObj) {
@@ -70,10 +76,8 @@ define([
             }
         }
 
-        //find name placeholder
-        this.skinParts.$name = this.$el.find('.name');
         this.skinParts.$name.text(this.name);
-
+        this.skinParts.$nullConnector.removeClass('right left');
         this.$el.removeClass('join invalid-meta-type');
 
         switch (this.metaTypeName) {
@@ -83,6 +87,34 @@ define([
                     multiplicity: nodeObj.getAttribute(nodePropertyNames.Attributes.multiplicity) || '?',
                     degree: nodeObj.getAttribute(nodePropertyNames.Attributes.degree) || '?'
                 });
+
+                if (typeof objDesc.relativeOrientation === 'string') {
+                    // The connector end is associated with a componentType.
+
+                    // Check if it is a null-connector.
+                    connections = nodeObj.getCollectionPaths('src').concat(nodeObj.getCollectionPaths('dst'));
+                    connections.forEach(function (connId) {
+                        var connNode = client.getNode(connId),
+                            connMetaNode;
+
+                        if (connNode) {
+                            connMetaNode = client.getNode(connNode.getMetaTypeId());
+                            if (connMetaNode && connMetaNode.getAttribute('name') === 'Connector') {
+                                // It has a connector and is not a null.
+                                hasConnectors = true;
+                            }
+                        }
+                    });
+
+                    if (hasConnectors === false) {
+                        this.skinParts.$nullConnector.addClass(objDesc.relativeOrientation);
+                    }
+
+                    if (this.metaTypeName === 'Trigger' && objDesc.relativeOrientation === 'left') {
+                        this.skinParts.$svgContainer.addClass('show-left');
+                        this.skinParts.$svgContainer.find('text').attr('x', '35');
+                    }
+                }
                 break;
             case 'Join':
                 this.$el.addClass('join');
