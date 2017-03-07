@@ -5,12 +5,14 @@
       max-width: 120px;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-top: 16px;
+      margin-top: 0;
       margin-bottom: 0;
     }
     .cardinality {
       font-size: 11px;
       min-width: 20px;
+      width: 20px;
+      position: static;
     }
   }
 }

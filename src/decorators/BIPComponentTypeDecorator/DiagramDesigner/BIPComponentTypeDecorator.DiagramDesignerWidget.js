@@ -381,10 +381,10 @@ define([
         lhsOrdered.sort(yAxisSorter);
 
         // Calculate the display-positions for the connector-ends.
-        relY = this.isCompound ? COMPOUND_PORTS_TOP_MARGIN : PORTS_TOP_MARGIN;
+        relY = PORTS_TOP_MARGIN;
         lhsOrdered.forEach(calcConnEndPositions);
 
-        relY = this.isCompound ? COMPOUND_PORTS_TOP_MARGIN : PORTS_TOP_MARGIN;
+        relY = PORTS_TOP_MARGIN;
         rhsOrdered.forEach(calcConnEndPositions);
     };
 

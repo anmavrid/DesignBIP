@@ -89,9 +89,3 @@
       border-radius: 5px 5px 0 0; }
   .bip-component-type-decorator.compound-type {
     background-color: #999900; }
-    .bip-component-type-decorator.compound-type .cardinality {
-      display: none; }
-    .bip-component-type-decorator.compound-type .name {
-      margin-top: 5px; }
-
-/*# sourceMappingURL=BIPComponentTypeDecorator.DiagramDesignerWidget.css.map */

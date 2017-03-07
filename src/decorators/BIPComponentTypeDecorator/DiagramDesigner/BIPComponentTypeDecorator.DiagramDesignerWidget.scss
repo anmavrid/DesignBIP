@@ -106,11 +106,5 @@
   // Changes when the type is compound-type
   &.compound-type {
     background-color: #999900;
-    .cardinality {
-      display: none;
-    }
-    .name {
-      margin-top: 5px;
-    }
   }
 }

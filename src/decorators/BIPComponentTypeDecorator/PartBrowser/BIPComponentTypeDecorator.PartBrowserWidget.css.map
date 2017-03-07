@@ -1,7 +1,0 @@
-{
-"version": 3,
-"mappings": "AACE,2CAA8B;EAC5B,KAAK,EAAE,KAAK;EACZ,iDAAM;IACJ,SAAS,EAAE,KAAK;IAChB,QAAQ,EAAE,MAAM;IAChB,aAAa,EAAE,QAAQ;IACvB,UAAU,EAAE,IAAI;IAChB,aAAa,EAAE,CAAC;EAElB,wDAAa;IACX,SAAS,EAAE,IAAI;IACf,SAAS,EAAE,IAAI",
-"sources": ["BIPComponentTypeDecorator.PartBrowserWidget.scss"],
-"names": [],
-"file": "BIPComponentTypeDecorator.PartBrowserWidget.css"
-}

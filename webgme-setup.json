@@ -1,17 +1,9 @@
 {
   "components": {
     "plugins": {
-      "CodeGeneration": {
-        "src": "src/plugins/CodeGeneration",
-        "test": "test/plugins/CodeGeneration"
-      },
-      "BIPCodeGenerator": {
-        "src": "src/plugins/BIPCodeGenerator",
-        "test": "test/plugins/BIPCodeGenerator"
-      },
-      "CodeGenerator": {
-        "src": "src/plugins/CodeGenerator",
-        "test": "test/plugins/CodeGenerator"
+      "ArchitectureSpecGenerator": {
+        "src": "src/plugins/ArchitectureSpecGenerator",
+        "test": "test/plugins/ArchitectureSpecGenerator"
       }
     },
     "seeds": {
@@ -41,9 +33,9 @@
         "widget": "src/visualizers/widgets/CodeEditor",
         "project": "webgme-codeeditor"
       },
-      "ModelEditorDD": {
+      "BIPEditor": {
         "src": "panels/ModelEditor/ModelEditorPanel",
-        "title": "ModelEditorDD",
+        "title": "BIP Editor",
         "panel": "src/visualizers/panels/ModelEditor",
         "secondary": false,
         "widget": "src/visualizers/widgets/ModelEditor",

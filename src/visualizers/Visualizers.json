@@ -6,8 +6,8 @@
     "DEBUG_ONLY": false
   },
   {
-    "id": "ModelEditorDD",
-    "title": "ModelEditorDD",
+    "id": "BIPEditor",
+    "title": "BIP Editor",
     "panel": "panels/ModelEditor/ModelEditorPanel",
     "DEBUG_ONLY": false
   }
