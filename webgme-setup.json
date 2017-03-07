@@ -1,21 +1,47 @@
 {
   "components": {
     "plugins": {
-      "CodeGeneration": {
-        "src": "src/plugins/CodeGeneration",
-        "test": "test/plugins/CodeGeneration"
+      "ArchitectureSpecGenerator": {
+        "src": "src/plugins/ArchitectureSpecGenerator",
+        "test": "test/plugins/ArchitectureSpecGenerator"
+      }
+    },
+    "seeds": {
+      "BIP": {
+        "src": "src/seeds/BIP"
+      }
+    },
+    "visualizers": {},
+    "decorators": {
+      "BIPComponentTypeDecorator": {
+        "src": "src/decorators/BIPComponentTypeDecorator"
       },
-      "BIPCodeGenerator": {
-        "src": "src/plugins/BIPCodeGenerator",
-        "test": "test/plugins/BIPCodeGenerator"
-      },
-      "CodeGenerator": {
-        "src": "src/plugins/CodeGenerator",
-        "test": "test/plugins/CodeGenerator"
+      "BIPConnectorEndDecorator": {
+        "src": "src/decorators/BIPConnectorEndDecorator"
       }
     }
   },
   "dependencies": {
-    "plugins": {}
+    "plugins": {},
+    "seeds": {},
+    "visualizers": {
+      "CodeEditor": {
+        "src": "panels/CodeEditor/CodeEditorPanel",
+        "title": "CodeEditor",
+        "panel": "src/visualizers/panels/CodeEditor",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/CodeEditor",
+        "project": "webgme-codeeditor"
+      },
+      "BIPEditor": {
+        "src": "panels/ModelEditor/ModelEditorPanel",
+        "title": "BIP Editor",
+        "panel": "src/visualizers/panels/ModelEditor",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/ModelEditor",
+        "project": "diagram-designers"
+      }
+    },
+    "decorators": {}
   }
 }

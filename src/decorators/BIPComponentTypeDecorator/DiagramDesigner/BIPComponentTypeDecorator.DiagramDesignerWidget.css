@@ -1,0 +1,91 @@
+.bip-component-type-decorator {
+  width: 164px;
+  min-height: 40px;
+  border: 1px solid black;
+  background-color: #ffff99;
+  padding: 0;
+  text-align: center; }
+  .bip-component-type-decorator .ports-container {
+    width: 163px;
+    min-height: 1px;
+    display: inline-flex; }
+    .bip-component-type-decorator .ports-container .lhs {
+      min-height: 1px;
+      width: 65px;
+      display: inline-block;
+      text-align: left; }
+      .bip-component-type-decorator .ports-container .lhs .trans-connector {
+        border-bottom-right-radius: 2px;
+        border-top-right-radius: 2px; }
+    .bip-component-type-decorator .ports-container .center {
+      min-height: 1px;
+      width: 33px;
+      display: inline-block; }
+    .bip-component-type-decorator .ports-container .rhs {
+      min-height: 1px;
+      width: 65px;
+      display: inline-block;
+      text-align: right; }
+      .bip-component-type-decorator .ports-container .rhs .trans-connector {
+        border-bottom-left-radius: 2px;
+        border-top-left-radius: 2px; }
+    .bip-component-type-decorator .ports-container .trans-connector {
+      display: inline-block;
+      background-color: rgba(255, 187, 70, 0.91);
+      position: static;
+      min-width: 30px;
+      max-width: 60px;
+      width: auto;
+      overflow-wrap: break-word;
+      text-overflow: ellipsis;
+      overflow-y: hidden;
+      text-align: center;
+      font-size: 10px;
+      padding: 4px;
+      margin-left: -1px;
+      border: black solid 1px;
+      font-weight: normal;
+      cursor: pointer;
+      z-index: 10; }
+      .bip-component-type-decorator .ports-container .trans-connector.show-connectors {
+        border: blue solid 1px;
+        background-color: #fefefe; }
+      .bip-component-type-decorator .ports-container .trans-connector:hover {
+        border: rgba(82, 168, 236, 0.6) solid 1px;
+        background-color: #fefefe;
+        box-shadow: inset 0 1px 1px darkgrey, 0 0 8px rgba(82, 168, 236, 0.6); }
+  .bip-component-type-decorator .cardinality {
+    position: absolute;
+    min-width: 30px;
+    max-width: 50px;
+    width: auto;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-family: monospace;
+    font-size: 13px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-bottom: black solid 1px;
+    border-right: black solid 1px;
+    border-bottom-right-radius: 6px; }
+  .bip-component-type-decorator .name {
+    margin: 23px 3px 3px 5px;
+    overflow-x: hidden;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: bold;
+    width: auto;
+    text-overflow: ellipsis;
+    font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+    text-align: center; }
+  .bip-component-type-decorator .popover {
+    white-space: nowrap; }
+    .bip-component-type-decorator .popover .popover-content {
+      padding: 8px 14px;
+      margin: 0;
+      font-size: 12px;
+      font-family: monospace;
+      background-color: white;
+      border-radius: 5px 5px 0 0; }
+  .bip-component-type-decorator.compound-type {
+    background-color: #999900; }

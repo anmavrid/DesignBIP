@@ -1,0 +1,26 @@
+[
+  {
+    "<gmeId>": {
+      "id": "<gmeId>",
+      "name": "<gmeName>",
+      "transitions": {
+        "<instanceId>": [
+          {
+            "srcState": {
+              "id": "<gmeId>",
+              "name": "<gmeName>"
+            },
+            "dstState": {
+              "id": "<gmeId>",
+              "name": "<gmeName>"
+            },
+            "transition": {
+              "id": "<gmeId>",
+              "name": "<gmeName>"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

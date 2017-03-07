@@ -1,0 +1,110 @@
+.bip-component-type-decorator {
+  width: 164px;
+  min-height: 40px;
+  border: 1px solid black;
+  background-color: rgb(255, 255, 153);
+  padding: 0;
+  text-align: center;
+  .ports-container {
+    width: 163px;
+    min-height: 1px;
+    display: inline-flex;
+    .lhs {
+      min-height: 1px;
+      width: 65px;
+      display: inline-block;
+      text-align: left;
+      .trans-connector {
+        border-bottom-right-radius: 2px;
+        border-top-right-radius: 2px;
+      }
+    }
+    .center {
+      min-height: 1px;
+      width: 33px;
+      display: inline-block;
+    }
+    .rhs {
+      min-height: 1px;
+      width: 65px;
+      display: inline-block;
+      text-align: right;
+      .trans-connector {
+        border-bottom-left-radius: 2px;
+        border-top-left-radius: 2px;
+      }
+    }
+    .trans-connector {
+      display: inline-block;
+      background-color: rgba(255, 187, 70, 0.91);
+      position: static;
+      min-width: 30px;
+      max-width: 60px;
+      width: auto;
+      overflow-wrap: break-word;
+      text-overflow: ellipsis;
+      overflow-y: hidden;
+      text-align: center;
+      font-size: 10px;
+      padding: 4px;
+      margin-left: -1px;
+      border: black solid 1px;
+      font-weight: normal;
+      cursor: pointer;
+      z-index: 10;
+      &.show-connectors {
+        border: blue solid 1px;
+        background-color: #fefefe;
+      }
+      &:hover {
+        border: rgba(82, 168, 236, 0.6) solid 1px;
+        background-color: #fefefe;
+        box-shadow: inset 0 1px 1px darkgrey, 0 0 8px rgba(82, 168, 236, 0.6);
+      }
+    }
+  }
+  .cardinality {
+    position: absolute;
+    min-width: 30px;
+    max-width: 50px;
+    width: auto;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    //font-weight: bold;
+    font-family: monospace;
+    font-size: 13px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-bottom: black solid 1px;
+    border-right: black solid 1px;
+    border-bottom-right-radius: 6px;
+  }
+  .name {
+    margin: 23px 3px 3px 5px;
+    overflow-x: hidden;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: bold;
+    width: auto;
+    text-overflow: ellipsis;
+    font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+    text-align: center;
+  }
+
+  .popover {
+    white-space: nowrap;
+    .popover-content {
+      padding: 8px 14px;
+      margin: 0;
+      font-size: 12px;
+      font-family: monospace;
+      background-color: white;
+      border-radius: 5px 5px 0 0;
+    }
+  }
+
+  // Changes when the type is compound-type
+  &.compound-type {
+    background-color: #999900;
+  }
+}

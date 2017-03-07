@@ -1,0 +1,12 @@
+.part-browser .bip-connector-end-decorator {
+  height: auto;
+  line-height: 18px;
+  width: 50px;
+  text-align: center; }
+  .part-browser .bip-connector-end-decorator .svg-container {
+    width: 20px;
+    display: inline-block; }
+  .part-browser .bip-connector-end-decorator .name {
+    display: block;
+    font-size: 11px;
+    font-weight: bold; }

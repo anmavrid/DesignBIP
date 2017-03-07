@@ -1,0 +1,37 @@
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.SwitchableRoute] - Component:  2 of type Route is executing transition on from state off to state on
+MySystem-akka.actor.default-dispatcher-5 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition add
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition add
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition on from state off to state on
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-4 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition off from state on to state wait
+MySystem-akka.actor.default-dispatcher-4 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition internal from state wait to state done
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.SwitchableRoute] - Component:  2 of type Route is executing transition off from state on to state wait
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.SwitchableRoute] - Component:  2 of type Route is executing transition internal from state wait to state done
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition finished from state done to state off
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition rm
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-6 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition add
+MySystem-akka.actor.default-dispatcher-6 INFO [org.javabip.spec.SwitchableRoute] - Component:  3 of type Route is executing transition on from state off to state on
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.SwitchableRoute] - Component:  2 of type Route is executing transition finished from state done to state off
+MySystem-akka.actor.default-dispatcher-5 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition rm
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition add
+MySystem-akka.actor.default-dispatcher-6 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition on from state off to state on
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition off from state on to state wait
+MySystem-akka.actor.default-dispatcher-2 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition internal from state wait to state done
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.SwitchableRoute] - Component:  3 of type Route is executing transition off from state on to state wait
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.SwitchableRoute] - Component:  3 of type Route is executing transition internal from state wait to state done
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition finished from state done to state off
+MySystem-akka.actor.default-dispatcher-6 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition rm
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition add
+MySystem-akka.actor.default-dispatcher-4 INFO [org.javabip.spec.SwitchableRoute] - Component:  1 of type Route is executing transition on from state off to state on
+BIPEngine INFO [org.javabip.engine.BDDBIPEngineImpl] - ******************************* Engine **********************************
+MySystem-akka.actor.default-dispatcher-7 INFO [org.javabip.spec.SwitchableRoute] - Component:  3 of type Route is executing transition finished from state done to state off
+MySystem-akka.actor.default-dispatcher-6 INFO [org.javabip.spec.RouteOnOffMonitor] - Component: 1 of type Monitor is executing transition rm
