@@ -10,11 +10,13 @@
 define([
     'plugin/PluginConfig',
     'text!./metadata.json',
-    'plugin/PluginBase'
+    'plugin/PluginBase',
+    'common/util/xmljsonconverter'
 ], function (
         PluginConfig,
         pluginMetadata,
-        PluginBase) {
+        PluginBase,
+        Converter) {
     'use strict';
     pluginMetadata = JSON.parse(pluginMetadata);
 
@@ -64,6 +66,44 @@ define([
                     self.logger.debug(Object.keys(nodes));
                     var model = self.generateMacros(self.generateArchitectureModel(nodes));
                     self.logger.info(JSON.stringify(model, null, 4));
+                    
+                    var accept = [];
+                    var require = [];
+                    
+                    for (var port of model.ports) {
+                        var effect = {"@id": port.name, "@specType": port.componentType}; 
+                        var acceptPorts = [];
+                        for (var acc of port.accept)
+                            if (acc !== "-") 
+                                acceptPorts.push({"@id": acc[0], "@specType": acc[1]}); 
+                        var acceptCauses = {"port": acceptPorts};
+                        
+                        var option = [];
+                        if (port.require !== "-"){
+                            for (var requiredPorts of port.require) {
+                                var causes = [];
+                                for (var listOfPorts of requiredPorts) {
+                                    var ports = [];
+                                    for (var requiredPort of listOfPorts) 
+                                        if (requiredPort !== "-") {
+                                            ports.push({"@id": requiredPort[0], "@specType": requiredPort[1]});
+                                            self.logger.info("Required port: " + requiredPort[0] + " " + requiredPort[1]);
+                                        }
+                                    causes.push({"port" : ports});
+                                }                            
+                                option.push({"causes" : causes});
+                            }
+                        }
+
+                        accept.push({"effect": effect, "causes": acceptCauses});
+                        require.push({"effect": effect, "causes": {"option": option}});
+                    }
+                    
+                    self.logger.info(require);
+                    
+                    var xml = {"glue" : {"accepts" : {"accept": accept}, "requires" : {"require": require}}};
+                    //filesToAdd['Glue.xml'] = jsonToXml.convertToString(xml);
+                    self.logger.info((new Converter.JsonToXml()).convertToString(xml));
                 })
                 .then(function(){
                     self.result.setSuccess(true);
@@ -90,7 +130,7 @@ define([
     };
     
     ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel){
-        //var self = this; 
+        var self = this; 
         
         for (var port of architectureModel.ports) {
             var require = new Set;
@@ -103,19 +143,20 @@ define([
                     break;
                 }
             for (var connector of port.connectors) {
+                var option= [];
                 var connectorEnd;
                 for (var end of connector.ends)
                     if (end.port === port)
                         connectorEnd = end; 
                 if (connectorEnd.multiplicity !== '1')
                     for (var otherConnectorEnd of connector.ends)
-                        accept.add(otherConnectorEnd.port.name);
+                        accept.add(otherConnectorEnd.port);
                 else 
                    for (var otherConnectorEnd of connector.ends)
                         if (otherConnectorEnd.port.name !== port.name)
-                            accept.add(otherConnectorEnd.port.name);
+                            accept.add(otherConnectorEnd.port);
                 if (connectorEnd.type === 'Trigger'){
-                        require.add("-");
+                        option.push("-");
                     }
                 else {
                     var triggerExists = false;
@@ -128,20 +169,22 @@ define([
                             if (otherConnectorEnd.port.name !== port.name || parseInt(otherConnectorEnd.multiplicity) >1 ) {
                                 var reqCause = [];
                                 for (var i = 0; i < parseInt(otherConnectorEnd.multiplicity); i++)
-                                    reqCause.push(otherConnectorEnd.port.name);
-                                require.add(reqCause);
+                                    reqCause.push(otherConnectorEnd.port);
+                                option.push(reqCause);
+                                //require.add(reqCause);
                             }
                         }
                         else{
                             if (otherConnectorEnd.type === 'Trigger' && (otherConnectorEnd.port.name !== port.name || parseInt(otherConnectorEnd.multiplicity) >1 )){
                                 var reqCause = [];
                                 for (var i = 0; i < parseInt(otherConnectorEnd.multiplicity); i++)
-                                    reqCause.push(otherConnectorEnd.port.name);
-                                require.add(reqCause);
+                                    reqCause.push(otherConnectorEnd.port);
+                                option.push(reqCause);
                             }
                         }
                     }
                 }
+                require.add(option);
             }
             //set to list
             port.require = [...require];
@@ -152,6 +195,34 @@ define([
         for (var end of architectureModel.connectorEnds){
                 delete end.connector;
                 delete end.port;
+        }
+        for (var port of architectureModel.ports) {
+            var simpleAccept = [];
+            var simpleRequire = [];
+            for (var acceptedPort of port.accept) {
+                if (acceptedPort === "-")
+                    simpleAccept.push("-");
+                else simpleAccept.push([acceptedPort.name, acceptedPort.componentType]);                            
+            }                
+            for (var requireList of port.require) {
+                if (requireList === "-")
+                    simpleRequire = "-";
+                else {
+                    var simpleRequireList = [];
+                    for (var option of requireList) {
+                        var simpleList = [];
+                        for (var requiredPort of option) {
+                            if (requiredPort === "-") 
+                                simpleList.push("-");
+                            else simpleList.push([requiredPort.name, requiredPort.componentType]);
+                        }
+                        simpleRequireList.push(simpleList);
+                    }
+                    simpleRequire.push(simpleRequireList);
+                }
+            }
+            port.accept = simpleAccept;
+            port.require = simpleRequire;
         }
         return architectureModel;
     };
@@ -254,7 +325,7 @@ define([
         }  
         return architectureModel;       
     };
-
+    
     return ArchitectureSpecGenerator;
 });
 
