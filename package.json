@@ -20,7 +20,12 @@
   "devDependencies": {
     "mocha": "^2.2.5",
     "rimraf": "^2.4.0",
-    "chai": "^3.0.0"
+    "chai": "^3.0.0",
+    "jscs": "3.0.7",
+    "jshint": "2.9.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "diagram-designers": "github:webgme/diagram-designers#bip",
+    "webgme-codeeditor": "github:finger563/webgme-codeeditor"
+  }
 }

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "CodeEditor",
+    "title": "CodeEditor",
+    "panel": "panels/CodeEditor/CodeEditorPanel",
+    "DEBUG_ONLY": false
+  },
+  {
+    "id": "BIPEditor",
+    "title": "BIP Editor",
+    "panel": "panels/ModelEditor/ModelEditorPanel",
+    "DEBUG_ONLY": false
+  }
+]

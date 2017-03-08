@@ -7,7 +7,10 @@ var config = require('./config.webgme'),
 // config.server.port = 8080;
 // config.mongo.uri = 'mongodb://127.0.0.1:27017/webgme_my_app';
 
+config.requirejsPaths['widgets/DiagramDesigner'] =
+    './node_modules/diagram-designers/src/visualizers/widgets/DiagramDesigner';
+
+config.visualization.svgDirs = ['./src/svgs'];
+
 validateConfig(config);
 module.exports = config;
-
-config.visualization.svgDirs = ["./src/svgs"] 

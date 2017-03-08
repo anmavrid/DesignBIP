@@ -1,0 +1,28 @@
+{
+  "CodeEditor": {
+    "theme": "default",
+    "keyBinding": "sublime",
+    "autoSaveInterval": "2000",
+    "defaultSyntax": "java",
+    "syntaxToModeMap": {
+      "java": {
+        "name": "java"
+      },
+      "C++": {
+        "name": "text/x-c++src",
+        "useCPP": true
+      },
+      "JSON": {
+        "name": "application/json"
+      },
+      "Python": {
+        "name": "text/x-python"
+      }
+    },
+    "attrToSyntaxMap": {
+      "TransitionMethod": {
+        "Method Body": "java"
+      }
+    }
+  }
+}
