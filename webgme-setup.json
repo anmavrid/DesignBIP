@@ -4,6 +4,10 @@
       "ArchitectureSpecGenerator": {
         "src": "src/plugins/ArchitectureSpecGenerator",
         "test": "test/plugins/ArchitectureSpecGenerator"
+      },
+      "BIP_CodeGenerate": {
+        "src": "src/plugins/BIP_CodeGenerate",
+        "test": "test/plugins/BIP_CodeGenerate"
       }
     },
     "seeds": {
