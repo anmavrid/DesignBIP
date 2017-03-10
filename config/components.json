@@ -13,7 +13,7 @@
       "EnforceableTransition": {
         "transitionMethod": "Java"
       },
-      "internal": {
+      "InternalTransition": {
         "transitionMethod": "Java"
       },
       "SpontaneousTransition": {
