@@ -12,27 +12,25 @@ define([
     'text!./metadata.json',
     'plugin/PluginBase',
     'common/util/ejs',
-    'text!./Templates/language.ejs',
-    'text!./Templates/model.ejs'
+    'text!./Templates/componentType.ejs'
 ], function (
     PluginConfig,
     pluginMetadata,
     PluginBase,
     ejs,
-    languageTemplate,
-    modelTemplate) {
+    componentTypeTemplate) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
 
     /**
-     * Initializes a new instance of BIP_CodeGenerate.
+     * Initializes a new instance of ComponentTypeGenerator.
      * @class
      * @augments {PluginBase}
-     * @classdesc This class represents the plugin BIP_CodeGenerate.
+     * @classdesc This class represents the plugin ComponentTypeGenerator.
      * @constructor
      */
-    var BIP_CodeGenerate = function () {
+    var ComponentTypeGenerator = function () {
         // Call base class' constructor.
         PluginBase.call(this);
         this.pluginMetadata = pluginMetadata;
@@ -43,11 +41,11 @@ define([
      * This is also available at the instance at this.pluginMetadata.
      * @type {object}
      */
-    BIP_CodeGenerate.metadata = pluginMetadata;
+    ComponentTypeGenerator.metadata = pluginMetadata;
 
     // Prototypical inheritance from PluginBase.
-    BIP_CodeGenerate.prototype = Object.create(PluginBase.prototype);
-    BIP_CodeGenerate.prototype.constructor = BIP_CodeGenerate;
+    ComponentTypeGenerator.prototype = Object.create(PluginBase.prototype);
+    ComponentTypeGenerator.prototype.constructor = ComponentTypeGenerator;
 
     /**
      * Main function for the plugin to execute. This will perform the execution.
@@ -58,15 +56,13 @@ define([
      *
      * @param {function(string, plugin.PluginResult)} callback - the result callback
      */
-    BIP_CodeGenerate.prototype.main = function (callback) {
+    ComponentTypeGenerator.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-            artifact,
-            languageText,
-            nodeObject;
+            artifact;
 
 
         // Using the logger.
@@ -75,36 +71,28 @@ define([
         self.extractDataModel(self.activeNode)
             .then(function (nodes) {
 
-                //self.logger.info(Object.keys(nodes));
-                var dataModel = self.makeModelObject(nodes);
-                var dataModelStr = JSON.stringify(dataModel, null, 4);
-                self.dataModel = dataModel;
+
+                var componentInfos = self.makeModelObject(nodes);
+                var dataModelStr = JSON.stringify(componentInfos, null, 4);
+                self.componentInfos = componentInfos;
                 self.logger.info('************DataModel***********\n',dataModelStr);
 
-                var langModel = self.makeLanguageObject(nodes);
-                var langModelStr = JSON.stringify(langModel, null, 4);
-                self.langModel = langModel;
-                self.logger.info('************LangModel***********\n',langModelStr);
+                var filesToAdd = {};
 
+                for(var i=0;i<componentInfos.length;i++)
+                {
+                    var fileName = componentInfos[i].name+'.java';
+                    filesToAdd[fileName]=ejs.render(componentTypeTemplate,componentInfos[i]);
+                    self.logger.info('************LangModel***********\n',filesToAdd[fileName]);
+                }
 
                 artifact = self.blobClient.createArtifact('project-data');
 
-
-                //var JSCodeLang = ejs.render(languageTemplate, self);
-
-                //var currentConfig = self.getCurrentConfig();
-                //self.currentConfig = currentConfig;
-
-                var JSCodeModel = ejs.render(modelTemplate, self);
-
-                //var JSCode = JSCodeLang+JSCodeModel;
-                self.logger.info('************Code is***********\n',JSCodeModel);
-
-                return artifact.addFiles({'dataModel.json':dataModelStr,'langModel.json':langModelStr,'Route.java':JSCodeModel});
+                return artifact.addFiles(filesToAdd);
             })
             .then(function (fileHash) {
                 self.result.addArtifact(fileHash);
-                return artifact.save()
+                return artifact.save();
             })
             .then(function (artifactHash) {
                 self.result.addArtifact(artifactHash);
@@ -118,7 +106,7 @@ define([
             }) ;
     };
 
-    BIP_CodeGenerate.prototype.extractDataModel = function (node) {
+    ComponentTypeGenerator.prototype.extractDataModel = function (node) {
         var self = this;
         return self.core.loadSubTree(node)
             .then(function (nodeArr) {
@@ -131,110 +119,101 @@ define([
             });
     };
 
-    BIP_CodeGenerate.prototype.makeLanguageObject = function (nodes) {
+    ComponentTypeGenerator.prototype.makeModelObject = function (nodes) {
         var self = this,
             path,
             node,
-            languageModel={};
+            componentTypes = [];
 
         for (path in nodes) {
             node = nodes[path];
-            if(node!=self.rootNode) {
-                if (self.core.isMetaNode(node))
-                    languageModel[self.core.getAttribute(self.getMetaType(node), 'name')] = self.info_of_language(node, nodes);
+
+            if (self.isMetaTypeOf(node,self.META.ComponentType)){
+                componentTypes.push(self.getComponentData(node,nodes));
             }
         }
-        return languageModel;
+        return componentTypes;
     };
 
-    BIP_CodeGenerate.prototype.info_of_language = function (node,nodes) {
-        var self= this,
-            childrenPaths,
-            i,
-            lang = {
-                attributes:[],
-                canHavechildren:'',
-                pointers:[],
-                sets:[]
-            };
+    ComponentTypeGenerator.prototype.getComponentData = function (ctNode, nodes) {
+        var info={
+            name: this.core.getAttribute(ctNode, 'name'),
+            path: this.core.getPath(ctNode),
+            cardinality: this.core.getAttribute(ctNode, 'cardinality'),
+            definitions: this.core.getAttribute(ctNode, 'definitions'),
+            forwards: this.core.getAttribute(ctNode, 'forwards'),
+            constructors: this.core.getAttribute(ctNode, 'constructors'),
+            transitions: [],
+            states: [],
+            guards:[]
+        },
+            childrenPaths = this.core.getChildrenPaths(ctNode),
+            childNode,
+            i;
+        //todo populate the
 
-        lang.attributes = self.core.getValidAttributeNames(node);
-
-        if(self.core.getChildrenMeta(node)!== null)
-            lang.canHavechildren = true;
-        else
-            lang.canHavechildren = false;
-
-        lang.pointers = self.core.getValidPointerNames(node);
-
-        lang.sets = self.core.getValidSetNames(node);
-
-        return lang;
-    };
-
-
-    BIP_CodeGenerate.prototype.makeModelObject = function (nodes) {
-        var self = this,
-            path,
-            node,
-            dataModel={};
-
-        for (path in nodes) {
-            node = nodes[path];
-            if(self.core.getAttribute(node, 'name')!="FCO")
-                dataModel[self.core.getPath(node)] = self.info_of_model(node,nodes);
-        }
-        return dataModel;
-    };
-
-
-    BIP_CodeGenerate.prototype.info_of_model = function (node,nodes) {
-        var self= this,
-            childrenPaths,
-            metaNode,
-            i,
-            values = {
-                name:'',
-                children: [],
-                _type: '',
-                _isMeta: ''
-            };
-
-        values.name = self.core.getAttribute(node, 'name');
-        //self.logger.info("Name is",values.name);
-        childrenPaths = self.core.getChildrenPaths(node);
-        if(childrenPaths.length>0)
-            values.children= childrenPaths;
-
-        if(node!=self.rootNode) {
-            metaNode = self.getMetaType(node);
-            values._type = self.core.getAttribute(metaNode, 'name');
-
-            if (self.getMetaType(node) === node) {
-                values._isMeta = true;
+        for(i=0;i<childrenPaths.length;i++)
+        {
+            childNode=nodes[childrenPaths[i]];
+            if (this.isMetaTypeOf(childNode,this.META.TransitionBase)){
+                info.transitions.push(this.getTransitionInfo(childNode, nodes));
             }
-            else {
-                values._isMeta = false;
+            else if(this.isMetaTypeOf(childNode,this.META.StateBase)){
+                info.states.push(this.getStateInfo(childNode, nodes));
             }
-
-            var keys = self.core.getValidAttributeNames(node);
-            for (i = 0; i < keys.length; i += 1) {
-
-                values[keys[i]] = self.core.getAttribute(node,keys[i]);
-            }
-
-            keys = self.core.getValidPointerNames(node);
-            for (i = 0; i < keys.length; i += 1) {
-
-                values[keys[i]] = self.core.getPointerPath(node, keys[i]);
-            }
-
-            keys = self.core.getValidSetNames(node);
-            for (i = 0; i < keys.length; i += 1) {
-                values[keys[i]] = self.core.getMemberPaths(node, keys[i]);
+            else if(this.isMetaTypeOf(childNode,this.META.Guard)){
+                info.guards.push(this.getGuardInfo(childNode, nodes));
             }
         }
-        return values;
+        return info;
     };
-    return BIP_CodeGenerate;
+
+    ComponentTypeGenerator.prototype.getGuardInfo = function (node/*, nodes*/) {
+        var info= {
+            name:this.core.getAttribute(node,'name'),
+            type:this.core.getAttribute(this.core.getMetaType(node),'name'),
+            path:this.core.getPath(node),
+            guardMethod:this.core.getAttribute(node,'guardMethod')
+        };
+        return info;
+    };
+
+    ComponentTypeGenerator.prototype.getTransitionInfo = function (node, nodes) {
+        var info= {
+                name:this.core.getAttribute(node,'name'),
+                type:this.core.getAttribute(this.core.getMetaType(node),'name'),
+                path:this.core.getPath(node),
+                src:{},
+                dst:{},
+                guard:{}
+        };
+        var srcNode;
+        var dstNode;
+
+        var srcPath=this.core.getPointerPath(node,'src');
+        var dstPath=this.core.getPointerPath(node,'dst');
+
+        if(srcPath){
+            srcNode = nodes[srcPath];
+        }
+
+        if(dstPath){
+            dstNode = nodes[dstPath];
+        }
+
+        return info;
+
+    };
+
+    ComponentTypeGenerator.prototype.getStateInfo = function (node/*,nodes*/) {
+        var info= {
+            name:this.core.getAttribute(node,'name'),
+            type:this.core.getAttribute(this.core.getMetaType(node),'name'),
+            path:this.core.getPath(node)
+        };
+
+        return info;
+    };
+
+    return ComponentTypeGenerator;
 });
