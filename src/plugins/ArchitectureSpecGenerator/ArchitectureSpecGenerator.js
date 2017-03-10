@@ -66,49 +66,52 @@ define([
                     self.logger.debug(Object.keys(nodes));
                     var model = self.generateMacros(self.generateArchitectureModel(nodes));
                     self.logger.info(JSON.stringify(model, null, 4));
-                    
+
                     var accept = [];
                     var require = [];
-                    
+
                     for (var port of model.ports) {
-                        var effect = {"@id": port.name, "@specType": port.componentType}; 
+                        var effect = {'@id': port.name, '@specType': port.componentType};
                         var acceptPorts = [];
-                        for (var acc of port.accept)
-                            if (acc !== "-") 
-                                acceptPorts.push({"@id": acc[0], "@specType": acc[1]}); 
-                        var acceptCauses = {"port": acceptPorts};
-                        
+                        for (var acc of port.accept) {
+                            if (acc !== '-') {
+                                acceptPorts.push({'@id': acc[0], '@specType': acc[1]});
+                            }
+                        }
+                        var acceptCauses = {'port': acceptPorts};
+
                         var option = [];
-                        if (port.require !== "-"){
+                        if (port.require !== '-') {
                             for (var requiredPorts of port.require) {
                                 var causes = [];
                                 for (var listOfPorts of requiredPorts) {
                                     var ports = [];
-                                    for (var requiredPort of listOfPorts) 
-                                        if (requiredPort !== "-") {
-                                            ports.push({"@id": requiredPort[0], "@specType": requiredPort[1]});
-                                            self.logger.info("Required port: " + requiredPort[0] + " " + requiredPort[1]);
+                                    for (var requiredPort of listOfPorts) {
+                                        if (requiredPort !== '-') {
+                                            ports.push({'@id': requiredPort[0], '@specType': requiredPort[1]});
+                                            //self.logger.info('Required port: ' + requiredPort[0] + ' ' + requiredPort[1]);
                                         }
-                                    causes.push({"port" : ports});
-                                }                            
-                                option.push({"causes" : causes});
+                                    }
+                                    causes.push({'port': ports});
+                                }
+                                option.push({'causes': causes});
                             }
                         }
 
-                        accept.push({"effect": effect, "causes": acceptCauses});
-                        require.push({"effect": effect, "causes": {"option": option}});
+                        accept.push({'effect': effect, 'causes': acceptCauses});
+                        require.push({'effect': effect, 'causes': {'option': option}});
                     }
-                    
+
                     self.logger.info(require);
-                    
-                    var xml = {"glue" : {"accepts" : {"accept": accept}, "requires" : {"require": require}}};
+
+                    var xml = {'glue': {'accepts': {'accept': accept}, 'requires': {'require': require}}};
                     //filesToAdd['Glue.xml'] = jsonToXml.convertToString(xml);
                     self.logger.info((new Converter.JsonToXml()).convertToString(xml));
                 })
-                .then(function(){
+                .then(function () {
                     self.result.setSuccess(true);
                     callback(null, self.result);
-                }) 
+                })
                 .catch(function (err) {
                     self.logger.error(err.stack);
                     // Result success is false at invocation.
@@ -128,58 +131,66 @@ define([
                     return nodes;
                 });
     };
-    
-    ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel){
-        var self = this; 
-        
+
+    ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel) {
+        //var self = this;
+
         for (var port of architectureModel.ports) {
-            var require = new Set;
-            var accept = new Set;
-            
-            for (var connectorEnd of port.connectorEnds)
-                if (!connectorEnd.hasOwnProperty('connector')) {
-                    require.add("-");
-                    accept.add("-");
+            var require = new Set();
+            var accept = new Set();
+
+            for (var end of port.connectorEnds) {
+                if (!end.hasOwnProperty('connector')) {
+                    require.add('-');
+                    accept.add('-');
                     break;
                 }
+            }
             for (var connector of port.connectors) {
-                var option= [];
+                var option = [];
                 var connectorEnd;
-                for (var end of connector.ends)
-                    if (end.port === port)
-                        connectorEnd = end; 
-                if (connectorEnd.multiplicity !== '1')
-                    for (var otherConnectorEnd of connector.ends)
-                        accept.add(otherConnectorEnd.port);
-                else 
-                   for (var otherConnectorEnd of connector.ends)
-                        if (otherConnectorEnd.port.name !== port.name)
-                            accept.add(otherConnectorEnd.port);
-                if (connectorEnd.type === 'Trigger'){
-                        option.push("-");
+                for (var e of connector.ends) {
+                    if (end.port === port) {
+                        connectorEnd = e;
                     }
-                else {
+                }
+                if (connectorEnd.multiplicity !== '1') {
+                    for (var otherConnectorEnd of connector.ends) {
+                        accept.add(otherConnectorEnd.port);
+                    }
+                } else {
+                   for (var otherConnectorEnd of connector.ends) {
+                        if (otherConnectorEnd.port.name !== port.name) {
+                            accept.add(otherConnectorEnd.port);
+                        }
+                    }
+                }
+                if (connectorEnd.type === 'Trigger') {
+                    option.push('-');
+                } else {
                     var triggerExists = false;
                     for (var otherConnectorEnd of connector.ends) {
-                        if (otherConnectorEnd.type === 'Trigger')
+                        if (otherConnectorEnd.type === 'Trigger') {
                             triggerExists = true;
+                        }
                     }
-                    for (var otherConnectorEnd of connector.ends) {
-                        if (triggerExists === false){
-                            if (otherConnectorEnd.port.name !== port.name || parseInt(otherConnectorEnd.multiplicity) >1 ) {
+                    for (var otherEnd of connector.ends) {
+                        if (triggerExists === false) {
+                            if (otherEnd.port.name !== port.name || parseInt(otherEnd.multiplicity) >1 ) {
                                 var reqCause = [];
-                                for (var i = 0; i < parseInt(otherConnectorEnd.multiplicity); i++)
-                                    reqCause.push(otherConnectorEnd.port);
+                                for (var i = 0; i < parseInt(otherEnd.multiplicity); i++) {
+                                    reqCause.push(otherEnd.port);
+                                }
                                 option.push(reqCause);
                                 //require.add(reqCause);
                             }
-                        }
-                        else{
-                            if (otherConnectorEnd.type === 'Trigger' && (otherConnectorEnd.port.name !== port.name || parseInt(otherConnectorEnd.multiplicity) >1 )){
-                                var reqCause = [];
-                                for (var i = 0; i < parseInt(otherConnectorEnd.multiplicity); i++)
-                                    reqCause.push(otherConnectorEnd.port);
-                                option.push(reqCause);
+                        } else {
+                            if (otherEnd.type === 'Trigger' && (otherEnd.port.name !== port.name || parseInt(otherEnd.multiplicity) >1 )) {
+                                var reqCauseTrigger = [];
+                                for (var i = 0; i < parseInt(otherEnd.multiplicity); i++) {
+                                    reqCause.push(otherEnd.port);
+                                }
+                                option.push(reqCauseTrigger);
                             }
                         }
                     }
@@ -190,31 +201,35 @@ define([
             port.require = [...require];
             port.accept = [...accept];
         }
-        
+
         //remove circular references
-        for (var end of architectureModel.connectorEnds){
-                delete end.connector;
-                delete end.port;
+        for (var end of architectureModel.connectorEnds) {
+            delete end.connector;
+            delete end.port;
         }
         for (var port of architectureModel.ports) {
             var simpleAccept = [];
             var simpleRequire = [];
             for (var acceptedPort of port.accept) {
-                if (acceptedPort === "-")
-                    simpleAccept.push("-");
-                else simpleAccept.push([acceptedPort.name, acceptedPort.componentType]);                            
-            }                
+                if (acceptedPort === '-') {
+                    simpleAccept.push('-');
+                } else {
+                    simpleAccept.push([acceptedPort.name, acceptedPort.componentType]);
+                }
+            }
             for (var requireList of port.require) {
-                if (requireList === "-")
-                    simpleRequire = "-";
-                else {
+                if (requireList === '-') {
+                    simpleRequire = '-';
+                } else {
                     var simpleRequireList = [];
                     for (var option of requireList) {
                         var simpleList = [];
                         for (var requiredPort of option) {
-                            if (requiredPort === "-") 
-                                simpleList.push("-");
-                            else simpleList.push([requiredPort.name, requiredPort.componentType]);
+                            if (requiredPort === '-') {
+                                simpleList.push('-');
+                            } else {
+                                simpleList.push([requiredPort.name, requiredPort.componentType]);
+                            }
                         }
                         simpleRequireList.push(simpleList);
                     }
@@ -226,7 +241,7 @@ define([
         }
         return architectureModel;
     };
-    
+
     ArchitectureSpecGenerator.prototype.generateArchitectureModel = function (nodes) {
         var self = this,
                 portObjects = {},
@@ -237,8 +252,8 @@ define([
                     connectors: [],
                     connectorEnds: []
                 };
-                
-        //create new clean objects        
+
+        //create new clean objects
         function portToObject(port) {
             var path = self.core.getPath(port);
             if (!portObjects.hasOwnProperty(path)) {
@@ -246,7 +261,7 @@ define([
             }
             return portObjects[path];
         }
-        
+
         function connectorToObject(connector) {
             var path = self.core.getPath(connector);
             if (!connectorObjects.hasOwnProperty(path)) {
@@ -254,7 +269,7 @@ define([
             }
             return connectorObjects[path];
         }
-        
+
         function endToObject(end) {
             var path = self.core.getPath(end);
             if (!endObjects.hasOwnProperty(path)) {
@@ -262,39 +277,38 @@ define([
             }
             return endObjects[path];
         }
-        
+
         for (var path in nodes) {
             var node = nodes[path];
-            
+
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
-                for (var child of self.core.getChildrenPaths(node)) 
-                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) 
-                        portToObject(nodes[child]).componentType = path;                 
-            }
-            else if (self.isMetaTypeOf(node, self.META.EnforceableTransition)) {
+                for (var child of self.core.getChildrenPaths(node)) {
+                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
+                        portToObject(nodes[child]).componentType = path;
+                    }
+                }
+            } else if (self.isMetaTypeOf(node, self.META.EnforceableTransition)) {
                 var port = portToObject(node);
                 architectureModel.ports.push(port);
                 port.name = self.core.getAttribute(node, 'name');
-            }
-            else if (self.isMetaTypeOf(node, self.META.Connector)) {
+            } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Join) {
                     var connector = connectorToObject(node);
-                    architectureModel.connectors.push(connector); 
+                    architectureModel.connectors.push(connector);
                     var srcConnectorEnd = endToObject(nodes[self.core.getPointerPath(node, 'src')]);
                     var dstConnectorEnd = endToObject(nodes[self.core.getPointerPath(node, 'dst')]);
                     srcConnectorEnd.connector = connector;
                     dstConnectorEnd.connector = connector;
                     connector.ends = [srcConnectorEnd, dstConnectorEnd];
                 }
-            }
-            else if (self.isMetaTypeOf(node, self.META.Join)) {
+            } else if (self.isMetaTypeOf(node, self.META.Join)) {
                 var connector = connectorToObject(node);
                 architectureModel.connectors.push(connector);
                 connector.ends = [];
                 for (var pathConnector in nodes) {
                     var nodeConnector = nodes[pathConnector];
-                    if (self.isMetaTypeOf(nodeConnector, self.META.Connector) 
-                            && nodes[self.core.getPointerPath(nodeConnector, 'dst')] === node) {
+                    if (self.isMetaTypeOf(nodeConnector, self.META.Connector) &&
+                            nodes[self.core.getPointerPath(nodeConnector, 'dst')] === node) {
                         var srcConnectorEnd = endToObject(nodes[self.core.getPointerPath(nodeConnector, 'src')]);
                         srcConnectorEnd.connector = connector;
                         connector.ends.push(srcConnectorEnd);
@@ -307,8 +321,9 @@ define([
                 architectureModel.connectorEnds.push(connectorEnd);
                 var port = portToObject(nodes[self.core.getPointerPath(node, 'dst')]);
                 connectorEnd.port = port;
-                if (!port.hasOwnProperty("connectorEnds"))
+                if (!port.hasOwnProperty('connectorEnds')) {
                     port.connectorEnds = [];
+                }
                 port.connectorEnds.push(connectorEnd);
                 connectorEnd.type = self.core.getAttribute(gmeEnd, 'name');
                 connectorEnd.degree = self.core.getAttribute(gmeEnd, 'Degree');
@@ -319,14 +334,13 @@ define([
         for (var port of architectureModel.ports) {
             port.connectors = new Set();
             for (var connectorEnd of port.connectorEnds) {
-                if (connectorEnd.hasOwnProperty('connector'))
-                  port.connectors.add(connectorEnd.connector);
+                if (connectorEnd.hasOwnProperty('connector')) {
+                    port.connectors.add(connectorEnd.connector);
+                }
             }
-        }  
-        return architectureModel;       
+        }
+        return architectureModel;
     };
-    
+
     return ArchitectureSpecGenerator;
 });
-
-
