@@ -38,7 +38,7 @@ define([
         CONN_END_X_MARGIN = 1;
 
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
-    nodePropertyNames.Attributes.cardinality = 'Cardinality';
+    nodePropertyNames.Attributes.cardinality = 'cardinality';
 
     BIPComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);

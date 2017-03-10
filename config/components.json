@@ -3,25 +3,24 @@
     "theme": "default",
     "keyBinding": "sublime",
     "autoSaveInterval": "2000",
-    "defaultSyntax": "java",
+    "defaultSyntax": "Java",
     "syntaxToModeMap": {
-      "java": {
-        "name": "java"
-      },
-      "C++": {
-        "name": "text/x-c++src",
-        "useCPP": true
-      },
-      "JSON": {
-        "name": "application/json"
-      },
-      "Python": {
-        "name": "text/x-python"
+      "Java": {
+        "name": "text/x-java"
       }
     },
     "attrToSyntaxMap": {
-      "TransitionMethod": {
-        "Method Body": "java"
+      "EnforceableTransition": {
+        "transitionMethod": "Java"
+      },
+      "internal": {
+        "transitionMethod": "Java"
+      },
+      "SpontaneousTransition": {
+        "transitionMethod": "Java"
+      },
+      "Guard": {
+        "guardMethod": "Java"
       }
     }
   }

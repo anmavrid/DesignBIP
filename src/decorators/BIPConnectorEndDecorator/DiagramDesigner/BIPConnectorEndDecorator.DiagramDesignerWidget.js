@@ -24,8 +24,8 @@ define([
         DECORATOR_ID = 'BIPConnectorEndDecorator';
 
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
-    nodePropertyNames.Attributes.degree = 'Degree';
-    nodePropertyNames.Attributes.multiplicity = 'Multiplicity';
+    nodePropertyNames.Attributes.degree = 'degree';
+    nodePropertyNames.Attributes.multiplicity = 'multiplicity';
 
     BIPConnectorEndDecorator = function (options) {
         var opts = _.extend({}, options);
