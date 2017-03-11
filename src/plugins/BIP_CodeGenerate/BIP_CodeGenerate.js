@@ -183,22 +183,29 @@ define([
                 name:this.core.getAttribute(node,'name'),
                 type:this.core.getAttribute(this.core.getMetaType(node),'name'),
                 path:this.core.getPath(node),
-                src:{},
-                dst:{},
-                guard:{}
+                src:'',
+                dst:'',
+                guard:this.core.getAttribute(node,'guardName'),
+                transitionMethod:this.core.getAttribute(node,'transitionMethod')
         };
         var srcNode;
         var dstNode;
 
         var srcPath=this.core.getPointerPath(node,'src');
+        //this.logger.info('************srcPath***********\n',srcPath);
         var dstPath=this.core.getPointerPath(node,'dst');
+        //this.logger.info('************dstPath***********\n',dstPath);
 
         if(srcPath){
             srcNode = nodes[srcPath];
+            info.src = this.core.getAttribute(srcNode,'name');
+            //this.logger.info('************srcNode Name***********\n',info.src);
         }
 
         if(dstPath){
             dstNode = nodes[dstPath];
+            info.dst = this.core.getAttribute(dstNode,'name');
+            //this.logger.info('************dstNode Name***********\n',info.dst);
         }
 
         return info;
