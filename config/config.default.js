@@ -11,6 +11,7 @@ config.requirejsPaths['widgets/DiagramDesigner'] =
     './node_modules/diagram-designers/src/visualizers/widgets/DiagramDesigner';
 
 config.visualization.svgDirs = ['./src/svgs'];
+config.seedProjects.defaultProject = 'BIP';
 
 validateConfig(config);
 module.exports = config;
