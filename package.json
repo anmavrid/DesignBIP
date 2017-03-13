@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "diagram-designers": "github:webgme/diagram-designers#bip",
-    "webgme-codeeditor": "github:finger563/webgme-codeeditor"
+    "webgme-codeeditor": "^2.0.0"
   }
 }
