@@ -23,7 +23,7 @@ config.visualization.panelPaths.push(__dirname + '/../node_modules/diagram-desig
 config.visualization.visualizerDescriptors.push(__dirname + '/../src/visualizers/Visualizers.json');
 // Add requirejs paths
 config.requirejsPaths = {
-  'ModelEditorDD': 'panels/ModelEditor/ModelEditorPanel',
+  'BIPEditor': 'panels/ModelEditor/ModelEditorPanel',
   'CodeEditor': 'panels/CodeEditor/CodeEditorPanel',
   'panels': './src/visualizers/panels',
   'widgets': './src/visualizers/widgets',

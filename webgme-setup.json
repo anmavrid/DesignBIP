@@ -4,6 +4,10 @@
       "ArchitectureSpecGenerator": {
         "src": "src/plugins/ArchitectureSpecGenerator",
         "test": "test/plugins/ArchitectureSpecGenerator"
+      },
+      "BehaviorSpecGenerator": {
+        "src": "src/plugins/BehaviorSpecGenerator",
+        "test": "test/plugins/BehaviorSpecGenerator"
       }
     },
     "seeds": {
