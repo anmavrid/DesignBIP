@@ -1,6 +1,6 @@
 {
-  "id": "BIP_CodeGenerate",
-  "name": "BIP_CodeGenerate",
+  "id": "BehaviorSpecGenerator",
+  "name": "BehaviorSpecGenerator",
   "version": "0.1.0",
   "description": "",
   "icon": {

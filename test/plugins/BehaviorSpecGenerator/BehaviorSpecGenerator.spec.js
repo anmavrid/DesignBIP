@@ -6,13 +6,13 @@
 'use strict';
 var testFixture = require('../../globals');
 
-describe('BIP_CodeGenerate', function () {
+describe('BehaviorSpecGenerator', function () {
     var gmeConfig = testFixture.getGmeConfig(),
         expect = testFixture.expect,
-        logger = testFixture.logger.fork('BIP_CodeGenerate'),
+        logger = testFixture.logger.fork('BehaviorSpecGenerator'),
         PluginCliManager = testFixture.WebGME.PluginCliManager,
         projectName = 'testProject',
-        pluginName = 'BIP_CodeGenerate',
+        pluginName = 'BehaviorSpecGenerator',
         project,
         gmeAuth,
         storage,

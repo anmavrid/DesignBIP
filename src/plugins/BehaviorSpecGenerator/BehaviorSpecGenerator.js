@@ -30,7 +30,7 @@ define([
      * @classdesc This class represents the plugin ComponentTypeGenerator.
      * @constructor
      */
-    var ComponentTypeGenerator = function () {
+    var BehaviorSpecGenerator = function () {
         // Call base class' constructor.
         PluginBase.call(this);
         this.pluginMetadata = pluginMetadata;
@@ -41,11 +41,11 @@ define([
      * This is also available at the instance at this.pluginMetadata.
      * @type {object}
      */
-    ComponentTypeGenerator.metadata = pluginMetadata;
+    BehaviorSpecGenerator.metadata = pluginMetadata;
 
     // Prototypical inheritance from PluginBase.
-    ComponentTypeGenerator.prototype = Object.create(PluginBase.prototype);
-    ComponentTypeGenerator.prototype.constructor = ComponentTypeGenerator;
+    BehaviorSpecGenerator.prototype = Object.create(PluginBase.prototype);
+    BehaviorSpecGenerator.prototype.constructor = BehaviorSpecGenerator;
 
     /**
      * Main function for the plugin to execute. This will perform the execution.
@@ -56,7 +56,7 @@ define([
      *
      * @param {function(string, plugin.PluginResult)} callback - the result callback
      */
-    ComponentTypeGenerator.prototype.main = function (callback) {
+    BehaviorSpecGenerator.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         // Use self to access core, project, result, logger etc from PluginBase.
@@ -106,7 +106,7 @@ define([
             }) ;
     };
 
-    ComponentTypeGenerator.prototype.extractDataModel = function (node) {
+    BehaviorSpecGenerator.prototype.extractDataModel = function (node) {
         var self = this;
         return self.core.loadSubTree(node)
             .then(function (nodeArr) {
@@ -119,7 +119,7 @@ define([
             });
     };
 
-    ComponentTypeGenerator.prototype.makeModelObject = function (nodes) {
+    BehaviorSpecGenerator.prototype.makeModelObject = function (nodes) {
         var self = this,
             path,
             node,
@@ -135,7 +135,7 @@ define([
         return componentTypes;
     };
 
-    ComponentTypeGenerator.prototype.getComponentData = function (ctNode, nodes) {
+    BehaviorSpecGenerator.prototype.getComponentData = function (ctNode, nodes) {
         var info={
             name: this.core.getAttribute(ctNode, 'name'),
             path: this.core.getPath(ctNode),
@@ -168,7 +168,7 @@ define([
         return info;
     };
 
-    ComponentTypeGenerator.prototype.getGuardInfo = function (node/*, nodes*/) {
+    BehaviorSpecGenerator.prototype.getGuardInfo = function (node/*, nodes*/) {
         var info= {
             name:this.core.getAttribute(node,'name'),
             type:this.core.getAttribute(this.core.getMetaType(node),'name'),
@@ -178,7 +178,7 @@ define([
         return info;
     };
 
-    ComponentTypeGenerator.prototype.getTransitionInfo = function (node, nodes) {
+    BehaviorSpecGenerator.prototype.getTransitionInfo = function (node, nodes) {
         var info= {
                 name:this.core.getAttribute(node,'name'),
                 type:this.core.getAttribute(this.core.getMetaType(node),'name'),
@@ -212,7 +212,7 @@ define([
 
     };
 
-    ComponentTypeGenerator.prototype.getStateInfo = function (node/*,nodes*/) {
+    BehaviorSpecGenerator.prototype.getStateInfo = function (node/*,nodes*/) {
         var info= {
             name:this.core.getAttribute(node,'name'),
             type:this.core.getAttribute(this.core.getMetaType(node),'name'),
@@ -222,5 +222,5 @@ define([
         return info;
     };
 
-    return ComponentTypeGenerator;
+    return BehaviorSpecGenerator;
 });
