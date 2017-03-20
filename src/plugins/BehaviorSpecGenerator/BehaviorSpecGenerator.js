@@ -70,23 +70,20 @@ define([
 
         self.extractDataModel(self.activeNode)
             .then(function (nodes) {
-
-
                 var componentInfos = self.makeModelObject(nodes);
                 var dataModelStr = JSON.stringify(componentInfos, null, 4);
                 self.componentInfos = componentInfos;
-                self.logger.info('************DataModel***********\n',dataModelStr);
+                //self.logger.info('************DataModel***********\n', dataModelStr);
 
                 var filesToAdd = {};
 
-                for(var i=0;i<componentInfos.length;i++)
-                {
-                    var fileName = componentInfos[i].name+'.java';
-                    filesToAdd[fileName]=ejs.render(componentTypeTemplate,componentInfos[i]);
-                    self.logger.info('************LangModel***********\n',filesToAdd[fileName]);
+                for (var i = 0; i<componentInfos.length; i++) {
+                    var fileName = componentInfos[i].name + '.java';
+                    filesToAdd[fileName] = ejs.render(componentTypeTemplate, componentInfos[i]);
+                    //self.logger.info('************LangModel***********\n', filesToAdd[fileName]);
                 }
 
-                artifact = self.blobClient.createArtifact('project-data');
+                artifact = self.blobClient.createArtifact('BehaviorSpecifications');
 
                 return artifact.addFiles(filesToAdd);
             })
@@ -128,15 +125,15 @@ define([
         for (path in nodes) {
             node = nodes[path];
 
-            if (self.isMetaTypeOf(node,self.META.ComponentType)){
-                componentTypes.push(self.getComponentData(node,nodes));
+            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+                componentTypes.push(self.getComponentData(node, nodes));
             }
         }
         return componentTypes;
     };
 
     BehaviorSpecGenerator.prototype.getComponentData = function (ctNode, nodes) {
-        var info={
+        var info = {
             name: this.core.getAttribute(ctNode, 'name'),
             path: this.core.getPath(ctNode),
             cardinality: this.core.getAttribute(ctNode, 'cardinality'),
@@ -145,23 +142,20 @@ define([
             constructors: this.core.getAttribute(ctNode, 'constructors'),
             transitions: [],
             states: [],
-            guards:[]
+            guards: []
         },
             childrenPaths = this.core.getChildrenPaths(ctNode),
             childNode,
             i;
         //todo populate the
 
-        for(i=0;i<childrenPaths.length;i++)
-        {
-            childNode=nodes[childrenPaths[i]];
-            if (this.isMetaTypeOf(childNode,this.META.TransitionBase)){
+        for (i = 0; i<childrenPaths.length; i++) {
+            childNode = nodes[childrenPaths[i]];
+            if (this.isMetaTypeOf(childNode, this.META.TransitionBase)) {
                 info.transitions.push(this.getTransitionInfo(childNode, nodes));
-            }
-            else if(this.isMetaTypeOf(childNode,this.META.StateBase)){
+            } else if (this.isMetaTypeOf(childNode, this.META.StateBase)) {
                 info.states.push(this.getStateInfo(childNode, nodes));
-            }
-            else if(this.isMetaTypeOf(childNode,this.META.Guard)){
+            } else if (this.isMetaTypeOf(childNode, this.META.Guard)) {
                 info.guards.push(this.getGuardInfo(childNode, nodes));
             }
         }
@@ -169,42 +163,42 @@ define([
     };
 
     BehaviorSpecGenerator.prototype.getGuardInfo = function (node/*, nodes*/) {
-        var info= {
-            name:this.core.getAttribute(node,'name'),
-            type:this.core.getAttribute(this.core.getMetaType(node),'name'),
-            path:this.core.getPath(node),
-            guardMethod:this.core.getAttribute(node,'guardMethod')
+        var info = {
+            name: this.core.getAttribute(node, 'name'),
+            type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
+            path: this.core.getPath(node),
+            guardMethod: this.core.getAttribute(node, 'guardMethod')
         };
         return info;
     };
 
     BehaviorSpecGenerator.prototype.getTransitionInfo = function (node, nodes) {
-        var info= {
-                name:this.core.getAttribute(node,'name'),
-                type:this.core.getAttribute(this.core.getMetaType(node),'name'),
-                path:this.core.getPath(node),
-                src:'',
-                dst:'',
-                guard:this.core.getAttribute(node,'guardName'),
-                transitionMethod:this.core.getAttribute(node,'transitionMethod')
-        };
+        var info = {
+                name: this.core.getAttribute(node, 'name'),
+                type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
+                path: this.core.getPath(node),
+                src: '',
+                dst: '',
+                guard: this.core.getAttribute(node, 'guardName'),
+                transitionMethod: this.core.getAttribute(node, 'transitionMethod')
+            };
         var srcNode;
         var dstNode;
 
-        var srcPath=this.core.getPointerPath(node,'src');
+        var srcPath = this.core.getPointerPath(node, 'src');
         //this.logger.info('************srcPath***********\n',srcPath);
-        var dstPath=this.core.getPointerPath(node,'dst');
+        var dstPath = this.core.getPointerPath(node, 'dst');
         //this.logger.info('************dstPath***********\n',dstPath);
 
-        if(srcPath){
+        if (srcPath) {
             srcNode = nodes[srcPath];
-            info.src = this.core.getAttribute(srcNode,'name');
+            info.src = this.core.getAttribute(srcNode, 'name');
             //this.logger.info('************srcNode Name***********\n',info.src);
         }
 
-        if(dstPath){
+        if (dstPath) {
             dstNode = nodes[dstPath];
-            info.dst = this.core.getAttribute(dstNode,'name');
+            info.dst = this.core.getAttribute(dstNode, 'name');
             //this.logger.info('************dstNode Name***********\n',info.dst);
         }
 
@@ -213,10 +207,10 @@ define([
     };
 
     BehaviorSpecGenerator.prototype.getStateInfo = function (node/*,nodes*/) {
-        var info= {
-            name:this.core.getAttribute(node,'name'),
-            type:this.core.getAttribute(this.core.getMetaType(node),'name'),
-            path:this.core.getPath(node)
+        var info = {
+            name: this.core.getAttribute(node, 'name'),
+            type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
+            path: this.core.getPath(node)
         };
 
         return info;
