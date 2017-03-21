@@ -80,7 +80,7 @@ define([
                                 acceptPorts.push({'@id': acc[0], '@specType': acc[1]});
                             }
                         }
-                        var acceptCauses = {'port': acceptPorts};
+                        var acceptCauses = {port: acceptPorts};
 
                         var option = [];
                         if (port.require !== '-') {
@@ -91,20 +91,19 @@ define([
                                     for (var requiredPort of listOfPorts) {
                                         if (requiredPort !== '-') {
                                             ports.push({'@id': requiredPort[0], '@specType': requiredPort[1]});
-                                            //self.logger.info('Required port: ' + requiredPort[0] + ' ' + requiredPort[1]);
                                         }
                                     }
-                                    causes.push({'port': ports});
+                                    causes.push({port: ports});
                                 }
-                                option.push({'causes': causes});
+                                option.push({causes: causes});
                             }
                         }
 
-                        accept.push({'effect': effect, 'causes': acceptCauses});
-                        require.push({'effect': effect, 'causes': {'option': option}});
+                        accept.push({effect: effect, causes: acceptCauses});
+                        require.push({effect: effect, causes: {option: option}});
                     }
 
-                    var xml = {'glue': {'accepts': {'accept': accept}, 'requires': {'require': require}}};
+                    var xml = {glue: {accepts: {accept: accept}, requires: {require: require}}};
                     var filesToAdd = {};
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
                     //self.logger.info((new Converter.JsonToXml()).convertToString(xml));
@@ -160,7 +159,6 @@ define([
                 var connectorEnd;
                 for (var e of connector.ends) {
                     if (e.port === port) {
-
                         connectorEnd = e;
                     }
                 }
@@ -168,14 +166,14 @@ define([
                 if (connectorEnd.multiplicity !== '1') {
                     //self.logger.info("multiplicity greater than 1 " + connectorEnd.port.name);
                     for (var otherConnectorEnd of connector.ends) {
-                      //self.logger.info("adding port: "+ otherConnectorEnd.port.name+ " for "+port.name);
+                        //self.logger.info("adding port: "+ otherConnectorEnd.port.name+ " for "+port.name);
                         accept.add(otherConnectorEnd.port);
                     }
                 } else {
                     for (var otherConEnd of connector.ends) {
-                      //self.logger.info("multiplicity equal to 1 " + connectorEnd.port.name);
+                        //self.logger.info("multiplicity equal to 1 " + connectorEnd.port.name);
                         if (otherConEnd.port.name !== port.name) {
-                          //self.logger.info("adding port: "+ otherConEnd.port.name+ " for "+port.name);
+                            //self.logger.info("adding port: "+ otherConEnd.port.name+ " for "+port.name);
                             accept.add(otherConEnd.port);
                         }
                     }
@@ -200,7 +198,7 @@ define([
                                 //require.add(reqCause);
                             }
                         } else {
-                            if (otherEnd.type === 'Trigger' && (otherEnd.port.name !== port.name || parseInt(otherEnd.multiplicity) >1 )) {
+                            if (otherEnd.type === 'Trigger' && (otherEnd.port.name !== port.name || otherEnd.multiplicity !== 1 )) {
                                 var reqCauseTrigger = [];
                                 for (var i = 0; i < parseInt(otherEnd.multiplicity); i++) {
                                     reqCauseTrigger.push(otherEnd.port);
@@ -211,22 +209,7 @@ define([
                         }
                     }
                 }
-                var equalArrays = false;
-                for (var reqOption of require) {
-                    if (reqOption.length !== option.length) {
-                        equalArrays = true;
-                        break;
-                    }
-                    for (var i = 0; i < reqOption.length; i++) {
-                        if (reqOption[i] !== (option[i])) {
-                            equalArrays = true;
-                            break;
-                        }
-                    }
-                }
-                if (!equalArrays) {
-                    require.add(option);
-                }
+                require.add(option);
             }
             //set to list
             port.require = [...require];
@@ -385,7 +368,7 @@ define([
                 if (connectorEnd.hasOwnProperty('connector')) {
                     port.connectors.add(connectorEnd.connector);
                 }
-                 //self.logger.info("port "+ port.name +" is connected to " + connectorEnd.type + " with multiplicity " + connectorEnd.multiplicity);
+                //self.logger.info("port "+ port.name +" is connected to " + connectorEnd.type + " with multiplicity " + connectorEnd.multiplicity);
             }
 
         }
