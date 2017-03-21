@@ -212,24 +212,24 @@ define([
             port.accept = [...accept];
         }
 
-        for (var port of architectureModel.ports) {
+        for (var modelPort of architectureModel.ports) {
             var simpleAccept = [];
             var simpleRequire = [];
-            for (var acceptedPort of port.accept) {
+            for (var acceptedPort of modelPort.accept) {
                 if (acceptedPort === '') {
                     simpleAccept.push('');
                 } else {
                     simpleAccept.push([acceptedPort.name, acceptedPort.componentType]);
                 }
             }
-            for (var requireList of port.require) {
+            for (var requireList of modelPort.require) {
                 if (requireList === '') {
                     simpleRequire = '';
                 } else {
                     var simpleRequireList = [];
-                    for (var option of requireList) {
+                    for (var reqOption of requireList) {
                         var simpleList = [];
-                        for (var requiredPort of option) {
+                        for (var requiredPort of reqOption) {
                             if (requiredPort === '') {
                                 simpleList.push('');
                             } else {
@@ -241,8 +241,8 @@ define([
                     simpleRequire.push(simpleRequireList);
                 }
             }
-            port.accept = simpleAccept;
-            port.require = simpleRequire;
+            modelPort.accept = simpleAccept;
+            modelPort.require = simpleRequire;
         }
         return architectureModel;
     };
