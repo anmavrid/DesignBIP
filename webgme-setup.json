@@ -9,9 +9,9 @@
         "src": "src/plugins/BehaviorSpecGenerator",
         "test": "test/plugins/BehaviorSpecGenerator"
       },
-      "startJavaBIPEngine": {
-        "src": "src/plugins/startJavaBIPEngine",
-        "test": "test/plugins/startJavaBIPEngine"
+      "JavaBIPEngine": {
+        "src": "src/plugins/JavaBIPEngine",
+        "test": "test/plugins/JavaBIPEngine"
       }
     },
     "seeds": {
