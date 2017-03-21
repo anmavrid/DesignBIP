@@ -98,11 +98,9 @@ define([
                                 option.push({causes: causes});
                             }
                         }
-
                         accept.push({effect: effect, causes: acceptCauses});
                         require.push({effect: effect, causes: {option: option}});
                     }
-
                     var xml = {glue: {accepts: {accept: accept}, requires: {require: require}}};
                     var filesToAdd = {};
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
@@ -113,8 +111,9 @@ define([
                     self.result.addArtifact(fileHash);
                     return artifact.save();
                 })
-                .then(function (artifactHash) {
-                    self.result.addArtifact(artifactHash);
+                .then(function () {
+                    //.then(function (artifactHash) {
+                    //self.result.addArtifact(artifactHash);
                     self.result.setSuccess(true);
                     callback(null, self.result);
                 })
