@@ -76,20 +76,20 @@ define([
                         var effect = {'@id': port.name, '@specType': port.componentType};
                         var acceptPorts = [];
                         for (var acc of port.accept) {
-                            if (acc !== '-') {
+                            if (acc !== '') {
                                 acceptPorts.push({'@id': acc[0], '@specType': acc[1]});
                             }
                         }
                         var acceptCauses = {port: acceptPorts};
 
                         var option = [];
-                        if (port.require !== '-') {
+                        if (port.require !== '') {
                             for (var requiredPorts of port.require) {
                                 var causes = [];
                                 for (var listOfPorts of requiredPorts) {
                                     var ports = [];
                                     for (var requiredPort of listOfPorts) {
-                                        if (requiredPort !== '-') {
+                                        if (requiredPort !== '') {
                                             ports.push({'@id': requiredPort[0], '@specType': requiredPort[1]});
                                         }
                                     }
@@ -106,8 +106,6 @@ define([
                     var xml = {glue: {accepts: {accept: accept}, requires: {require: require}}};
                     var filesToAdd = {};
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
-                    //self.logger.info((new Converter.JsonToXml()).convertToString(xml));
-
                     artifact = self.blobClient.createArtifact('GlueSpecification');
                     return artifact.addFiles(filesToAdd);
                 })
@@ -140,6 +138,7 @@ define([
                 });
     };
 
+    /* This is the algorithm presented in the paper */
     ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel) {
         //var self = this;
 
@@ -149,8 +148,8 @@ define([
 
             for (var end of port.connectorEnds) {
                 if (!end.hasOwnProperty('connector')) {
-                    require.add('-');
-                    accept.add('-');
+                    require.add('');
+                    accept.add('');
                     break;
                 }
             }
@@ -162,7 +161,6 @@ define([
                         connectorEnd = e;
                     }
                 }
-                //self.logger.info("multiplicity: "+ connectorEnd.multiplicity+ " for port "+ port.name);
                 if (connectorEnd.multiplicity !== '1') {
                     //self.logger.info("multiplicity greater than 1 " + connectorEnd.port.name);
                     for (var otherConnectorEnd of connector.ends) {
@@ -179,7 +177,7 @@ define([
                     }
                 }
                 if (connectorEnd.type === 'Trigger') {
-                    option.push('-');
+                    option.push('');
                 } else {
                     var triggerExists = false;
                     for (var other of connector.ends) {
@@ -195,7 +193,6 @@ define([
                                     reqCause.push(otherEnd.port);
                                 }
                                 option.push(reqCause);
-                                //require.add(reqCause);
                             }
                         } else {
                             if (otherEnd.type === 'Trigger' && (otherEnd.port.name !== port.name || otherEnd.multiplicity !== 1 )) {
@@ -205,7 +202,6 @@ define([
                                 }
                                 option.push(reqCauseTrigger);
                             }
-
                         }
                     }
                 }
@@ -216,32 +212,26 @@ define([
             port.accept = [...accept];
         }
 
-        //remove circular references
-        for (var end of architectureModel.connectorEnds) {
-            delete end.connector;
-            delete end.port;
-        }
-
         for (var port of architectureModel.ports) {
             var simpleAccept = [];
             var simpleRequire = [];
             for (var acceptedPort of port.accept) {
-                if (acceptedPort === '-') {
-                    simpleAccept.push('-');
+                if (acceptedPort === '') {
+                    simpleAccept.push('');
                 } else {
                     simpleAccept.push([acceptedPort.name, acceptedPort.componentType]);
                 }
             }
             for (var requireList of port.require) {
-                if (requireList === '-') {
-                    simpleRequire = '-';
+                if (requireList === '') {
+                    simpleRequire = '';
                 } else {
                     var simpleRequireList = [];
                     for (var option of requireList) {
                         var simpleList = [];
                         for (var requiredPort of option) {
-                            if (requiredPort === '-') {
-                                simpleList.push('-');
+                            if (requiredPort === '') {
+                                simpleList.push('');
                             } else {
                                 simpleList.push([requiredPort.name, requiredPort.componentType]);
                             }
@@ -259,9 +249,6 @@ define([
 
     ArchitectureSpecGenerator.prototype.generateArchitectureModel = function (nodes) {
         var self = this,
-                portObjects = {},
-                connectorObjects = {},
-                endObjects = {},
                 subConnectors = [],
                 architectureModel = {
                     ports: [],
@@ -269,51 +256,25 @@ define([
                     connectorEnds: []
                 };
 
-        //create new clean objects
-        function portToObject(port) {
-            var path = self.core.getPath(port);
-            if (!portObjects.hasOwnProperty(path)) {
-                portObjects[path] = {};
-            }
-            return portObjects[path];
-        }
-
-        function connectorToObject(connector) {
-            var path = self.core.getPath(connector);
-            if (!connectorObjects.hasOwnProperty(path)) {
-                //self.logger.info('it does not contain connector ' + path);
-                connectorObjects[path] = {};
-            }
-            return connectorObjects[path];
-        }
-
-        function endToObject(end) {
-            var path = self.core.getPath(end);
-            if (!endObjects.hasOwnProperty(path)) {
-                endObjects[path] = {};
-            }
-            return endObjects[path];
-        }
-
         for (var path in nodes) {
             var node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                 for (var child of self.core.getChildrenPaths(node)) {
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
-                        portToObject(nodes[child]).componentType = path;
+                        nodes[child].componentType = path;
                     }
                 }
             } else if (self.isMetaTypeOf(node, self.META.EnforceableTransition)) {
-                var port = portToObject(node);
+                var port = node;
                 architectureModel.ports.push(port);
                 port.name = self.core.getAttribute(node, 'name');
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 /* If the connector is binary */
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
-                    var connector = connectorToObject(node);
+                    var connector = node;
                     architectureModel.connectors.push(connector);
-                    var srcConnectorEnd = endToObject(nodes[self.core.getPointerPath(node, 'src')]);
-                    var dstConnectorEnd = endToObject(nodes[self.core.getPointerPath(node, 'dst')]);
+                    var srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
+                    var dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
                     srcConnectorEnd.connector = connector;
                     dstConnectorEnd.connector = connector;
                     connector.ends = [srcConnectorEnd, dstConnectorEnd];
@@ -324,10 +285,10 @@ define([
             } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
                 var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
                 if (self.getMetaType(gmeEnd) !== self.META.Connector) {
-                    var connectorEnd = endToObject(gmeEnd);
+                    var connectorEnd = gmeEnd;
                     architectureModel.connectorEnds.push(connectorEnd);
 
-                    var auxPort = portToObject(nodes[self.core.getPointerPath(node, 'dst')]);
+                    var auxPort = nodes[self.core.getPointerPath(node, 'dst')];
                     connectorEnd.port = auxPort;
                     if (!auxPort.hasOwnProperty('connectorEnds')) {
                         auxPort.connectorEnds = [];
@@ -344,16 +305,14 @@ define([
 
         for (var subpart of subConnectors) {
             var auxNode = nodes[self.core.getPointerPath(subpart, 'dst')];
-            //self.logger.info("the connector it is attached to " + self.core.getPath(auxNode));
             var srcAuxNode = nodes[self.core.getPointerPath(auxNode, 'src')];
-            var auxConnector = connectorToObject(auxNode);
-            var srcEnd = endToObject(nodes[self.core.getPointerPath(subpart, 'src')]);
-            if (architectureModel.connectors.includes(auxConnector)) {
-                auxConnector.ends.push(srcEnd);
-                srcEnd.connector = auxConnector;
-            } else if (architectureModel.connectorEnds.includes(endToObject(srcAuxNode))) {
+            var srcEnd = nodes[self.core.getPointerPath(subpart, 'src')];
+            if (architectureModel.connectors.includes(auxNode)) {
+                auxNode.ends.push(srcEnd);
+                srcEnd.connector = auxNode;
+            } else if (architectureModel.connectorEnds.includes(srcAuxNode)) {
                 for (var existingConnector in architectureModel.connectors) {
-                    if (existingConnector.ends.includes(endToObject(srcAuxNode))) {
+                    if (existingConnector.ends.includes(srcAuxNode)) {
                         existingConnector.ends.push(srcEnd);
                         srcEnd.connector = existingConnector;
                     }
@@ -362,13 +321,12 @@ define([
             }
         }
 
-        for (var port of architectureModel.ports) {
-            port.connectors = new Set();
-            for (var connectorEnd of port.connectorEnds) {
-                if (connectorEnd.hasOwnProperty('connector')) {
-                    port.connectors.add(connectorEnd.connector);
+        for (var modelPort of architectureModel.ports) {
+            modelPort.connectors = new Set();
+            for (var conEnd of modelPort.connectorEnds) {
+                if (conEnd.hasOwnProperty('connector')) {
+                    modelPort.connectors.add(conEnd.connector);
                 }
-                //self.logger.info("port "+ port.name +" is connected to " + connectorEnd.type + " with multiplicity " + connectorEnd.multiplicity);
             }
 
         }
