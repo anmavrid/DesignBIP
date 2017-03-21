@@ -26,6 +26,11 @@ module.exports = {
             },
             Guard: {
                 guardMethod: 'Java'
+            },
+            ComponentType: {
+                constructors: 'Java',
+                definitions: 'Java',
+                forwards: 'Java'
             }
         }
     }
