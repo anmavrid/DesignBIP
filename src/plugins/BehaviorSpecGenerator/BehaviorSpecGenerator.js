@@ -70,8 +70,19 @@ define([
 
         self.extractDataModel(self.activeNode)
             .then(function (nodes) {
-                var componentInfos = self.makeModelObject(nodes);
-                var dataModelStr = JSON.stringify(componentInfos, null, 4);
+                var violations = self.hasViolations(nodes),
+                    componentInfos,
+                    dataModelStr;
+
+                if (violations.length > 0) {
+                    violations.forEach(function (violation) {
+                        self.createMessage(violation.node, violation.message, 'error');
+                    });
+                    throw new Error('Model has ' + violations.length + '  violation(s), see messages for details..');
+                }
+
+                componentInfos = self.makeModelObject(nodes);
+                dataModelStr = JSON.stringify(componentInfos, null, 4);
                 self.componentInfos = componentInfos;
                 //self.logger.info('************DataModel***********\n', dataModelStr);
 
@@ -214,6 +225,43 @@ define([
         };
 
         return info;
+    };
+
+    BehaviorSpecGenerator.prototype.hasViolations = function (nodes) {
+        var violations = [],
+            stateNames = {},
+            name,
+            nodePath,
+            node;
+
+        for (nodePath in nodes) {
+            node = nodes[nodePath];
+            name = this.core.getAttribute(node, 'name');
+            // TODO: check all expected types and more constraints.
+            if (this.isMetaTypeOf(node, this.META.ComponentType)) {
+                // This will be a java class - no special characters etc.
+                // The example is incomplete and also allows leading numbers, try at https://regex101.com/
+                if (/^[0-9a-zA-Z_]*$/.test(name) === false) {
+                    violations.push({
+                        node: node,
+                        message: 'Illegal ComponentType name [' + name + ']'
+                    });
+                }
+            } else if (this.isMetaTypeOf(node, this.META.StateBase)) {
+                if (stateNames.hasOwnProperty(name)) {
+                    violations.push({
+                        node: node,
+                        message: 'Duplicated name [' + name + '] shared with ' + stateNames[name]
+                    });
+                }
+
+                stateNames[name] = this.core.getPath(node);
+            } else {
+                this.logger.info('Found unexpected type, no checking performed ...');
+            }
+        }
+
+        return violations;
     };
 
     return BehaviorSpecGenerator;
