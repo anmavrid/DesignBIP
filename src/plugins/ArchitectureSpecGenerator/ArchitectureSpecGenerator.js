@@ -18,6 +18,7 @@ define([
         PluginBase,
         Converter) {
     'use strict';
+    
     pluginMetadata = JSON.parse(pluginMetadata);
 
     /**

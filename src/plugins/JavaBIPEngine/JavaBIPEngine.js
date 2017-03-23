@@ -59,32 +59,37 @@ define([
             nodeObject;
 
 
-        // Using the logger.
-        self.logger.debug('This is a debug message.');
-        self.logger.info('This is an info message.');
-        self.logger.warn('This is a warning message.');
-        self.logger.error('This is an error message.');
-
-        // Using the coreAPI to make changes.
-
         nodeObject = self.activeNode;
 
-        self.core.setAttribute(nodeObject, 'name', 'My new obj');
-        self.core.setRegistry(nodeObject, 'position', {x: 70, y: 70});
+        self.loadNodeMap(nodeObject)
+                .then(function (nodes) {
+                    self.logger.debug(Object.keys(nodes));
+                    self.checkConsistency(nodes);
 
+                })
+        .then(function () {
+                        self.result.setSuccess(true);
+                        callback(null, self.result);
+                    })
+                    .catch(function (err) {
+                        self.logger.error(err.stack);
+                        // Result success is false at invocation.
+                        callback(err, self.result);
+                    }) ;
 
-        // This will save the changes. If you don't want to save;
-        // exclude self.save and call callback directly from this scope.
-        self.save('JavaBIPEngine updated model.')
-            .then(function () {
-                self.result.setSuccess(true);
-                callback(null, self.result);
-            })
-            .catch(function (err) {
-                // Result success is false at invocation.
-                callback(err, self.result);
-            });
+    };
 
+    JavaBIPEngine.prototype.checkConsistency = function (nodes) {
+        var self, consistent = false;
+
+        for (var path in nodes) {
+            var node = nodes[path];
+            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+                var cardinality = self.core.getAttribute(node, 'cardinality');
+            }
+        }
+
+        return consistent;
     };
 
     return JavaBIPEngine;
