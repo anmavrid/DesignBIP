@@ -26,6 +26,9 @@
       },
       "BIPConnectorEndDecorator": {
         "src": "src/decorators/BIPConnectorEndDecorator"
+      },
+      "BIPStateDecorator": {
+        "src": "src/decorators/BIPStateDecorator"
       }
     }
   },

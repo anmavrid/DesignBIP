@@ -1,0 +1,7 @@
+{
+"version": 3,
+"mappings": "AACE,kCAAqB;EACnB,MAAM,EAAE,IAAI;EACZ,WAAW,EAAE,IAAI;EACjB,KAAK,EAAE,IAAI;EACX,UAAU,EAAE,MAAM;EAClB,iDAAe;IACb,KAAK,EAAE,IAAI;IACX,OAAO,EAAE,YAAY",
+"sources": ["BIPStateDecorator.PartBrowserWidget.scss"],
+"names": [],
+"file": "BIPStateDecorator.PartBrowserWidget.css"
+}

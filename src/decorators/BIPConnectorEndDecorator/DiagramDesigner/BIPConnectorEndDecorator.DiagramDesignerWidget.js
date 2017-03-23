@@ -137,8 +137,6 @@ define([
             edge = 10,
             LEN = 20;
 
-        //by default return the bounding box edge's midpoints
-
         if (id === undefined || id === this.hostDesignerItem.id) {
             //NORTH
             result.push({
