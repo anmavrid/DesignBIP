@@ -1,7 +1,0 @@
-{
-"version": 3,
-"mappings": "AACE,0CAA6B;EAC3B,MAAM,EAAE,IAAI;EACZ,WAAW,EAAE,IAAI;EACjB,KAAK,EAAE,IAAI;EACX,UAAU,EAAE,MAAM;EAClB,yDAAe;IACb,KAAK,EAAE,IAAI;IACX,OAAO,EAAE,YAAY;EAEvB,gDAAM;IACJ,OAAO,EAAE,KAAK;IACd,SAAS,EAAE,IAAI;IACf,WAAW,EAAE,IAAI",
-"sources": ["BIPConnectorEndDecorator.PartBrowserWidget.scss"],
-"names": [],
-"file": "BIPConnectorEndDecorator.PartBrowserWidget.css"
-}
