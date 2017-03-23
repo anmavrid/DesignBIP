@@ -1,0 +1,9 @@
+.part-browser .bip-state-decorator {
+  height: auto;
+  line-height: 18px;
+  width: 50px;
+  text-align: center; }
+  .part-browser .bip-state-decorator .svg-container {
+    width: 40px;
+    display: inline-block; }
+
