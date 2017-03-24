@@ -18,7 +18,7 @@ define([
         PluginBase,
         Converter) {
     'use strict';
-    
+
     pluginMetadata = JSON.parse(pluginMetadata);
 
     /**
@@ -58,15 +58,24 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-            nodeObject,
             artifact;
 
-        nodeObject = self.activeNode;
 
-        self.loadNodeMap(nodeObject)
+        self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
-                    self.logger.debug(Object.keys(nodes));
+                    //self.logger.debug(Object.keys(nodes));
                     //var model = self.generateArchitectureModel(nodes);
+
+                    var violations = self.hasViolations(nodes);
+
+                    if (violations.length > 0) {
+                        violations.forEach(function (violation) {
+                            self.createMessage(violation.node, violation.message, 'error');
+                        });
+                        throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
+                    }
+
+
                     var model = self.generateMacros(self.generateArchitectureModel(nodes));
                     //self.logger.info(JSON.stringify(model, null, 4));
 
@@ -299,7 +308,7 @@ define([
                     connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
                     //self.logger.info('end of port ' + auxPort.name + " has multiplicity "+ connectorEnd.multiplicity);
                 }
-                //TODO: add also export ports
+                //TODO: add also export ports for hierarchical connector motifs
             }
         }
 
@@ -320,7 +329,6 @@ define([
                 }
             }
         }
-
         for (var modelPort of architectureModel.ports) {
             modelPort.connectors = new Set();
             for (var conEnd of modelPort.connectorEnds) {
@@ -328,9 +336,62 @@ define([
                     modelPort.connectors.add(conEnd.connector);
                 }
             }
-
         }
         return architectureModel;
+    };
+
+    ArchitectureSpecGenerator.prototype.hasViolations = function (nodes) {
+        var violations = [],
+        self = this,
+        nodePath,
+        node,
+        zeroEnforceableTransitions = true;
+
+        for (nodePath in nodes) {
+            node = nodes[nodePath];
+            //self.logger.info('nodePath: ' + nodePath);
+            if (this.isMetaTypeOf(node, this.META.ComponentType)) {
+                // TODO
+            } else if (this.isMetaTypeOf(node, this.META.EnforceableTransition)) {
+                zeroEnforceableTransitions = false;
+                // TODO
+            } else if (this.isMetaTypeOf(node, this.META.Connector)) {
+                if (self.core.getPointerPath(node, 'dst') === null) {
+                    violations.push({
+                        node: node,
+                        message: 'Dst of connector [' + nodePath + '] is null'
+                    });
+                }
+                if (self.core.getPointerPath(node, 'src') === null) {
+                    violations.push({
+                        node: node,
+                        message: 'Src of connector [' + nodePath + '] is null'
+                    });
+                }
+            } else if (this.isMetaTypeOf(node, this.META.Connection)) {
+                if (self.core.getPointerPath(node, 'dst') === null) {
+                    violations.push({
+                        node: node,
+                        message: 'Dst of connetion [' + nodePath + '] is null'
+                    });
+                }
+                if (self.core.getPointerPath(node, 'src') === null) {
+                    violations.push({
+                        node: node,
+                        message: 'Src of connection [' + nodePath + '] is null'
+                    });
+                }
+            } else {
+              //TODO: Check multiplicity, degree of connector ends
+                //this.logger.info('Found unexpected type, no checking performed ...');
+            }
+        }
+        if (zeroEnforceableTransitions) {
+            violations.push({
+                message: 'No Enforceable Transitions in the entire project'
+            });
+        }
+        return violations;
     };
 
     return ArchitectureSpecGenerator;
