@@ -55,17 +55,21 @@ define([
     JavaBIPEngine.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
-        var self = this,
-            nodeObject;
+        var self = this;
 
-
-        nodeObject = self.activeNode;
-
-        self.loadNodeMap(nodeObject)
+        self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
-                    self.logger.debug(Object.keys(nodes));
-                    self.checkConsistency(nodes);
+                    self.logger.info(Object.keys(nodes));
+                    var violations = self.hasViolations(nodes);
 
+                    if (violations.length > 0) {
+                        violations.forEach(function (violation) {
+                            self.createMessage(violation.node, violation.message, 'error');
+                        });
+                        throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
+                    }
+
+                    var consistent = self.checkConsistency(nodes);
                 })
         .then(function () {
                         self.result.setSuccess(true);
@@ -75,21 +79,53 @@ define([
                         self.logger.error(err.stack);
                         // Result success is false at invocation.
                         callback(err, self.result);
-                    }) ;
-
+                    });
     };
 
     JavaBIPEngine.prototype.checkConsistency = function (nodes) {
-        var self, consistent = false;
+        var self = this,
+         consistent = false;
 
         for (var path in nodes) {
             var node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                 var cardinality = self.core.getAttribute(node, 'cardinality');
+                self.logger.info('cardinality ' + cardinality);
             }
         }
 
         return consistent;
+    };
+
+    JavaBIPEngine.prototype.loadNodeMap = function (node) {
+        var self = this;
+        return self.core.loadSubTree(node)
+                .then(function (nodeArr) {
+                    var nodes = {},
+                            i;
+                    for (i = 0; i < nodeArr.length; i += 1) {
+                        nodes[self.core.getPath(nodeArr[i])] = nodeArr[i];
+                    }
+                    return nodes;
+                });
+    };
+
+    JavaBIPEngine.prototype.hasViolations = function (nodes) {
+        var violations = [],
+        //self = this,
+        nodePath,
+        node;
+
+        for (nodePath in nodes) {
+            node = nodes[nodePath];
+            //self.logger.info('nodePath: ' + nodePath);
+            if (this.isMetaTypeOf(node, this.META.ComponentType)) {
+                // TODO
+            } else {
+                //TODO: Check cardinalities, multiplicities and degrees
+            }
+        }
+        return violations;
     };
 
     return JavaBIPEngine;
