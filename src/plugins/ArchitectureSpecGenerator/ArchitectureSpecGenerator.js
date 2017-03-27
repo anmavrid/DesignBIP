@@ -339,9 +339,7 @@ define([
 
         for (nodePath in nodes) {
             node = nodes[nodePath];
-            if (this.isMetaTypeOf(node, this.META.ComponentType)) {
-                // TODO
-            } else if (this.isMetaTypeOf(node, this.META.EnforceableTransition)) {
+            if (this.isMetaTypeOf(node, this.META.EnforceableTransition)) {
                 zeroEnforceableTransitions = false;
             } else if (this.isMetaTypeOf(node, this.META.Connector)) {
                 if (self.core.getPointerPath(node, 'dst') === null) {
@@ -384,6 +382,7 @@ define([
                         message: 'ConnectorEnd [' + nodePath + '] is not connected to any port'
                     });
                 }
+            } else {
                 //TODO: Check multiplicity, degree of connector ends
                 //this.logger.info('Found unexpected type, no checking performed ...');
             }
