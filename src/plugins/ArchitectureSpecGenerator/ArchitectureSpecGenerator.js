@@ -75,10 +75,8 @@ define([
                         throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
                     }
 
-
                     var model = self.generateMacros(self.generateArchitectureModel(nodes));
                     //self.logger.info(JSON.stringify(model, null, 4));
-
                     var accept = [];
                     var require = [];
 
@@ -134,19 +132,6 @@ define([
                 }) ;
     };
 
-    ArchitectureSpecGenerator.prototype.loadNodeMap = function (node) {
-        var self = this;
-        return self.core.loadSubTree(node)
-                .then(function (nodeArr) {
-                    var nodes = {},
-                            i;
-                    for (i = 0; i < nodeArr.length; i += 1) {
-                        nodes[self.core.getPath(nodeArr[i])] = nodeArr[i];
-                    }
-                    return nodes;
-                });
-    };
-
     /* This is the algorithm presented in the paper */
     ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel) {
         //var self = this;
@@ -154,12 +139,13 @@ define([
         for (var port of architectureModel.ports) {
             var require = new Set();
             var accept = new Set();
-
-            for (var end of port.connectorEnds) {
-                if (!end.hasOwnProperty('connector')) {
-                    require.add('');
-                    accept.add('');
-                    break;
+            if (port.connectorEnds !== undefined) {
+                for (var end of port.connectorEnds) {
+                    if (!end.hasOwnProperty('connector')) {
+                        require.add('');
+                        accept.add('');
+                        break;
+                    }
                 }
             }
             for (var connector of port.connectors) {
@@ -331,10 +317,14 @@ define([
         }
         for (var modelPort of architectureModel.ports) {
             modelPort.connectors = new Set();
-            for (var conEnd of modelPort.connectorEnds) {
-                if (conEnd.hasOwnProperty('connector')) {
-                    modelPort.connectors.add(conEnd.connector);
+            if (modelPort.connectorEnds !== undefined) {
+                for (var conEnd of modelPort.connectorEnds) {
+                    if (conEnd.hasOwnProperty('connector')) {
+                        modelPort.connectors.add(conEnd.connector);
+                    }
                 }
+            } else {
+                self.logger.warn('Port ' + self.core.getAttribute(modelPort, 'name') + ' is not connected to any connector-end.');
             }
         }
         return architectureModel;
@@ -349,12 +339,10 @@ define([
 
         for (nodePath in nodes) {
             node = nodes[nodePath];
-            //self.logger.info('nodePath: ' + nodePath);
             if (this.isMetaTypeOf(node, this.META.ComponentType)) {
                 // TODO
             } else if (this.isMetaTypeOf(node, this.META.EnforceableTransition)) {
                 zeroEnforceableTransitions = false;
-                // TODO
             } else if (this.isMetaTypeOf(node, this.META.Connector)) {
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
@@ -381,14 +369,28 @@ define([
                         message: 'Src of connection [' + nodePath + '] is null'
                     });
                 }
-            } else {
+            } else if (this.isMetaTypeOf(node, this.META.Trigger) || this.isMetaTypeOf(node, this.META.Synchron)) {
+                var isConnected = false;
+                for (var path in nodes) {
+                    if (this.isMetaTypeOf(nodes[path], this.META.Connection) ) {
+                        if (self.core.getPointerPath(nodes[path], 'src') === nodePath) {
+                            isConnected = true;
+                        }
+                    }
+                }
+                if (!isConnected) {
+                    violations.push({
+                        node: node,
+                        message: 'ConnectorEnd [' + nodePath + '] is not connected to any port'
+                    });
+                }
                 //TODO: Check multiplicity, degree of connector ends
                 //this.logger.info('Found unexpected type, no checking performed ...');
             }
         }
         if (zeroEnforceableTransitions) {
             violations.push({
-                message: 'No Enforceable Transitions in the entire project'
+                message: 'No Enforceable Transitions in the entire project, cannot generate Architecture specification'
             });
         }
         return violations;
