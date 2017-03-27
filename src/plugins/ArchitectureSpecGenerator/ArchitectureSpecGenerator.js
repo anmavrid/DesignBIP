@@ -372,7 +372,7 @@ define([
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
                         node: node,
-                        message: 'Dst of connetion [' + nodePath + '] is null'
+                        message: 'Dst of connection [' + nodePath + '] is null'
                     });
                 }
                 if (self.core.getPointerPath(node, 'src') === null) {
@@ -382,7 +382,7 @@ define([
                     });
                 }
             } else {
-              //TODO: Check multiplicity, degree of connector ends
+                //TODO: Check multiplicity, degree of connector ends
                 //this.logger.info('Found unexpected type, no checking performed ...');
             }
         }
