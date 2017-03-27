@@ -97,19 +97,6 @@ define([
         return consistent;
     };
 
-    JavaBIPEngine.prototype.loadNodeMap = function (node) {
-        var self = this;
-        return self.core.loadSubTree(node)
-                .then(function (nodeArr) {
-                    var nodes = {},
-                            i;
-                    for (i = 0; i < nodeArr.length; i += 1) {
-                        nodes[self.core.getPath(nodeArr[i])] = nodeArr[i];
-                    }
-                    return nodes;
-                });
-    };
-
     JavaBIPEngine.prototype.hasViolations = function (nodes) {
         var violations = [],
         //self = this,
