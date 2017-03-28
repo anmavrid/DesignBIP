@@ -59,8 +59,8 @@ define([
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
-                    self.logger.info(Object.keys(nodes));
-                    var violations = self.hasViolations(nodes);
+                    self.logger.debug(Object.keys(nodes));
+                    var violations = [];
 
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
@@ -68,8 +68,18 @@ define([
                         });
                         throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
                     }
+                    var inconsistencies = self.checkConsistency(nodes);
 
-                    var consistent = self.checkConsistency(nodes);
+                    if (inconsistencies.length === 0) {
+                        self.startJavaBIPEngine();
+                    } else {
+                        for (var problem in inconsistencies) {
+                            violations.push({
+                                message: 'ConnectorMotif connected with ends [' + problem + '] is inconsistent'
+                            });
+                        }
+                        throw new Error('Model has ' + violations.length + '  inconsistencies, see messages for details');
+                    }
                 })
         .then(function () {
                         self.result.setSuccess(true);
@@ -84,17 +94,27 @@ define([
 
     JavaBIPEngine.prototype.checkConsistency = function (nodes) {
         var self = this,
-         consistent = false;
+         inconsistencies = [],
+         cardinalityToValue = {};
+
 
         for (var path in nodes) {
             var node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                 var cardinality = self.core.getAttribute(node, 'cardinality');
-                self.logger.info('cardinality ' + cardinality);
+                self.logger.info(cardinality);
+                if (/^[a-z]$/.test(cardinality)) {
+                    self.logger.info('passed if');
+                    cardinalityToValue = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
+                }
+                //self.logger.info('cardinality ' + cardinality);
             }
         }
+        return inconsistencies;
+    };
 
-        return consistent;
+    JavaBIPEngine.prototype.startJavaBIPEngine = function () {
+
     };
 
     JavaBIPEngine.prototype.hasViolations = function (nodes) {
