@@ -95,19 +95,110 @@ define([
     JavaBIPEngine.prototype.checkConsistency = function (nodes) {
         var self = this,
          inconsistencies = [],
-         cardinalityToValue = {};
-
+         componentTypes = [],
+         subConnectors = [],
+         connectorEnds = [],
+         connectors = [];
 
         for (var path in nodes) {
             var node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                 var cardinality = self.core.getAttribute(node, 'cardinality');
-                self.logger.info(cardinality);
-                if (/^[a-z]$/.test(cardinality)) {
-                    self.logger.info('passed if');
-                    cardinalityToValue = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
+                var component = node;
+                componentTypes.push(component);
+                for (var child of self.core.getChildrenPaths(node)) {
+                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
+                        if (!component.hasOwnProperty('ports')) {
+                            component.ports = [];
+                        }
+                        component.ports.push(nodes[child]);
+                    }
+                    if (!/^[1-9]+$/.test(cardinality)) {
+                        component.cardinalityParameter = cardinality;
+                    }
+                    while (!/^[1-9]+$/.test(cardinality) ) {
+                        cardinality = 3;
+                        //cardinality = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
+                    }
                 }
                 //self.logger.info('cardinality ' + cardinality);
+                component.cardinalityValue = cardinality;
+            } else if (self.isMetaTypeOf(node, self.META.Connector)) {
+                /* If the connector is binary */
+                if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
+                    var connector = node;
+                    connectors.push(connector);
+                    var srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
+                    var dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
+                    srcConnectorEnd.connector = connector;
+                    dstConnectorEnd.connector = connector;
+                    connector.ends = [srcConnectorEnd, dstConnectorEnd];
+                /* If it is part of an n-ary connector */
+                } else {
+                    subConnectors.push(node);
+                }
+            } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
+                var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
+                if (self.getMetaType(gmeEnd) !== self.META.Connector) {
+                    var connectorEnd = gmeEnd;
+                    var auxPort = nodes[self.core.getPointerPath(node, 'dst')];
+                    if (!auxPort.hasOwnProperty('connectorEnds')) {
+                        auxPort.connectorEnds = [];
+                    }
+                    auxPort.connectorEnds.push(connectorEnd);
+                    connectorEnds.push(connectorEnd);
+                    connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
+                    connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
+                    //self.logger.info('end of port ' + auxPort.name + " has multiplicity "+ connectorEnd.multiplicity);
+                }
+                //TODO: add also export ports for hierarchical connector motifs
+            }
+        }
+        for (var subpart of subConnectors) {
+            var auxNode = nodes[self.core.getPointerPath(subpart, 'dst')];
+            var srcAuxNode = nodes[self.core.getPointerPath(auxNode, 'src')];
+            var srcEnd = nodes[self.core.getPointerPath(subpart, 'src')];
+            if (connectors.includes(auxNode)) {
+                auxNode.ends.push(srcEnd);
+                srcEnd.connector = auxNode;
+            } else if (connectorEnds.includes(srcAuxNode)) {
+                for (var existingConnector in connectors) {
+                    if (existingConnector.ends.includes(srcAuxNode)) {
+                        existingConnector.ends.push(srcEnd);
+                        srcEnd.connector = existingConnector;
+                    }
+                }
+            }
+        }
+        for (var motif of connectors) {
+            var matchingFactor = -1;
+            for (var end of motif.ends) {
+                if (!/^[0-9]+$/.test(end.degree)) {
+                    //TODO: update for expressions
+                    self.logger.debug('length ' + componentTypes.length);
+                    for (var type of componentTypes) {
+                        self.logger.debug('component.cardinalityParameter ' + type.cardinalityParameter);
+                        self.logger.debug('component.cardinalityValue ' + type.cardinalityValue);
+                        if (type.cardinalityParameter === end.degree) {
+                            end.degree = type.cardinalityValue;
+                        }
+                    }
+
+                }
+                if (!/^[0-9]+$/.test(end.multiplicity)) {
+                    //TODO: update for expressions
+                    for (var type of componentTypes) {
+                        if (type.cardinalityParameter === end.multiplicity) {
+                            end.degree = type.cardinalityValue;
+                        }
+                    }
+                }
+                if (matchingFactor === -1) {
+                    matchingFactor = (end.degree ) / end.multiplicity;
+                } else if (matchingFactor !== (end.degree) / end.multiplicity) {
+                    self.logger.error('Connector motif consisting of ends '+ motif.ends.path + 'is inconsistent');
+                }
+                self.logger.debug('matching factor ' + matchingFactor);
             }
         }
         return inconsistencies;
