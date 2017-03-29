@@ -121,7 +121,6 @@ define([
                         nodes[child].cardinality = cardinality;
                     }
                 }
-                //self.logger.info('cardinality ' + cardinality);
                 component.cardinalityValue = cardinality;
 
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
@@ -142,17 +141,10 @@ define([
                 var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
                 if (self.getMetaType(gmeEnd) !== self.META.Connector) {
                     var connectorEnd = gmeEnd;
-                    //var auxPort = nodes[self.core.getPointerPath(node, 'dst')];
-                    //connectorEnd.port = nodes[self.core.getPointerPath(node, 'dst')];
                     connectorEnd.cardinality = nodes[self.core.getPointerPath(node, 'dst')].cardinality;
-                    // if (!auxPort.hasOwnProperty('connectorEnds')) {
-                    //     auxPort.connectorEnds = [];
-                    // }
-                    // auxPort.connectorEnds.push(connectorEnd);
                     connectorEnds.push(connectorEnd);
                     connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
                     connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
-                    //self.logger.info('end of port ' + auxPort.name + " has multiplicity "+ connectorEnd.multiplicity);
                 }
                 //TODO: add also export ports for hierarchical connector motifs
             }
@@ -186,7 +178,6 @@ define([
                             end.degree = type.cardinalityValue;
                         }
                     }
-
                 }
                 if (!/^[0-9]+$/.test(end.multiplicity)) {
                     //TODO: update for expressions
@@ -213,7 +204,7 @@ define([
 
     JavaBIPEngine.prototype.hasViolations = function (nodes) {
         var violations = [],
-        //self = this,
+        self = this,
         nodePath,
         node;
 
@@ -221,11 +212,10 @@ define([
         2. Check that cardinalities are non zero naturals, or an alphabetic character
         3. Check that multiplicites, degrees are arithmetic expressions of cardinalities*/
 
-
         for (nodePath in nodes) {
             node = nodes[nodePath];
             //self.logger.info('nodePath: ' + nodePath);
-            if (this.isMetaTypeOf(node, this.META.ComponentType)) {
+            if (self.isMetaTypeOf(node, this.META.ComponentType)) {
                 // TODO
             } else {
                 //TODO: Check cardinalities, multiplicities and degrees
