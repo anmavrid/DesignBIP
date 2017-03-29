@@ -96,6 +96,7 @@ define([
         var self = this,
          inconsistencies = [],
          componentTypes = [],
+         ports = [],
          subConnectors = [],
          connectorEnds = [],
          connectors = [];
@@ -108,21 +109,21 @@ define([
                 componentTypes.push(component);
                 for (var child of self.core.getChildrenPaths(node)) {
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
-                        if (!component.hasOwnProperty('ports')) {
-                            component.ports = [];
+                        var port = nodes[child];
+                        ports.push(port);
+                        if (!/^[1-9]+$/.test(cardinality)) {
+                            component.cardinalityParameter = cardinality;
                         }
-                        component.ports.push(nodes[child]);
-                    }
-                    if (!/^[1-9]+$/.test(cardinality)) {
-                        component.cardinalityParameter = cardinality;
-                    }
-                    while (!/^[1-9]+$/.test(cardinality) ) {
-                        cardinality = 3;
-                        //cardinality = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
+                        while (!/^[1-9]+$/.test(cardinality) ) {
+                            cardinality = 3;
+                            //cardinality = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
+                        }
+                        nodes[child].cardinality = cardinality;
                     }
                 }
                 //self.logger.info('cardinality ' + cardinality);
                 component.cardinalityValue = cardinality;
+
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 /* If the connector is binary */
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
@@ -141,11 +142,13 @@ define([
                 var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
                 if (self.getMetaType(gmeEnd) !== self.META.Connector) {
                     var connectorEnd = gmeEnd;
-                    var auxPort = nodes[self.core.getPointerPath(node, 'dst')];
-                    if (!auxPort.hasOwnProperty('connectorEnds')) {
-                        auxPort.connectorEnds = [];
-                    }
-                    auxPort.connectorEnds.push(connectorEnd);
+                    //var auxPort = nodes[self.core.getPointerPath(node, 'dst')];
+                    //connectorEnd.port = nodes[self.core.getPointerPath(node, 'dst')];
+                    connectorEnd.cardinality = nodes[self.core.getPointerPath(node, 'dst')].cardinality;
+                    // if (!auxPort.hasOwnProperty('connectorEnds')) {
+                    //     auxPort.connectorEnds = [];
+                    // }
+                    // auxPort.connectorEnds.push(connectorEnd);
                     connectorEnds.push(connectorEnd);
                     connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
                     connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
@@ -189,16 +192,16 @@ define([
                     //TODO: update for expressions
                     for (var type of componentTypes) {
                         if (type.cardinalityParameter === end.multiplicity) {
-                            end.degree = type.cardinalityValue;
+                            end.multiplicity = type.cardinalityValue;
                         }
                     }
                 }
                 if (matchingFactor === -1) {
-                    matchingFactor = (end.degree ) / end.multiplicity;
-                } else if (matchingFactor !== (end.degree) / end.multiplicity) {
-                    self.logger.error('Connector motif consisting of ends '+ motif.ends.path + 'is inconsistent');
+                    matchingFactor = (end.degree * end.cardinality) / end.multiplicity;
+                } else if (matchingFactor !== (end.degree * end.cardinality) / end.multiplicity) {
+                    inconsistencies.push(motif);
                 }
-                self.logger.debug('matching factor ' + matchingFactor);
+                self.logger.info('matching factor ' + matchingFactor);
             }
         }
         return inconsistencies;
@@ -213,6 +216,11 @@ define([
         //self = this,
         nodePath,
         node;
+
+        /*TODO: 1. Check if multiplicities are less than cardinalities
+        2. Check that cardinalities are non zero naturals, or an alphabetic character
+        3. Check that multiplicites, degrees are arithmetic expressions of cardinalities*/
+
 
         for (nodePath in nodes) {
             node = nodes[nodePath];
