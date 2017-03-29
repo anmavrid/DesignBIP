@@ -182,7 +182,7 @@ define([
                     }
                     for (var otherEnd of connector.ends) {
                         if (triggerExists === false) {
-                            if (otherEnd.port.name !== port.name || parseInt(otherEnd.multiplicity) > '1' ) {
+                            if (otherEnd.port.name !== port.name || parseInt(otherEnd.multiplicity) > 1 ) {
                                 var reqCause = [];
                                 for (var i = 0; i < parseInt(otherEnd.multiplicity); i++) {
                                     reqCause.push(otherEnd.port);
