@@ -232,21 +232,17 @@ define([
             // Checks multiplicities and degrees
             var multiplicity = self.core.getAttribute(end, 'multiplicity');
             var degree = self.core.getAttribute(end, 'degree');
-            //self.logger.info(self.core.getAttribute(end, 'name'));
-            self.logger.info(multiplicity);
-            self.logger.info(degree);
+            self.logger.debug(multiplicity);
+            self.logger.debug(degree);
             var regExpArray = ['^['];
             for (var c of cardinalities) {
                 if (!/^[0-9]*$/.test(c)) {
                     regExpArray.push(c);
                 }
             }
-            //regExpArray = cardinalities.slice(0);
-            self.logger.info('array '+ regExpArray[1]);
             regExpArray.push.apply(regExpArray, ['+*-/', '\\(\\)', '0-9', ']', '+$']);
 
             var cardinalityRegEx = new RegExp(regExpArray.join(''), 'gi');
-            //parse(self.core.getAttribute(end, 'multiplicity'));
             //TODO: use the parser
             if (!/^(?:\(?([0-9]*|[a-z])\s*[+*-/]\s*\(?([0-9]*|[a-z])?\)?\)?)+|[0-9]+|[a-z]$/.test(multiplicity)) {
                 violations.push({
@@ -259,11 +255,16 @@ define([
                     message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an expression of cardinality parameters'
                 });
               //TODO: use the parser
-            } else if (!/^(?:\(?([0-9]*|[a-z])\s*[+*-/]\s*\(?([0-9]*|[a-z])?\)?\)?)+|[0-9]+|[a-z]$/.test(degree) &&  !cardinalities.includes(degree)) {
+            } else if (!/^(?:\(?([0-9]*|[a-z])\s*[+*-/]\s*\(?([0-9]*|[a-z])?\)?\)?)+|[0-9]+|[a-z]$/.test(degree)) {
                 violations.push({
                     node: end,
                     message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a a valid arithmetic expression'
                 });
+            } else if (!/^[0-9]*$/.test(degree) && !cardinalityRegEx.test(degree)) {
+                violations.push({
+                        node: end,
+                        message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an expression of cardinality parameters'
+                    });
             }
         }
         return violations;
