@@ -60,8 +60,8 @@ define([
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
                     self.logger.debug(Object.keys(nodes));
-                    var violations = [];
 
+                    var violations = self.hasViolations(nodes);
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
                             self.createMessage(violation.node, violation.message, 'error');
@@ -69,7 +69,6 @@ define([
                         throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
                     }
                     var inconsistencies = self.checkConsistency(nodes);
-
                     if (inconsistencies.length === 0) {
                         self.startJavaBIPEngine();
                     } else {
@@ -111,10 +110,11 @@ define([
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                         var port = nodes[child];
                         ports.push(port);
-                        if (!/^[1-9]+$/.test(cardinality)) {
+                        if (!/^[1-9][0-9]*$/.test(cardinality)) {
                             component.cardinalityParameter = cardinality;
                         }
-                        while (!/^[1-9]+$/.test(cardinality) ) {
+                        while (!/^[1-9][0-9]*$/.test(cardinality) ) {
+                            //TODO: add parser for expressions
                             cardinality = 3;
                             //cardinality = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
                         }
@@ -146,7 +146,7 @@ define([
                     connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
                     connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
                 }
-                //TODO: add also export ports for hierarchical connector motifs
+                //TODO: add export ports for hierarchical connector motifs
             }
         }
         for (var subpart of subConnectors) {
@@ -180,7 +180,7 @@ define([
                     }
                 }
                 if (!/^[0-9]+$/.test(end.multiplicity)) {
-                    //TODO: update for expressions
+                  //TODO: update for expressions
                     for (var type of componentTypes) {
                         if (type.cardinalityParameter === end.multiplicity) {
                             end.multiplicity = type.cardinalityValue;
@@ -192,7 +192,7 @@ define([
                 } else if (matchingFactor !== (end.degree * end.cardinality) / end.multiplicity) {
                     inconsistencies.push(motif);
                 }
-                self.logger.info('matching factor ' + matchingFactor);
+                self.logger.debug('matching factor ' + matchingFactor);
             }
         }
         return inconsistencies;
@@ -204,21 +204,48 @@ define([
 
     JavaBIPEngine.prototype.hasViolations = function (nodes) {
         var violations = [],
+        cardinalities = [],
+        connectorEnds = [],
         self = this,
         nodePath,
         node;
 
         /*TODO: 1. Check if multiplicities are less than cardinalities
-        2. Check that cardinalities are non zero naturals, or an alphabetic character
-        3. Check that multiplicites, degrees are arithmetic expressions of cardinalities*/
-
+        2. Check that multiplicities, degrees are arithmetic expressions of cardinalities*/
         for (nodePath in nodes) {
             node = nodes[nodePath];
-            //self.logger.info('nodePath: ' + nodePath);
             if (self.isMetaTypeOf(node, this.META.ComponentType)) {
-                // TODO
-            } else {
-                //TODO: Check cardinalities, multiplicities and degrees
+                // Checks cardinality whether it is non zero natural number or a character
+                if (/^[a-z]|[1-9][0-9]*$/.test(self.core.getAttribute(node, 'cardinality'))) {
+                    cardinalities.push(self.core.getAttribute(node, 'cardinality'));
+                } else {
+                    violations.push({
+                        node: node,
+                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character'
+                    });
+                }
+
+            } else if (self.isMetaTypeOf(node, this.META.Synchron) || self.isMetaTypeOf(node, this.META.Trigger)) {
+                connectorEnds.push(node);
+            }
+        }
+        for (var end of connectorEnds) {
+            // Checks multiplicities and degrees
+            //TODO: update for expressions
+            self.logger.debug(self.core.getAttribute(end, 'name'));
+            self.logger.debug(self.core.getAttribute(end, 'multiplicity'));
+            if (!/^[0-9]+$/.test(self.core.getAttribute(end,  'multiplicity')) && !cardinalities.includes(self.core.getAttribute(end, 'multiplicity'))) {
+                violations.push({
+                    node: end,
+                    message: 'Multiplicity [' + self.core.getAttribute(end, 'multiplicity') + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression involving cardinality parameters'
+                });
+                //TODO: update for expressions
+                self.logger.debug(self.core.getAttribute(end, 'degree'));
+            } else if (!/^[0-9]+$/.test(self.core.getAttribute(end, 'degree')) && !cardinalities.includes(self.core.getAttribute(end, 'degree'))) {
+                violations.push({
+                    node: end,
+                    message: 'Degree [' + self.core.getAttribute(end, 'degree') + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression involving cardinality parameters'
+                });
             }
         }
         return violations;
