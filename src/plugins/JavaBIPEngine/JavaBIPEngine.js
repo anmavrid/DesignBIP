@@ -114,7 +114,6 @@ define([
                             component.cardinalityParameter = cardinality;
                         }
                         while (!/^[1-9][0-9]*$/.test(cardinality) ) {
-                            //TODO: add parser for expressions
                             cardinality = 3;
                             //cardinality = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
                         }
@@ -231,25 +230,43 @@ define([
         }
         for (var end of connectorEnds) {
             // Checks multiplicities and degrees
-            //TODO: update for expressions
-            self.logger.debug(self.core.getAttribute(end, 'name'));
-            self.logger.debug(self.core.getAttribute(end, 'multiplicity'));
-            if (!/^[0-9]+$/.test(self.core.getAttribute(end,  'multiplicity')) && !cardinalities.includes(self.core.getAttribute(end, 'multiplicity'))) {
+            var multiplicity = self.core.getAttribute(end, 'multiplicity');
+            var degree = self.core.getAttribute(end, 'degree');
+            //self.logger.info(self.core.getAttribute(end, 'name'));
+            self.logger.info(multiplicity);
+            self.logger.info(degree);
+            var regExpArray = ['^['];
+            for (var c of cardinalities) {
+                if (!/^[0-9]*$/.test(c)) {
+                    regExpArray.push(c);
+                }
+            }
+            //regExpArray = cardinalities.slice(0);
+            self.logger.info('array '+ regExpArray[1]);
+            regExpArray.push.apply(regExpArray, ['+*-/', '\\(\\)', '0-9', ']', '+$']);
+
+            var cardinalityRegEx = new RegExp(regExpArray.join(''), 'gi');
+            //parse(self.core.getAttribute(end, 'multiplicity'));
+            //TODO: use the parser
+            if (!/^(?:\(?([0-9]*|[a-z])\s*[+*-/]\s*\(?([0-9]*|[a-z])?\)?\)?)+|[0-9]+|[a-z]$/.test(multiplicity)) {
                 violations.push({
                     node: end,
-                    message: 'Multiplicity [' + self.core.getAttribute(end, 'multiplicity') + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression involving cardinality parameters'
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression'
                 });
-                //TODO: update for expressions
-                self.logger.debug(self.core.getAttribute(end, 'degree'));
-            } else if (!/^[0-9]+$/.test(self.core.getAttribute(end, 'degree')) && !cardinalities.includes(self.core.getAttribute(end, 'degree'))) {
+            } else if (!/^[0-9]*$/.test(multiplicity) && !cardinalityRegEx.test(multiplicity)) {
                 violations.push({
                     node: end,
-                    message: 'Degree [' + self.core.getAttribute(end, 'degree') + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression involving cardinality parameters'
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an expression of cardinality parameters'
+                });
+              //TODO: use the parser
+            } else if (!/^(?:\(?([0-9]*|[a-z])\s*[+*-/]\s*\(?([0-9]*|[a-z])?\)?\)?)+|[0-9]+|[a-z]$/.test(degree) &&  !cardinalities.includes(degree)) {
+                violations.push({
+                    node: end,
+                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a a valid arithmetic expression'
                 });
             }
         }
         return violations;
     };
-
     return JavaBIPEngine;
 });
