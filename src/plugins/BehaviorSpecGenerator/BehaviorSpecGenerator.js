@@ -229,35 +229,50 @@ define([
 
     BehaviorSpecGenerator.prototype.hasViolations = function (nodes) {
         var violations = [],
-            stateNames = {},
+            componentTypeNames = {},
             name,
             nodePath,
             node;
 
         for (nodePath in nodes) {
+            var stateNames = {};
             node = nodes[nodePath];
             name = this.core.getAttribute(node, 'name');
             // TODO: check all expected types and more constraints.
             if (this.isMetaTypeOf(node, this.META.ComponentType)) {
                 // This will be a java class - no special characters etc.
                 // The example is incomplete and also allows leading numbers, try at https://regex101.com/
-                if (/^[0-9a-zA-Z_]*$/.test(name) === false) {
+                //if (/^[0-9a-zA-Z_]+$/.test(name) === false) {
+                if (/^(?!abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|intanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|Abstract|Continue|For|New|Switch|Assert|Default|Goto|Package|Synchronized|Boolean|Do|If|Private|This|Break|Double|Implements|Protected|Throw|Byte|Else|Import|Public|Throws|Case|Enum|Intanceof|Return|Transient|Catch|Extends|Int|Short|Try|Char|Final|Interface|Static|Void|Class|Finally|Long|Strictfp|Volatile|Const|Float|Native|Super|While)[A-Z][0-9a-z]+$/.test(name) === false) {
                     violations.push({
                         node: node,
-                        message: 'Illegal ComponentType name [' + name + ']'
+                        message: 'Illegal ComponentType name [' + name + '] \nIt is an illegal java class name.'
                     });
-                }
-            } else if (this.isMetaTypeOf(node, this.META.StateBase)) {
-                if (stateNames.hasOwnProperty(name)) {
-                    violations.push({
-                        node: node,
-                        message: 'Duplicated name [' + name + '] shared with ' + stateNames[name]
-                    });
+                    this.logger.info('Improper Java class name');
                 }
 
-                stateNames[name] = this.core.getPath(node);
-            } else {
-                this.logger.info('Found unexpected type, no checking performed ...');
+                if (componentTypeNames.hasOwnProperty(name)) {
+                    violations.push({
+                        node: node,
+                        message: 'Duplicated name [' + name + '] shared with ' + componentTypeNames[name]
+                    });
+                }
+                componentTypeNames[name] = this.core.getPath(node);
+
+                // check for states,guards and transitions in each componentType
+
+                /*for (var child of this.core.getChildrenPaths(node))
+                {
+                    if ((this.isMetaTypeOf(child, this.META.State)) || (this.isMetaTypeOf(child, this.META.InitialState))) {
+                        if (stateNames.hasOwnProperty(name)) {
+                            violations.push({
+                                node: node,
+                                message: 'Duplicated name [' + name + '] shared with ' + stateNames[name]
+                            });
+                        }
+                        stateNames[name] = this.core.getPath(node);
+                    }
+                }*/
             }
         }
 
