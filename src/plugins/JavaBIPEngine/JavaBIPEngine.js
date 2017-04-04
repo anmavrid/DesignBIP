@@ -74,12 +74,10 @@ define([
                     if (inconsistencies.length === 0) {
                         self.startJavaBIPEngine();
                     } else {
-                        for (var problem in inconsistencies) {
-                            violations.push({
-                                message: 'ConnectorMotif connected with ends [' + problem + '] is inconsistent'
-                            });
-                        }
-                        throw new Error('Model has ' + violations.length + '  inconsistencies, see messages for details');
+                        inconsistencies.forEach(function (inconsistency) {
+                            self.createMessage(inconsistency.node, inconsistency.message, 'error');
+                        });
+                        throw new Error('Model has ' + inconsistencies.length + '  inconsistencies, see messages for details');
                     }
                 })
         .then(function () {
@@ -190,11 +188,10 @@ define([
                             end.multiplicity = type.cardinalityValue;
                         }
                     }
-
-                } else if (end.multiplicity > type.cardinalityValue) {
+                } else if (end.multiplicity > end.cardinality) {
                     inconsistencies.push({
                         node: end,
-                        message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type [' + this.core.getPath(type) + ']'
+                        message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type'
                     });
                 }
 
