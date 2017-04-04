@@ -102,8 +102,8 @@ define([
          connectorEnds = [],
          connectors = [];
 
-         /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
-          2. Checks equality of matching factors of the same connector */
+        /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
+        2. Checks equality of matching factors of the same connector */
 
         for (var path in nodes) {
             var node = nodes[path];
@@ -190,13 +190,22 @@ define([
                             end.multiplicity = type.cardinalityValue;
                         }
                     }
+
+                } else if (end.multiplicity > type.cardinalityValue) {
+                    inconsistencies.push({
+                        node: end,
+                        message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type [' + this.core.getPath(type) + ']'
+                    });
                 }
+
                 if (matchingFactor === -1) {
                     matchingFactor = (end.degree * end.cardinality) / end.multiplicity;
                 } else if (matchingFactor !== (end.degree * end.cardinality) / end.multiplicity) {
-                    inconsistencies.push(motif);
+                    inconsistencies.push({
+                        node: motif,
+                        message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
+                    });
                 }
-                self.logger.debug('matching factor ' + matchingFactor);
             }
         }
         return inconsistencies;

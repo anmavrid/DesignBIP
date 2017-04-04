@@ -6,7 +6,6 @@ define([], function () {
 * http://pegjs.org/
 */
 return new function () {
-    var self = this;
     function peg$subclass(child, parent) {
       function ctor() { this.constructor = child; }
       ctor.prototype = parent.prototype;
