@@ -1,6 +1,6 @@
-module.exports =
+define([], function () {
 
-(function () {
+return new function () {
     'use strict';
     var self = this;
 
@@ -589,4 +589,6 @@ module.exports =
     SyntaxError: peg$SyntaxError,
     parse:       peg$parse
   };
-})();
+}();
+
+});

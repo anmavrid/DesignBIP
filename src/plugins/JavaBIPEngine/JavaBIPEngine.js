@@ -10,11 +10,13 @@
 define([
     'plugin/PluginConfig',
     'text!./metadata.json',
-    'plugin/PluginBase'
+    'plugin/PluginBase',
+     'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser'
 ], function (
     PluginConfig,
     pluginMetadata,
-    PluginBase) {
+    PluginBase,
+    ArithmeticExpressionParser) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -56,6 +58,14 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this;
+
+
+       //self.logger.info(ArithmeticExpressionParser.parse('d'));
+        //  try{
+        //     ArithmeticExpressionParser.parse('ds');
+        //   } catch (e) {
+        //     self.logger.info(e);
+        //   }
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
@@ -179,7 +189,7 @@ define([
                     }
                 }
                 if (!/^[0-9]+$/.test(end.multiplicity)) {
-                  //TODO: update for expressions
+                    //TODO: update for expressions
                     for (var type of componentTypes) {
                         if (type.cardinalityParameter === end.multiplicity) {
                             end.multiplicity = type.cardinalityValue;
@@ -254,11 +264,12 @@ define([
                     node: end,
                     message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an expression of cardinality parameters'
                 });
-              //TODO: use the parser
+                //TODO: use the parser
             } else if (!/^(?:\(?([0-9]*|[a-z])\s*[+*-/]\s*\(?([0-9]*|[a-z])?\)?\)?)+|[0-9]+|[a-z]$/.test(degree)) {
+
                 violations.push({
                     node: end,
-                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a a valid arithmetic expression'
+                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression'
                 });
             } else if (!/^[0-9]*$/.test(degree) && !cardinalityRegEx.test(degree)) {
                 violations.push({
