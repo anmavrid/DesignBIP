@@ -102,6 +102,9 @@ define([
          connectorEnds = [],
          connectors = [];
 
+         /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
+          2. Checks equality of matching factors of the same connector */
+
         for (var path in nodes) {
             var node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
