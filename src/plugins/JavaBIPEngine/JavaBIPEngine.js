@@ -98,6 +98,7 @@ define([
          ports = [],
          subConnectors = [],
          connectorEnds = [],
+         connections = [],
          connectors = [];
 
         /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
@@ -115,18 +116,18 @@ define([
                         ports.push(port);
                         if (/^[a-z]$/.test(cardinality)) {
                             component.cardinalityParameter = cardinality;
-                            self.logger.debug("1. cardinalityParameter " + component.cardinalityParameter);
+                            self.logger.debug('cardinalityParameter ' + component.cardinalityParameter);
                         }
-
                         while (/^[a-z]$/.test(cardinality) ) {
-                            //cardinality = 3;
+                            cardinality = 3;
                             //cardinality = prompt('Please enter number of component instances for ' + //self.core.getAttribute(node, 'name') + 'component type');
                         }
+                        self.logger.debug('cardinality: ' + cardinality);
                         nodes[child].cardinality = cardinality;
                     }
                 }
                 component.cardinalityValue = cardinality;
-                self.logger.debug("1. cardinalityValue " + component.cardinalityValue);
+                self.logger.debug('cardinalityValue ' + component.cardinalityValue);
 
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 /* If the connector is binary */
@@ -143,15 +144,21 @@ define([
                     subConnectors.push(node);
                 }
             } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
+                connections.push(node);
                 var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
                 if (self.getMetaType(gmeEnd) !== self.META.Connector) {
                     var connectorEnd = gmeEnd;
-                    connectorEnd.cardinality = nodes[self.core.getPointerPath(node, 'dst')].cardinality;
                     connectorEnds.push(connectorEnd);
                     connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
                     connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
                 }
                 //TODO: add export ports for hierarchical connector motifs
+            }
+        }
+        for (var connection of connections) {
+            var end = nodes[self.core.getPointerPath(connection, 'src')];
+            if (self.getMetaType(end) !== self.META.Connector) {
+                end.cardinality = nodes[self.core.getPointerPath(connection, 'dst')].cardinality;
             }
         }
         for (var subpart of subConnectors) {
@@ -174,29 +181,26 @@ define([
             var matchingFactor = -1;
             for (var end of motif.ends) {
                 var degreeExpression = end.degree;
-                var degreeValue;
                 self.logger.debug('degreeExpression: ' + degreeExpression);
                 if (!/^[0-9]+$/.test(end.degree)) {
                     for (var type of componentTypes) {
                         if (type.cardinalityParameter !== undefined && degreeExpression.includes(type.cardinalityParameter)) {
-                            degreeValue = degreeExpression.replace(type.cardinalityParameter, type.cardinalityValue);
-                            self.logger.debug('degreeValue ' + degreeValue);
+                            degreeExpression = degreeExpression.replace(type.cardinalityParameter, type.cardinalityValue);
+                            self.logger.debug('degreeValue ' + degreeExpression);
                         }
-                        end.degree = eval(degreeValue);
                     }
+                    end.degree = eval(degreeExpression);
                 }
-                var multiplicityExpression = end.degree;
-                var multiplicityValue;
+                var multiplicityExpression = end.multiplicity;
                 self.logger.debug('multiplicityExpression: ' + multiplicityExpression);
                 if (!/^[0-9]+$/.test(end.multiplicity)) {
                     for (var type of componentTypes) {
                         if (type.cardinalityParameter !== undefined && multiplicityExpression.includes(type.cardinalityParameter)) {
-                            multiplicityValue = multiplicityExpression.replace(type.cardinalityParameter, type.cardinalityValue);
-                            self.logger.debug('multiplicity ' + multiplicityValue);
+                            multiplicityExpression = multiplicityExpression.replace(type.cardinalityParameter, type.cardinalityValue);
+                            self.logger.debug('multiplicityValue ' + multiplicityExpression);
                         }
-                        end.multiplicity = eval(multiplicityValue);
                     }
-
+                    end.multiplicity = eval(multiplicityExpression);
                     if (end.multiplicity > end.cardinality) {
                         inconsistencies.push({
                             node: end,
@@ -204,15 +208,26 @@ define([
                         });
                     }
                 }
-            }
-
-            if (matchingFactor === -1) {
-                matchingFactor = (end.degree * end.cardinality) / end.multiplicity;
-            } else if (matchingFactor !== (end.degree * end.cardinality) / end.multiplicity) {
-                inconsistencies.push({
-                    node: motif,
-                    message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
-                });
+                self.logger.debug('cardinality value: ' + end.cardinality);
+                self.logger.debug('matchingFactor new ' + (end.degree * end.cardinality) / end.multiplicity);
+                self.logger.debug('matchingFactor old ' + matchingFactor);
+                var newMatchingFactor = (end.degree * end.cardinality) / end.multiplicity;
+                if (/^[0-9]*$/.test(newMatchingFactor)) {
+                    if (matchingFactor === -1) {
+                        matchingFactor = newMatchingFactor;
+                    } else if (matchingFactor !== newMatchingFactor) {
+                        inconsistencies.push({
+                            node: motif,
+                            message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
+                        });
+                        break;
+                    }
+                } else {
+                    inconsistencies.push({
+                        node: end,
+                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer/'
+                    });
+                }
             }
         }
         return inconsistencies;
@@ -247,18 +262,21 @@ define([
                 connectorEnds.push(node);
             }
         }
-        var regExpArray = ['^['];
+        var regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
+
         for (var c of cardinalities) {
             if (/^[a-z]$/.test(c)) {
                 regExpArray.push(c);
             }
         }
-        //regExpArray.push.apply(regExpArray, [']', '+$']);
-        regExpArray.push.apply(regExpArray, ['+*-/', '\(\)', '0-9', ']', '+$']);
+        regExpArray.push.apply(regExpArray, [']', '+$']);
         var cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
-        self.logger.info(cardinalityRegEx);
+        self.logger.debug(cardinalityRegEx);
+
         for (var end of connectorEnds) {
+            self.logger.debug('end: ' + end);
             // Checks multiplicities and degrees
+
             var multiplicity = self.core.getAttribute(end, 'multiplicity');
             var degree = self.core.getAttribute(end, 'degree');
             self.logger.debug(multiplicity);
@@ -269,7 +287,7 @@ define([
             } catch (e) {
                 violations.push({
                     node: end,
-                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression: ' + e
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case variables: ' + e
                 });
             }
             try {
@@ -277,17 +295,18 @@ define([
             } catch (e) {
                 violations.push({
                     node: end,
-                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression: ' + e
+                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case variables: ' + e
                 });
             }
-            if (!/^[0-9]+$/.test(multiplicity) && !cardinalityRegEx.test(multiplicity)) {
+            cardinalityRegEx.lastIndex = 0;
+            if (!(cardinalityRegEx.test(multiplicity))) {
                 violations.push({
                     node: end,
                     message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
                 });
             }
-            if (!/^[0-9]+$/.test(degree) && !cardinalityRegEx.test(degree)) {
-            //if (!/^[0-9]+$/.test(degree) && !cardinalityRegEx.test(degree)) {
+            cardinalityRegEx.lastIndex = 0;
+            if (!cardinalityRegEx.test(degree)) {
                 violations.push({
                         node: end,
                         message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
