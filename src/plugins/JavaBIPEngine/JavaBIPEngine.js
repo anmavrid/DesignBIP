@@ -113,17 +113,20 @@ define([
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                         var port = nodes[child];
                         ports.push(port);
-                        if (!/^[1-9][0-9]*$/.test(cardinality)) {
+                        if (/^[a-z]$/.test(cardinality)) {
                             component.cardinalityParameter = cardinality;
+                            self.logger.debug("1. cardinalityParameter " + component.cardinalityParameter);
                         }
-                        while (!/^[1-9][0-9]*$/.test(cardinality) ) {
-                            cardinality = 3;
-                            //cardinality = prompt('Please enter number of component instances for ' + self.core.getAttribute(node, 'name') + 'component type');
+
+                        while (/^[a-z]$/.test(cardinality) ) {
+                            //cardinality = 3;
+                            //cardinality = prompt('Please enter number of component instances for ' + //self.core.getAttribute(node, 'name') + 'component type');
                         }
                         nodes[child].cardinality = cardinality;
                     }
                 }
                 component.cardinalityValue = cardinality;
+                self.logger.debug("1. cardinalityValue " + component.cardinalityValue);
 
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 /* If the connector is binary */
@@ -170,39 +173,46 @@ define([
         for (var motif of connectors) {
             var matchingFactor = -1;
             for (var end of motif.ends) {
+                var degreeExpression = end.degree;
+                var degreeValue;
+                self.logger.debug('degreeExpression: ' + degreeExpression);
                 if (!/^[0-9]+$/.test(end.degree)) {
-                    //TODO: update for expressions
-                    self.logger.debug('length ' + componentTypes.length);
                     for (var type of componentTypes) {
-                        self.logger.debug('component.cardinalityParameter ' + type.cardinalityParameter);
-                        self.logger.debug('component.cardinalityValue ' + type.cardinalityValue);
-                        if (type.cardinalityParameter === end.degree) {
-                            end.degree = type.cardinalityValue;
+                        if (type.cardinalityParameter !== undefined && degreeExpression.includes(type.cardinalityParameter)) {
+                            degreeValue = degreeExpression.replace(type.cardinalityParameter, type.cardinalityValue);
+                            self.logger.debug('degreeValue ' + degreeValue);
                         }
+                        end.degree = eval(degreeValue);
                     }
                 }
+                var multiplicityExpression = end.degree;
+                var multiplicityValue;
+                self.logger.debug('multiplicityExpression: ' + multiplicityExpression);
                 if (!/^[0-9]+$/.test(end.multiplicity)) {
-                    //TODO: update for expressions
                     for (var type of componentTypes) {
-                        if (type.cardinalityParameter === end.multiplicity) {
-                            end.multiplicity = type.cardinalityValue;
+                        if (type.cardinalityParameter !== undefined && multiplicityExpression.includes(type.cardinalityParameter)) {
+                            multiplicityValue = multiplicityExpression.replace(type.cardinalityParameter, type.cardinalityValue);
+                            self.logger.debug('multiplicity ' + multiplicityValue);
                         }
+                        end.multiplicity = eval(multiplicityValue);
                     }
-                } else if (end.multiplicity > end.cardinality) {
-                    inconsistencies.push({
-                        node: end,
-                        message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type'
-                    });
-                }
 
-                if (matchingFactor === -1) {
-                    matchingFactor = (end.degree * end.cardinality) / end.multiplicity;
-                } else if (matchingFactor !== (end.degree * end.cardinality) / end.multiplicity) {
-                    inconsistencies.push({
-                        node: motif,
-                        message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
-                    });
+                    if (end.multiplicity > end.cardinality) {
+                        inconsistencies.push({
+                            node: end,
+                            message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type'
+                        });
+                    }
                 }
+            }
+
+            if (matchingFactor === -1) {
+                matchingFactor = (end.degree * end.cardinality) / end.multiplicity;
+            } else if (matchingFactor !== (end.degree * end.cardinality) / end.multiplicity) {
+                inconsistencies.push({
+                    node: motif,
+                    message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
+                });
             }
         }
         return inconsistencies;
@@ -237,20 +247,23 @@ define([
                 connectorEnds.push(node);
             }
         }
+        var regExpArray = ['^['];
+        for (var c of cardinalities) {
+            if (/^[a-z]$/.test(c)) {
+                regExpArray.push(c);
+            }
+        }
+        //regExpArray.push.apply(regExpArray, [']', '+$']);
+        regExpArray.push.apply(regExpArray, ['+*-/', '\(\)', '0-9', ']', '+$']);
+        var cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
+        self.logger.info(cardinalityRegEx);
         for (var end of connectorEnds) {
             // Checks multiplicities and degrees
             var multiplicity = self.core.getAttribute(end, 'multiplicity');
             var degree = self.core.getAttribute(end, 'degree');
             self.logger.debug(multiplicity);
             self.logger.debug(degree);
-            var regExpArray = ['^['];
-            for (var c of cardinalities) {
-                if (!/^[0-9]*$/.test(c)) {
-                    regExpArray.push(c);
-                }
-            }
-            regExpArray.push.apply(regExpArray, ['+*-/', '\\(\\)', '0-9', ']', '+$']);
-            var cardinalityRegEx = new RegExp(regExpArray.join(''), 'gi');
+
             try {
                 ArithmeticExpressionParser.parse(multiplicity);
             } catch (e) {
@@ -274,6 +287,7 @@ define([
                 });
             }
             if (!/^[0-9]+$/.test(degree) && !cardinalityRegEx.test(degree)) {
+            //if (!/^[0-9]+$/.test(degree) && !cardinalityRegEx.test(degree)) {
                 violations.push({
                         node: end,
                         message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
