@@ -249,7 +249,7 @@ define([
         for (nodePath in nodes) {
             node = nodes[nodePath];
             if (self.isMetaTypeOf(node, this.META.ComponentType)) {
-                // Checks cardinality whether it is non zero natural number or a character
+                // Checks cardinality whether it is non zero positive integer or a lower-case character
                 if (/^[a-z]|[1-9][0-9]*$/.test(self.core.getAttribute(node, 'cardinality'))) {
                     cardinalities.push(self.core.getAttribute(node, 'cardinality'));
                 } else {
