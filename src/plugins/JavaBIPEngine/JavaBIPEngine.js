@@ -10,11 +10,13 @@
 define([
     'plugin/PluginConfig',
     'text!./metadata.json',
-    'plugin/PluginBase'
+    'plugin/PluginBase',
+     'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser'
 ], function (
     PluginConfig,
     pluginMetadata,
-    PluginBase) {
+    PluginBase,
+    ArithmeticExpressionParser) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -55,37 +57,263 @@ define([
     JavaBIPEngine.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
+        var self = this;
+
+        self.loadNodeMap(self.activeNode)
+                .then(function (nodes) {
+                    self.logger.debug(Object.keys(nodes));
+
+                    var violations = self.hasViolations(nodes);
+                    if (violations.length > 0) {
+                        violations.forEach(function (violation) {
+                            self.createMessage(violation.node, violation.message, 'error');
+                        });
+                        throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
+                    }
+                    var inconsistencies = self.checkConsistency(nodes);
+                    if (inconsistencies.length === 0) {
+                        self.startJavaBIPEngine();
+                    } else {
+                        inconsistencies.forEach(function (inconsistency) {
+                            self.createMessage(inconsistency.node, inconsistency.message, 'error');
+                        });
+                        throw new Error('Model has ' + inconsistencies.length + '  inconsistencies, see messages for details');
+                    }
+                })
+        .then(function () {
+                        self.result.setSuccess(true);
+                        callback(null, self.result);
+                    })
+                    .catch(function (err) {
+                        self.logger.error(err.stack);
+                        // Result success is false at invocation.
+                        callback(err, self.result);
+                    });
+    };
+
+    JavaBIPEngine.prototype.checkConsistency = function (nodes) {
         var self = this,
-            nodeObject;
+         inconsistencies = [],
+         componentTypes = [],
+         ports = [],
+         subConnectors = [],
+         connectorEnds = [],
+         connections = [],
+         connectors = [];
 
+        /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
+        2. Checks equality of matching factors of the same connector */
 
-        // Using the logger.
-        self.logger.debug('This is a debug message.');
-        self.logger.info('This is an info message.');
-        self.logger.warn('This is a warning message.');
-        self.logger.error('This is an error message.');
+        for (var path in nodes) {
+            var node = nodes[path];
+            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+                var cardinality = self.core.getAttribute(node, 'cardinality');
+                var component = node;
+                componentTypes.push(component);
+                for (var child of self.core.getChildrenPaths(node)) {
+                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
+                        var port = nodes[child];
+                        ports.push(port);
+                        if (/^[a-z]$/.test(cardinality)) {
+                            component.cardinalityParameter = cardinality;
+                            self.logger.debug('cardinalityParameter ' + component.cardinalityParameter);
+                        }
+                        while (/^[a-z]$/.test(cardinality) ) {
+                            cardinality = 3;
+                            //cardinality = prompt('Please enter number of component instances for ' + //self.core.getAttribute(node, 'name') + 'component type');
+                        }
+                        self.logger.debug('cardinality: ' + cardinality);
+                        nodes[child].cardinality = cardinality;
+                    }
+                }
+                component.cardinalityValue = cardinality;
+                self.logger.debug('cardinalityValue ' + component.cardinalityValue);
 
-        // Using the coreAPI to make changes.
+            } else if (self.isMetaTypeOf(node, self.META.Connector)) {
+                /* If the connector is binary */
+                if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
+                    var connector = node;
+                    connectors.push(connector);
+                    var srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
+                    var dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
+                    srcConnectorEnd.connector = connector;
+                    dstConnectorEnd.connector = connector;
+                    connector.ends = [srcConnectorEnd, dstConnectorEnd];
+                /* If it is part of an n-ary connector */
+                } else {
+                    subConnectors.push(node);
+                }
+            } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
+                connections.push(node);
+                var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
+                if (self.getMetaType(gmeEnd) !== self.META.Connector) {
+                    var connectorEnd = gmeEnd;
+                    connectorEnds.push(connectorEnd);
+                    connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
+                    connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
+                }
+                //TODO: add export ports for hierarchical connector motifs
+            }
+        }
+        for (var connection of connections) {
+            var end = nodes[self.core.getPointerPath(connection, 'src')];
+            if (self.getMetaType(end) !== self.META.Connector) {
+                end.cardinality = nodes[self.core.getPointerPath(connection, 'dst')].cardinality;
+            }
+        }
+        for (var subpart of subConnectors) {
+            var auxNode = nodes[self.core.getPointerPath(subpart, 'dst')];
+            var srcAuxNode = nodes[self.core.getPointerPath(auxNode, 'src')];
+            var srcEnd = nodes[self.core.getPointerPath(subpart, 'src')];
+            if (connectors.includes(auxNode)) {
+                auxNode.ends.push(srcEnd);
+                srcEnd.connector = auxNode;
+            } else if (connectorEnds.includes(srcAuxNode)) {
+                for (var existingConnector in connectors) {
+                    if (existingConnector.ends.includes(srcAuxNode)) {
+                        existingConnector.ends.push(srcEnd);
+                        srcEnd.connector = existingConnector;
+                    }
+                }
+            }
+        }
+        for (var motif of connectors) {
+            var matchingFactor = -1;
+            for (var end of motif.ends) {
+                var degreeExpression = end.degree;
+                self.logger.debug('degreeExpression: ' + degreeExpression);
+                if (!/^[0-9]+$/.test(end.degree)) {
+                    for (var type of componentTypes) {
+                        if (type.cardinalityParameter !== undefined && degreeExpression.includes(type.cardinalityParameter)) {
+                            degreeExpression = degreeExpression.replace(type.cardinalityParameter, type.cardinalityValue);
+                            self.logger.debug('degreeValue ' + degreeExpression);
+                        }
+                    }
+                    end.degree = eval(degreeExpression);
+                }
+                var multiplicityExpression = end.multiplicity;
+                self.logger.debug('multiplicityExpression: ' + multiplicityExpression);
+                if (!/^[0-9]+$/.test(end.multiplicity)) {
+                    for (var type of componentTypes) {
+                        if (type.cardinalityParameter !== undefined && multiplicityExpression.includes(type.cardinalityParameter)) {
+                            multiplicityExpression = multiplicityExpression.replace(type.cardinalityParameter, type.cardinalityValue);
+                            self.logger.debug('multiplicityValue ' + multiplicityExpression);
+                        }
+                    }
+                    end.multiplicity = eval(multiplicityExpression);
+                    if (end.multiplicity > end.cardinality) {
+                        inconsistencies.push({
+                            node: end,
+                            message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type'
+                        });
+                    }
+                }
+                self.logger.debug('cardinality value: ' + end.cardinality);
+                self.logger.debug('matchingFactor new ' + (end.degree * end.cardinality) / end.multiplicity);
+                self.logger.debug('matchingFactor old ' + matchingFactor);
+                var newMatchingFactor = (end.degree * end.cardinality) / end.multiplicity;
+                if (/^[0-9]*$/.test(newMatchingFactor)) {
+                    if (matchingFactor === -1) {
+                        matchingFactor = newMatchingFactor;
+                    } else if (matchingFactor !== newMatchingFactor) {
+                        inconsistencies.push({
+                            node: motif,
+                            message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
+                        });
+                        break;
+                    }
+                } else {
+                    inconsistencies.push({
+                        node: end,
+                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer/'
+                    });
+                }
+            }
+        }
+        return inconsistencies;
+    };
 
-        nodeObject = self.activeNode;
-
-        self.core.setAttribute(nodeObject, 'name', 'My new obj');
-        self.core.setRegistry(nodeObject, 'position', {x: 70, y: 70});
-
-
-        // This will save the changes. If you don't want to save;
-        // exclude self.save and call callback directly from this scope.
-        self.save('JavaBIPEngine updated model.')
-            .then(function () {
-                self.result.setSuccess(true);
-                callback(null, self.result);
-            })
-            .catch(function (err) {
-                // Result success is false at invocation.
-                callback(err, self.result);
-            });
+    JavaBIPEngine.prototype.startJavaBIPEngine = function () {
 
     };
 
+    JavaBIPEngine.prototype.hasViolations = function (nodes) {
+        var violations = [],
+        cardinalities = [],
+        connectorEnds = [],
+        self = this,
+        nodePath,
+        node;
+
+        /* Check that multiplicities, degrees are valid arithmetic expressions of cardinalities */
+        for (nodePath in nodes) {
+            node = nodes[nodePath];
+            if (self.isMetaTypeOf(node, this.META.ComponentType)) {
+                // Checks cardinality whether it is non zero natural number or a character
+                if (/^[a-z]|[1-9][0-9]*$/.test(self.core.getAttribute(node, 'cardinality'))) {
+                    cardinalities.push(self.core.getAttribute(node, 'cardinality'));
+                } else {
+                    violations.push({
+                        node: node,
+                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character'
+                    });
+                }
+            } else if (self.isMetaTypeOf(node, this.META.Synchron) || self.isMetaTypeOf(node, this.META.Trigger)) {
+                connectorEnds.push(node);
+            }
+        }
+        var regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
+
+        for (var c of cardinalities) {
+            if (/^[a-z]$/.test(c)) {
+                regExpArray.push(c);
+            }
+        }
+        regExpArray.push.apply(regExpArray, [']', '+$']);
+        var cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
+        self.logger.debug(cardinalityRegEx);
+
+        for (var end of connectorEnds) {
+            self.logger.debug('end: ' + end);
+            // Checks multiplicities and degrees
+
+            var multiplicity = self.core.getAttribute(end, 'multiplicity');
+            var degree = self.core.getAttribute(end, 'degree');
+            self.logger.debug(multiplicity);
+            self.logger.debug(degree);
+
+            try {
+                ArithmeticExpressionParser.parse(multiplicity);
+            } catch (e) {
+                violations.push({
+                    node: end,
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case variables: ' + e
+                });
+            }
+            try {
+                ArithmeticExpressionParser.parse(degree);
+            } catch (e) {
+                violations.push({
+                    node: end,
+                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case variables: ' + e
+                });
+            }
+            cardinalityRegEx.lastIndex = 0;
+            if (!(cardinalityRegEx.test(multiplicity))) {
+                violations.push({
+                    node: end,
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
+                });
+            }
+            cardinalityRegEx.lastIndex = 0;
+            if (!cardinalityRegEx.test(degree)) {
+                violations.push({
+                        node: end,
+                        message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
+                    });
+            }
+        }
+        return violations;
+    };
     return JavaBIPEngine;
 });
