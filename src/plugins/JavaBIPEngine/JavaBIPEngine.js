@@ -212,7 +212,7 @@ define([
                 self.logger.debug('matchingFactor new ' + (end.degree * end.cardinality) / end.multiplicity);
                 self.logger.debug('matchingFactor old ' + matchingFactor);
                 var newMatchingFactor = (end.degree * end.cardinality) / end.multiplicity;
-                if (/^[0-9]*$/.test(newMatchingFactor)) {
+                if (/^[0-9]+$/.test(newMatchingFactor)) {
                     if (matchingFactor === -1) {
                         matchingFactor = newMatchingFactor;
                     } else if (matchingFactor !== newMatchingFactor) {
