@@ -1,10 +1,10 @@
 .bip-state-decorator {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   line-height: 0;
   font-weight: normal;
   .svg-container {
-    width: 40px;
+    width: 80px;
     display: inline-block;
   }
 
@@ -12,27 +12,92 @@
   .connector {
     border: blue solid 1px;
     background-color: #fefefe;
-    height: 10px;
-    width: 10px;
+
     position: absolute;
     cursor: pointer;
     z-index: 10;
 
     &.bottom {
-      margin-left: 5px;
+      margin-left: 34px;
       margin-top: -1px;
+      height: 15px;
+      width: 15px;
     }
+
+    &.bottom_right_1 {
+      margin-left: 63px;
+      margin-top: -6px;
+      height: 15px;
+      width: 15px;
+    }
+
+    &.bottom_right_2 {
+      margin-left: 77px;
+      margin-top: -26px;
+      height: 15px;
+      width: 15px;
+    }
+
+    &.bottom_left_1 {
+      margin-left: 4px;
+      margin-top: -6px;
+      height: 15px;
+      width: 15px;
+    }
+
+    &.bottom_left_2 {
+      margin-left: -12px;
+      margin-top: -26px;
+      height: 15px;
+      width: 15px;
+    }
+
     &.top {
-      margin-left: 5px;
-      margin-top: -28px;
+      margin-left: 34px;
+      margin-top: -95px;
+      height: 15px;
+      width: 15px;
     }
+
+    &.top_left_1 {
+      margin-left: 4px;
+      margin-top: -90px;
+      height: 15px;
+      width: 15px;
+    }
+
+    &.top_left_2 {
+      margin-left: -12px;
+      margin-top: -70px;
+      height: 15px;
+      width: 15px;
+    }
+
+    &.top_right_1 {
+      margin-left: 60px;
+      margin-top: -90px;
+      height: 15px;
+      width: 15px;
+    }
+
+    &.top_right_2 {
+      margin-left: 77px;
+      margin-top: -70px;
+      height: 15px;
+      width: 15px;
+    }
+
     &.left {
-      margin-top: -15px;
-      margin-left: -8px;
+      margin-top: -48px;
+      margin-left: -15px;
+      width: 15px;
+      height: 15px;
     }
     &.right {
-      margin-top: -15px;
-      margin-left: 18px;
+      margin-top: -48px;
+      margin-left: 80px;
+      width: 15px;
+      height: 15px;
     }
 
     &:hover {

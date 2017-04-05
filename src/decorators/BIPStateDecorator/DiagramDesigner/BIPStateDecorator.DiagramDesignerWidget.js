@@ -71,58 +71,145 @@ define([
 
     BIPStateDecorator.prototype.getConnectionAreas = function (id /*, isEnd, connectionMetaInfo*/) {
         var result = [],
-            edge = 10,
-            LEN = 20;
+            edge = 10;
 
         // This is where the connections will be connected too. (Right click to see the green boxes).
         // TODO: Add more areas around the circle..
         if (id === undefined || id === this.hostDesignerItem.id) {
-            //NORTH
+
+            //EAST-CENTRE
             result.push({
                 id: '0',
-                x1: edge,
-                y1: 0,
-                x2: this.hostDesignerItem.getWidth() - edge,
-                y2: 0,
-                angle1: 270,
-                angle2: 270,
-                len: LEN
+                x1: this.hostDesignerItem.getWidth(),
+                y1: edge,
+                x2: this.hostDesignerItem.getWidth(),
+                y2: this.hostDesignerItem.getHeight() - edge,
+                angle1: 0,
+                angle2: 0
             });
 
-            //EAST
+            //EAST - SOUTH - 30
             result.push({
                 id: '1',
                 x1: this.hostDesignerItem.getWidth(),
                 y1: edge,
                 x2: this.hostDesignerItem.getWidth(),
                 y2: this.hostDesignerItem.getHeight() - edge,
-                angle1: 0,
-                angle2: 0,
-                len: LEN
+                angle1: 30,
+                angle2: 30
             });
 
-            //SOUTH
+            //EAST - SOUTH -60
             result.push({
                 id: '2',
+                x1: this.hostDesignerItem.getWidth(),
+                y1: edge,
+                x2: this.hostDesignerItem.getWidth(),
+                y2: this.hostDesignerItem.getHeight() - edge,
+                angle1: 60,
+                angle2: 60
+            });
+
+            //SOUTH - CENTRE
+            result.push({
+                id: '3',
+                x1: 15,
+                y1: 0,
+                x2: this.hostDesignerItem.getWidth() - edge,
+                y2: 0,
+                angle1: 90,
+                angle2: 90
+            });
+
+
+            //SOUTH - WEST - 120
+            result.push({
+                id: '4',
                 x1: edge,
                 y1: this.hostDesignerItem.getHeight(),
                 x2: this.hostDesignerItem.getWidth() - edge,
                 y2: this.hostDesignerItem.getHeight(),
-                angle1: 90,
-                angle2: 90,
-                len: LEN
+                angle1: 120,
+                angle2: 120
+            });
+
+            //SOUTH - WEST - 150
+            result.push({
+                id: '5',
+                x1: edge,
+                y1: this.hostDesignerItem.getHeight(),
+                x2: this.hostDesignerItem.getWidth() - edge,
+                y2: this.hostDesignerItem.getHeight(),
+                angle1: 150,
+                angle2: 150
             });
 
             //WEST
             result.push({
-                id: '3',
+                id: '6',
                 x1: 0,
                 y1: edge,
                 x2: 0,
                 y2: this.hostDesignerItem.getHeight() - edge,
                 angle1: 180,
-                angle2: 180,
-                len: LEN
+                angle2: 180
+            });
+
+            //WEST - NORTH - 210
+            result.push({
+                id: '7',
+                x1: 0,
+                y1: edge,
+                x2: 0,
+                y2: this.hostDesignerItem.getHeight() - edge,
+                angle1: 210,
+                angle2: 210
+            });
+
+            //WEST - NORTH - 240
+            result.push({
+                id: '8',
+                x1: 0,
+                y1: edge,
+                x2: 0,
+                y2: this.hostDesignerItem.getHeight() - edge,
+                angle1: 240,
+                angle2: 240
+            });
+
+            //NORTH - CENTRE
+            result.push({
+                id: '9',
+                x1: 0,
+                y1: edge,
+                x2: 0,
+                y2: this.hostDesignerItem.getHeight() - edge,
+                angle1: 270,
+                angle2: 270
+            });
+
+
+            //NORTH - EAST - 300
+            result.push({
+                id: '10',
+                x1: 0,
+                y1: edge,
+                x2: 0,
+                y2: this.hostDesignerItem.getHeight() - edge,
+                angle1: 300,
+                angle2: 300
+            });
+
+
+            //NORTH - EAST - 330
+            result.push({
+                id: '11',
+                x1: 0,
+                y1: edge,
+                x2: 0,
+                y2: this.hostDesignerItem.getHeight() - edge,
+                angle1: 330,
+                angle2: 330
             });
         }
 
