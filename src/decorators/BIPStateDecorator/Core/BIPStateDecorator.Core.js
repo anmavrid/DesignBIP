@@ -51,7 +51,7 @@ define([
 
         if (this.name) {
             // TODO: Find the threshold and how to cut it when it exceeds.
-            if (this.name.length < 10) {
+            if (this.name.length < 8) {
                 this.skinParts.$name.text(this.name);
             } else {
                 this.skinParts.$name.text('.');

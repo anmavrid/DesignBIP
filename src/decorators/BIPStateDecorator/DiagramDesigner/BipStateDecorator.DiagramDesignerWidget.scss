@@ -1,10 +1,10 @@
 .bip-state-decorator {
-  width: 80px;
-  height: 80px;
+  width: 48px;
+  height: 48px;
   line-height: 0;
   font-weight: normal;
   .svg-container {
-    width: 80px;
+    width: 48px;
     display: inline-block;
   }
 
@@ -18,84 +18,28 @@
     z-index: 10;
 
     &.bottom {
-      margin-left: 34px;
-      margin-top: -1px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.bottom_right_1 {
-      margin-left: 63px;
+      margin-left: 16px;
       margin-top: -6px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.bottom_right_2 {
-      margin-left: 77px;
-      margin-top: -26px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.bottom_left_1 {
-      margin-left: 4px;
-      margin-top: -6px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.bottom_left_2 {
-      margin-left: -12px;
-      margin-top: -26px;
       height: 15px;
       width: 15px;
     }
 
     &.top {
-      margin-left: 34px;
-      margin-top: -95px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.top_left_1 {
-      margin-left: 4px;
-      margin-top: -90px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.top_left_2 {
-      margin-left: -12px;
-      margin-top: -70px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.top_right_1 {
-      margin-left: 60px;
-      margin-top: -90px;
-      height: 15px;
-      width: 15px;
-    }
-
-    &.top_right_2 {
-      margin-left: 77px;
-      margin-top: -70px;
+      margin-left: 16px;
+      margin-top: -58px;
       height: 15px;
       width: 15px;
     }
 
     &.left {
-      margin-top: -48px;
-      margin-left: -15px;
+      margin-top: -34px;
+      margin-left: -10px;
       width: 15px;
       height: 15px;
     }
     &.right {
-      margin-top: -48px;
-      margin-left: 80px;
+      margin-top: -34px;
+      margin-left: 45px;
       width: 15px;
       height: 15px;
     }
