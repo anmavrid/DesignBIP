@@ -101,7 +101,7 @@ define([
 
             //EAST - SOUTH - 60
             result.push({
-                id: '1',
+                id: '2',
                 x1: 37,
                 y1: 41,
                 x2: 37,
@@ -113,7 +113,7 @@ define([
 
             //WEST - CENTRE
             result.push({
-                id: '6',
+                id: '3',
                 x1: 0,
                 y1: 20,
                 x2: 0,
@@ -124,7 +124,7 @@ define([
 
             //WEST - NORTH - 210
             result.push({
-                id: '7',
+                id: '4',
                 x1: 5,
                 y1: 9,
                 x2: 5,
@@ -135,7 +135,7 @@ define([
 
             //WEST - NORTH - 240
             result.push({
-                id: '7',
+                id: '5',
                 x1: 14,
                 y1: 0,
                 x2: 14,
@@ -147,7 +147,7 @@ define([
 
             //NORTH - CENTRE
             result.push({
-                id: '9',
+                id: '6',
                 x1: 22,
                 y1: 0,
                 x2: 30,
@@ -158,7 +158,7 @@ define([
 
             //NORTH - EAST - 270
             result.push({
-                id: '9',
+                id: '7',
                 x1: 34,
                 y1: 4,
                 x2: 42,
@@ -169,7 +169,7 @@ define([
 
             //NORTH - EAST - 300
             result.push({
-                id: '9',
+                id: '8',
                 x1: 42,
                 y1: 14,
                 x2: 50,
@@ -180,7 +180,7 @@ define([
 
             //SOUTH - CENTRE
             result.push({
-                id: '3',
+                id: '9',
                 x1: 22,
                 y1: 48,
                 x2: 30,
@@ -189,6 +189,27 @@ define([
                 // angle2: 90
             });
 
+            //SOUTH - WEST - 120
+            result.push({
+                id: '10',
+                x1: 11,
+                y1: 45,
+                x2: 19,
+                y2: 45,
+                // angle1: 90,
+                // angle2: 90
+            });
+
+            //SOUTH - WEST - 150
+            result.push({
+                id: '11',
+                x1: 5,
+                y1: 36,
+                x2: 5,
+                y2: 36,
+                // angle1: 90,
+                // angle2: 90
+            });
 
         }
 

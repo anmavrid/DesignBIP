@@ -35,17 +35,6 @@ define([
 
             this.skinParts.$svg = $(template);
             this.skinParts.$name = this.skinParts.$svg.find('.name');
-
-            //TODO: If we need to show a pop-over (for showing the full name or some other data).
-            this.skinParts.$svgContainer.popover({
-                delay: {
-                    show: 150,
-                    hide: 0
-                },
-                animation: false,
-                trigger: 'hover',
-                content: this.name
-            });
             this.skinParts.$svgContainer.append(this.skinParts.$svg);
         }
 
@@ -54,7 +43,19 @@ define([
             if (this.name.length < 8) {
                 this.skinParts.$name.text(this.name);
             } else {
-                this.skinParts.$name.text('.');
+                this.skinParts.$name.text(this.name.substring(0, 5).concat('...'));
+
+                //TODO: If we need to show a pop-over (for showing the full name or some other data).
+                this.skinParts.$svgContainer.popover({
+                    delay: {
+                        show: 150,
+                        hide: 0
+                    },
+                    animation: false,
+                    trigger: 'hover',
+                    content: this.name
+                });
+
             }
         }
 
