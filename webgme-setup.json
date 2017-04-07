@@ -51,6 +51,14 @@
         "secondary": false,
         "widget": "src/visualizers/widgets/ModelEditor",
         "project": "webgme-bip-editors"
+      },
+      "BIPExecutionViz": {
+        "src": "panels/BIPExecutionViz/BIPExecutionVizPanel",
+        "title": "BIPExecutionViz",
+        "panel": "src/visualizers/panels/BIPExecutionViz",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/BIPExecutionViz",
+        "project": "webgme-bip-editors"
       }
     },
     "decorators": {}

@@ -10,5 +10,11 @@
     "title": "BIP Editor",
     "panel": "panels/ModelEditor/ModelEditorPanel",
     "DEBUG_ONLY": false
+  },
+  {
+    "id": "BIPExecutionViz",
+    "title": "BIPExecutionViz",
+    "panel": "panels/BIPExecutionViz/BIPExecutionVizPanel",
+    "DEBUG_ONLY": false
   }
 ]
