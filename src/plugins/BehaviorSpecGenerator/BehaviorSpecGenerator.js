@@ -12,13 +12,15 @@ define([
     'text!./metadata.json',
     'plugin/PluginBase',
     'common/util/ejs',
-    'text!./Templates/componentType.ejs'
+    'text!./Templates/componentType.ejs',
+    'plugin/BehaviorSpecGenerator/BehaviorSpecGenerator/GuardExpressionParser'
 ], function (
     PluginConfig,
     pluginMetadata,
     PluginBase,
     ejs,
-    componentTypeTemplate) {
+    componentTypeTemplate,
+    GuardExpressionParser) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -259,20 +261,32 @@ define([
                 }
                 componentTypeNames[name] = this.core.getPath(node);
 
+
                 // check for states,guards and transitions in each componentType
 
-                /*for (var child of this.core.getChildrenPaths(node))
+                //var childrenPaths = this.core.getChildrenPaths(node);
+                //this.logger.info("*******",childrenPaths);
+
+                for (var childPath of this.core.getChildrenPaths(node))
                 {
+                    this.logger.info("*******",childPath);
+                    var child  = nodes[childPath];
+                    //this.logger.info("*******",child);
+                    //this.logger.info("*******",child);
+                    var childName = this.core.getAttribute(child,'name');
+
                     if ((this.isMetaTypeOf(child, this.META.State)) || (this.isMetaTypeOf(child, this.META.InitialState))) {
-                        if (stateNames.hasOwnProperty(name)) {
+                        if (stateNames.hasOwnProperty(childName)) {
                             violations.push({
                                 node: node,
-                                message: 'Duplicated name [' + name + '] shared with ' + stateNames[name]
+                                message: 'Duplicated name [' + childName + '] shared with ' + stateNames[childName]
                             });
                         }
-                        stateNames[name] = this.core.getPath(node);
+                        stateNames[childName] = this.core.getPath(child);
+                        this.logger.info("*******",stateNames[childPath]);
                     }
-                }*/
+
+                }
             }
         }
 
