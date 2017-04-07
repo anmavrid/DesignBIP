@@ -1,0 +1,18 @@
+ 1) All generated JAVA classes or variables should be valid java names (and not collide with reserved keywords)
+
+2) Guard expressions must be valid: they can be defined using the name of guards, parenthesis and three logical operators: negation '!', conjunction '&' and disjunction ‘|'
+
+3) References to guards must be valid (that is a guard must exist with that name in the component type)
+
+4) Name collisions where applicable: 
+	A) Each component type must have a unique name. 
+	B) Each enforceable and spontaneous transition of a component type must have a 		unique name. The same does not hold for internal transitions (all internal 		transitions are named 'internal'). 
+	C) Each state of a component type must have a unique alphanumeric name.  
+	D) Each guard of a component type must have a unique alphanumeric name. 
+	E) Notice that you can have for instance two component types both with a state 		named “one", the uniqueness constraint applies only on the states, transitions  	and guards of the same component type.
+
+5) All transitions should have a src and dst set.
+
+6) Attributes: constructors, definitions, forwards of ComponentType, guardMethod of Guard, and transitionMethod of TransitionBase must not be empty.
+
+7) Log a warning if there is a (forgotten) state without any incoming or outgoing transitions. This does not add any errors but in principle there shouldn't be any unconnected states.
