@@ -14,7 +14,7 @@ config.seedProjects.basePaths.push(__dirname + '/../src/seeds/BIP');
 
 
 config.visualization.panelPaths.push(__dirname + '/../node_modules/webgme-codeeditor/src/visualizers/panels');
-config.visualization.panelPaths.push(__dirname + '/../node_modules/diagram-designers/src/visualizers/panels');
+config.visualization.panelPaths.push(__dirname + '/../node_modules/webgme-bip-editors/src/visualizers/panels');
 
 
 
@@ -27,8 +27,8 @@ config.requirejsPaths = {
   'CodeEditor': 'panels/CodeEditor/CodeEditorPanel',
   'panels': './src/visualizers/panels',
   'widgets': './src/visualizers/widgets',
-  'panels/ModelEditor': './node_modules/diagram-designers/src/visualizers/panels/ModelEditor',
-  'widgets/ModelEditor': './node_modules/diagram-designers/src/visualizers/widgets/ModelEditor',
+  'panels/ModelEditor': './node_modules/webgme-bip-editors/src/visualizers/panels/ModelEditor',
+  'widgets/ModelEditor': './node_modules/webgme-bip-editors/src/visualizers/widgets/ModelEditor',
   'panels/CodeEditor': './node_modules/webgme-codeeditor/src/visualizers/panels/CodeEditor',
   'widgets/CodeEditor': './node_modules/webgme-codeeditor/src/visualizers/widgets/CodeEditor'
 };

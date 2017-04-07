@@ -50,7 +50,7 @@
         "panel": "src/visualizers/panels/ModelEditor",
         "secondary": false,
         "widget": "src/visualizers/widgets/ModelEditor",
-        "project": "diagram-designers"
+        "project": "webgme-bip-editors"
       }
     },
     "decorators": {}

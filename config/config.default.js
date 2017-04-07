@@ -8,7 +8,7 @@ var config = require('./config.webgme'),
 // config.mongo.uri = 'mongodb://127.0.0.1:27017/webgme_my_app';
 
 config.requirejsPaths['widgets/DiagramDesigner'] =
-    './node_modules/diagram-designers/src/visualizers/widgets/DiagramDesigner';
+    './node_modules/webgme-bip-editors/src/visualizers/widgets/DiagramDesigner';
 
 config.visualization.svgDirs = ['./src/svgs'];
 config.seedProjects.defaultProject = 'BIP';
