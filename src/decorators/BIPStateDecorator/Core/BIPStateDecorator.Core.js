@@ -35,32 +35,39 @@ define([
 
             this.skinParts.$svg = $(template);
             this.skinParts.$name = this.skinParts.$svg.find('.name');
-
-            //TODO: If we need to show a pop-over (for showing the full name or some other data).
-            // this.skinParts.$svgContainer.popover({
-            //     delay: {
-            //         show: 150,
-            //         hide: 0
-            //     },
-            //     animation: false,
-            //     trigger: 'hover',
-            //     title: 'Multiplicity: ' + name.multiplicity,
-            //     content: 'Degree : ' + name.degree
-            // });
             this.skinParts.$svgContainer.append(this.skinParts.$svg);
         }
 
         if (this.name) {
             // TODO: Find the threshold and how to cut it when it exceeds.
-            if (this.name.length < 10) {
+            if (this.name.length < 8) {
                 this.skinParts.$name.text(this.name);
             } else {
-                this.skinParts.$name.text('...');
+                this.skinParts.$name.text(this.name.substring(0, 5).concat('...'));
+
+                //TODO: If we need to show a pop-over (for showing the full name or some other data).
+                this.skinParts.$svgContainer.popover({
+                    delay: {
+                        show: 150,
+                        hide: 0
+                    },
+                    animation: false,
+                    trigger: 'hover',
+                    content: this.name
+                });
+
             }
         }
 
         // Store the current one as previous for next iteration.
         this.prevMetaTypeName = this.metaTypeName;
+
+         // If state is InitialState then, the border color is red
+        if (this.metaTypeName === "InitialState") {
+            this.skinParts.$svg.find('circle').css('stroke', 'red');
+
+        }
+
     };
 
     return BIPStateDecoratorCore;
