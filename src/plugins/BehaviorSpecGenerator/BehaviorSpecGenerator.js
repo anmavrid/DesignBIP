@@ -234,18 +234,24 @@ define([
             componentTypeNames = {},
             name,
             nodePath,
+            guardNames = {},
+            guardExpressions = [],
             node;
 
         for (nodePath in nodes) {
             var stateNames = {};
+            var transitionNames = {};
+
             node = nodes[nodePath];
             name = this.core.getAttribute(node, 'name');
+
+
             // TODO: check all expected types and more constraints.
             if (this.isMetaTypeOf(node, this.META.ComponentType)) {
                 // This will be a java class - no special characters etc.
                 // The example is incomplete and also allows leading numbers, try at https://regex101.com/
                 //if (/^[0-9a-zA-Z_]+$/.test(name) === false) {
-                if (/^(?!abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|intanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|Abstract|Continue|For|New|Switch|Assert|Default|Goto|Package|Synchronized|Boolean|Do|If|Private|This|Break|Double|Implements|Protected|Throw|Byte|Else|Import|Public|Throws|Case|Enum|Intanceof|Return|Transient|Catch|Extends|Int|Short|Try|Char|Final|Interface|Static|Void|Class|Finally|Long|Strictfp|Volatile|Const|Float|Native|Super|While)[A-Z][0-9a-z]+$/.test(name) === false) {
+                if (/^(?!abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|intanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|Abstract|Continue|For|New|Switch|Assert|Default|Goto|Package|Synchronized|Boolean|Do|If|Private|This|Break|Double|Implements|Protected|Throw|Byte|Else|Import|Public|Throws|Case|Enum|Intanceof|Return|Transient|Catch|Extends|Int|Short|Try|Char|Final|Interface|Static|Void|Class|Finally|Long|Strictfp|Volatile|Const|Float|Native|Super|While)[A-Z][0-9a-zA-Z]+$/.test(name) === false) {
                     violations.push({
                         node: node,
                         message: 'Illegal ComponentType name [' + name + '] \nIt is an illegal java class name.'
@@ -261,19 +267,39 @@ define([
                 }
                 componentTypeNames[name] = this.core.getPath(node);
 
+                var constructors = this.core.getAttribute(node, 'constructors');
+                if (constructors == '') {
+                    violations.push({
+                        node: node,
+                        message: 'Constructors empty for' + componentTypeNames[name]
+                    });
+                }
+                var definitions = this.core.getAttribute(node, 'definitions');
+                if (definitions == '') {
+                    violations.push({
+                        node: node,
+                        message: 'Definitions empty for' + componentTypeNames[name]
+                    });
+                }
+                var forwards = this.core.getAttribute(node, 'forwards');
+                if (definitions == '') {
+                    violations.push({
+                        node: node,
+                        message: 'forwards empty for' + componentTypeNames[name]
+                    });
+                }
 
                 // check for states,guards and transitions in each componentType
 
                 //var childrenPaths = this.core.getChildrenPaths(node);
                 //this.logger.info("*******",childrenPaths);
 
-                for (var childPath of this.core.getChildrenPaths(node))
-                {
-                    this.logger.info("*******",childPath);
-                    var child  = nodes[childPath];
+                for (var childPath of this.core.getChildrenPaths(node)) {
+                    this.logger.info("*******", childPath);
+                    var child = nodes[childPath];
                     //this.logger.info("*******",child);
                     //this.logger.info("*******",child);
-                    var childName = this.core.getAttribute(child,'name');
+                    var childName = this.core.getAttribute(child, 'name');
 
                     if ((this.isMetaTypeOf(child, this.META.State)) || (this.isMetaTypeOf(child, this.META.InitialState))) {
                         if (stateNames.hasOwnProperty(childName)) {
@@ -283,13 +309,132 @@ define([
                             });
                         }
                         stateNames[childName] = this.core.getPath(child);
-                        this.logger.info("*******",stateNames[childPath]);
+                        this.logger.info("*******", stateNames[childPath]);
                     }
 
+                    if ((this.isMetaTypeOf(child, this.META.EnforceableTransition)) || (this.isMetaTypeOf(child, this.META.SpontaneousTransition))) {
+
+                        if (this.core.getPointerPath(child, 'dst') === null) {
+                            violations.push({
+                                node: node,
+                                message: 'Dst of connector [' + childPath + '] is null'
+                            });
+                        }
+                        if (this.core.getPointerPath(child, 'src') === null) {
+                            violations.push({
+                                node: node,
+                                message: 'Src of connector [' + childPath + '] is null'
+                            });
+                        }
+
+                        //this.logger.info('***guardname is: ',this.core.getAttribute(child, 'guardName'));
+                        var expression = this.core.getAttribute(child, 'guardName');
+                        if(expression!=''){
+                            guardExpressions.push(expression);
+                        }
+
+
+                        var transitionMethod = this.core.getAttribute(child, 'transitionMethod');
+                        if (transitionMethod === '') {
+                            violations.push({
+                                node: node,
+                                message: 'transitionMethod empty for ' + childName + ' with path ' + childPath
+                            });
+                        }
+
+                        if (transitionNames.hasOwnProperty(childName)) {
+                            violations.push({
+                                node: node,
+                                message: 'Duplicated name [' + childName + '] shared with ' + transitionNames[childName]
+                            });
+                        }
+                        transitionNames[childName] = this.core.getPath(child);
+                        //this.logger.info("*******",stateNames[childPath]);
+                    }
+
+                    if (this.isMetaTypeOf(child, this.META.InternalTransition)) {
+
+                        if (this.core.getPointerPath(child, 'dst') === null) {
+                            violations.push({
+                                node: node,
+                                message: 'Dst of connector [' + childPath + '] is null'
+                            });
+                        }
+                        if (this.core.getPointerPath(child, 'src') === null) {
+                            violations.push({
+                                node: node,
+                                message: 'Src of connector [' + childPath + '] is null'
+                            });
+                        }
+
+                        //this.logger.info('***guardname is: ',this.core.getAttribute(child, 'guardName'));
+                        var expression = this.core.getAttribute(child, 'guardName');
+                        if(expression!=''){
+                            guardExpressions.push(expression);
+                        }
+                        var transitionMethod = this.core.getAttribute(child, 'transitionMethod');
+                        if (transitionMethod === '') {
+                            violations.push({
+                                node: node,
+                                message: 'transitionMethod empty for ' + childName + ' with path ' + childPath
+                            });
+                        }
+                    }
+
+
+                    if (this.isMetaTypeOf(child, this.META.Guard)) {
+                        if (transitionNames.hasOwnProperty(childName)) {
+                            violations.push({
+                                node: node,
+                                message: 'Duplicated name [' + childName + '] shared with ' + guardNames[childName]
+                            });
+                        }
+                        guardNames[childName] = this.core.getPath(child);
+                        //this.logger.info("*******",stateNames[childPath]);
+
+                        var guardMathod = this.core.getAttribute(child, 'guardMethod');
+                        if (guardMathod === '') {
+                            violations.push({
+                                node: node,
+                                message: 'GuardMethod empty for ' + childName + ' with path ' + childPath
+                            });
+                        }
+                    }
                 }
             }
         }
 
+        //this.logger.info('guardNames size ' + guardNames);
+        var regExpArray = ['^[', '\&\!\|', '\(\)'];
+        this.logger.info('regExpArray ' + regExpArray);
+
+
+        for (var name in guardNames) {
+            regExpArray.push(name);
+        }
+
+        regExpArray.push.apply(regExpArray, [']', '+$']);
+        var guardRegEx = new RegExp(regExpArray.join(''), 'g');
+        this.logger.info('guardRegEx ' + guardRegEx);
+
+        for(var i=0;i<guardExpressions.length;i++){
+            try {
+                GuardExpressionParser.parse(guardExpressions[i]);
+            } catch (e) {
+                violations.push({
+//                    node: end,
+                    message: 'GuardExpression [' + guardExpressions[i] + '] is not a valid boolean expression'
+                });
+            }
+
+            guardRegEx.lastIndex = 0;
+            if (!(guardRegEx.test(guardExpressions[i]))) {
+                violations.push({
+  //                  node: end,
+                    message: 'Guard Expression '+ guardExpressions[i] + ' does not contain valid guard names.'
+                });
+            }
+        }
         return violations;
     };
 
