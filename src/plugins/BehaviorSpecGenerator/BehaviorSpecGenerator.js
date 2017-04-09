@@ -236,12 +236,16 @@ define([
             nodePath,
             guardNames = {},
             guardExpressions = [],
+            stateswithvalidTransitions = {},
+            totalStateNames = {},
             node;
 
         for (nodePath in nodes) {
-            var stateNames = {};
+            guardNames = {};
+            guardExpressions = [];
+            stateswithvalidTransitions = {};
+            totalStateNames = {};
             var transitionNames = {};
-
             node = nodes[nodePath];
             name = this.core.getAttribute(node, 'name');
 
@@ -262,7 +266,7 @@ define([
                 if (componentTypeNames.hasOwnProperty(name)) {
                     violations.push({
                         node: node,
-                        message: 'Duplicated name [' + name + '] shared with ' + componentTypeNames[name]
+                        message: 'Duplicated component [' + name + '] shared with ' + componentTypeNames[name]
                     });
                 }
                 componentTypeNames[name] = this.core.getPath(node);
@@ -295,28 +299,24 @@ define([
                 //this.logger.info("*******",childrenPaths);
 
                 for (var childPath of this.core.getChildrenPaths(node)) {
-                    this.logger.info("*******", childPath);
                     var child = nodes[childPath];
-                    //this.logger.info("*******",child);
-                    //this.logger.info("*******",child);
                     var childName = this.core.getAttribute(child, 'name');
 
                     if ((this.isMetaTypeOf(child, this.META.State)) || (this.isMetaTypeOf(child, this.META.InitialState))) {
-                        if (stateNames.hasOwnProperty(childName)) {
+                        if (totalStateNames.hasOwnProperty(childName)) {
                             violations.push({
                                 node: node,
-                                message: 'Duplicated name [' + childName + '] shared with ' + stateNames[childName]
+                                message: 'Duplicated State [' + childName + '] shared with ' + totalStateNames[childName]
                             });
                         }
-                        stateNames[childName] = this.core.getPath(child);
-                        this.logger.info("*******", stateNames[childPath]);
+                        totalStateNames[childName] = this.core.getPath(child);
                     }
 
                     if ((this.isMetaTypeOf(child, this.META.EnforceableTransition)) || (this.isMetaTypeOf(child, this.META.SpontaneousTransition))) {
 
                         if (this.core.getPointerPath(child, 'dst') === null) {
                             violations.push({
-                                node: node,
+                                    node: node,
                                 message: 'Dst of connector [' + childPath + '] is null'
                             });
                         }
@@ -327,12 +327,22 @@ define([
                             });
                         }
 
-                        //this.logger.info('***guardname is: ',this.core.getAttribute(child, 'guardName'));
+                        if (this.core.getPointerPath(child, 'dst') != null) {
+                            var state = nodes[this.core.getPointerPath(child, 'dst')];
+                            var stateName = this.core.getAttribute(state, 'name');
+                            stateswithvalidTransitions[stateName]= this.core.getPath(state);
+                        }
+
+                        if (this.core.getPointerPath(child, 'src') != null) {
+                            var state = nodes[this.core.getPointerPath(child, 'dst')];
+                            var stateName = this.core.getAttribute(state, 'name');
+                            stateswithvalidTransitions[stateName]= this.core.getPath(state);
+                        }
+
                         var expression = this.core.getAttribute(child, 'guardName');
                         if(expression!=''){
                             guardExpressions.push(expression);
                         }
-
 
                         var transitionMethod = this.core.getAttribute(child, 'transitionMethod');
                         if (transitionMethod === '') {
@@ -345,7 +355,7 @@ define([
                         if (transitionNames.hasOwnProperty(childName)) {
                             violations.push({
                                 node: node,
-                                message: 'Duplicated name [' + childName + '] shared with ' + transitionNames[childName]
+                                message: 'Duplicated transition [' + childName + '] shared with ' + transitionNames[childName]
                             });
                         }
                         transitionNames[childName] = this.core.getPath(child);
@@ -383,10 +393,10 @@ define([
 
 
                     if (this.isMetaTypeOf(child, this.META.Guard)) {
-                        if (transitionNames.hasOwnProperty(childName)) {
+                        if (guardNames.hasOwnProperty(childName)) {
                             violations.push({
                                 node: node,
-                                message: 'Duplicated name [' + childName + '] shared with ' + guardNames[childName]
+                                message: 'Duplicated guard [' + childName + '] shared with ' + guardNames[childName]
                             });
                         }
                         guardNames[childName] = this.core.getPath(child);
@@ -404,7 +414,12 @@ define([
             }
         }
 
-        //this.logger.info('guardNames size ' + guardNames);
+        for(var stateName in totalStateNames) {
+            if (!stateswithvalidTransitions.hasOwnProperty(stateName)) {
+                this.logger.warn('State '+ stateName +' with path '+ totalStateNames[stateName] +' has no transitions associated with it.Check your model.');
+            }
+        }
+
         var regExpArray = ['^[', '\&\!\|', '\(\)'];
         this.logger.info('regExpArray ' + regExpArray);
 
