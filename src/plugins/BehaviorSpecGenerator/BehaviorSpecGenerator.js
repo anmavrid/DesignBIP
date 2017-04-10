@@ -234,6 +234,7 @@ define([
             componentTypeNames = {},
             name,
             nodePath,
+            totalguardNames = {},
             guardNames = {},
             guardExpressions = [],
             stateswithvalidTransitions = {},
@@ -294,9 +295,6 @@ define([
                 }
 
                 // check for states,guards and transitions in each componentType
-
-                //var childrenPaths = this.core.getChildrenPaths(node);
-                //this.logger.info("*******",childrenPaths);
 
                 for (var childPath of this.core.getChildrenPaths(node)) {
                     var child = nodes[childPath];
@@ -400,7 +398,6 @@ define([
                             });
                         }
                         guardNames[childName] = this.core.getPath(child);
-                        //this.logger.info("*******",stateNames[childPath]);
 
                         var guardMathod = this.core.getAttribute(child, 'guardMethod');
                         if (guardMathod === '') {
@@ -411,24 +408,74 @@ define([
                         }
                     }
                 }
+
+                var regExpArray = ['^('];
+                this.logger.info('regExpArray ' + regExpArray);
+
+                var j=0;
+                for (var name in guardNames) {
+                    if(j!=0) {
+                        regExpArray.push('|');
+                    }
+                    j++;
+                    this.logger.info('***',name);
+                    regExpArray.push(name);
+                }
+                regExpArray.push('|');
+
+                // ^(g1|abs2r3|[\!\&\(\)\|])+$
+
+                regExpArray.push.apply(regExpArray, ['[\!\&\(\)\|])+$']);
+                var guardRegEx = new RegExp(regExpArray.join(''), 'g');
+                this.logger.info('guardRegEx ' + guardRegEx);
+
+                for(var i=0;i<guardExpressions.length;i++){
+                    try {
+                        GuardExpressionParser.parse(guardExpressions[i]);
+                    } catch (e) {
+                        violations.push({
+//                    node: end,
+                            message: 'GuardExpression [' + guardExpressions[i] + '] is not a valid boolean expression'
+                        });
+                    }
+
+                    guardRegEx.lastIndex = 0;
+                    if (!(guardRegEx.test(guardExpressions[i]))) {
+                        violations.push({
+                            //                  node: end,
+                            message: 'Guard Expression '+ guardExpressions[i] + ' does not contain valid guard names.'
+                        });
+                    }
+                }
+
+                for(var stateName in totalStateNames) {
+                    if (!stateswithvalidTransitions.hasOwnProperty(stateName)) {
+                        this.logger.warn('State '+ stateName +' with path '+ totalStateNames[stateName] +' has no transitions associated with it.Check your model.');
+                    }
+                }
+
             }
         }
 
-        for(var stateName in totalStateNames) {
-            if (!stateswithvalidTransitions.hasOwnProperty(stateName)) {
-                this.logger.warn('State '+ stateName +' with path '+ totalStateNames[stateName] +' has no transitions associated with it.Check your model.');
-            }
-        }
 
-        var regExpArray = ['^[', '\&\!\|', '\(\)'];
+
+        // ^(g1|abs2r3|[\!\&\(\)\|])+$
+
+        /*var regExpArray = ['^('];
         this.logger.info('regExpArray ' + regExpArray);
 
-
+        var j=0;
         for (var name in guardNames) {
+            if(j!=0) {
+                regExpArray.push('|');
+            }
+            j++;
+            this.logger.info('***',name);
             regExpArray.push(name);
         }
+        regExpArray.push('|');
 
-        regExpArray.push.apply(regExpArray, [']', '+$']);
+        regExpArray.push.apply(regExpArray, ['[\!\&\(\)\|])+]']);
         var guardRegEx = new RegExp(regExpArray.join(''), 'g');
         this.logger.info('guardRegEx ' + guardRegEx);
 
@@ -450,6 +497,7 @@ define([
                 });
             }
         }
+        */
         return violations;
     };
 
