@@ -58,6 +58,7 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this;
+        var architectureModel = {};
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
@@ -70,9 +71,10 @@ define([
                         });
                         throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
                     }
-                    var inconsistencies = self.checkConsistency(nodes);
+                    architectureModel = self.getArchitectureModel(nodes);
+                    var inconsistencies = self.checkConsistency(architectureModel, nodes);
                     if (inconsistencies.length === 0) {
-                        self.startJavaBIPEngine();
+                        self.startJavaBIPEngine(architectureModel);
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
@@ -91,29 +93,27 @@ define([
                     });
     };
 
-    JavaBIPEngine.prototype.checkConsistency = function (nodes) {
+    JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
         var self = this,
-         inconsistencies = [],
-         componentTypes = [],
-         ports = [],
-         subConnectors = [],
-         connectorEnds = [],
-         connections = [],
-         connectors = [];
-
-        /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
-        2. Checks equality of matching factors of the same connector */
+        architectureModel = {
+            componentTypes: [],
+            ports: [],
+            subConnectors: [],
+            connectorEnds: [],
+            connections: [],
+            connectors: []
+        };
 
         for (var path in nodes) {
             var node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                 var cardinality = self.core.getAttribute(node, 'cardinality');
                 var component = node;
-                componentTypes.push(component);
+                architectureModel.componentTypes.push(component);
                 for (var child of self.core.getChildrenPaths(node)) {
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                         var port = nodes[child];
-                        ports.push(port);
+                        architectureModel.ports.push(port);
                         if (/^[a-z]$/.test(cardinality)) {
                             component.cardinalityParameter = cardinality;
                             self.logger.debug('cardinalityParameter ' + component.cardinalityParameter);
@@ -133,7 +133,7 @@ define([
                 /* If the connector is binary */
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
                     var connector = node;
-                    connectors.push(connector);
+                    architectureModel.connectors.push(connector);
                     var srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
                     var dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
                     srcConnectorEnd.connector = connector;
@@ -141,35 +141,45 @@ define([
                     connector.ends = [srcConnectorEnd, dstConnectorEnd];
                 /* If it is part of an n-ary connector */
                 } else {
-                    subConnectors.push(node);
+                    architectureModel.subConnectors.push(node);
                 }
             } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
-                connections.push(node);
+                architectureModel.connections.push(node);
                 var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
                 if (self.getMetaType(gmeEnd) !== self.META.Connector) {
                     var connectorEnd = gmeEnd;
-                    connectorEnds.push(connectorEnd);
+                    architectureModel.connectorEnds.push(connectorEnd);
                     connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
                     connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
                 }
                 //TODO: add export ports for hierarchical connector motifs
             }
         }
-        for (var connection of connections) {
+        return architectureModel;
+      };
+
+    JavaBIPEngine.prototype.checkConsistency = function (architectureModel, nodes) {
+        var self = this,
+         inconsistencies = [];
+
+        /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
+        2. Checks equality of matching factors of the same connector */
+
+        for (var connection of architectureModel.connections) {
             var end = nodes[self.core.getPointerPath(connection, 'src')];
             if (self.getMetaType(end) !== self.META.Connector) {
                 end.cardinality = nodes[self.core.getPointerPath(connection, 'dst')].cardinality;
             }
         }
-        for (var subpart of subConnectors) {
+        for (var subpart of architectureModel.subConnectors) {
             var auxNode = nodes[self.core.getPointerPath(subpart, 'dst')];
             var srcAuxNode = nodes[self.core.getPointerPath(auxNode, 'src')];
             var srcEnd = nodes[self.core.getPointerPath(subpart, 'src')];
-            if (connectors.includes(auxNode)) {
+            if (architectureModel.connectors.includes(auxNode)) {
                 auxNode.ends.push(srcEnd);
                 srcEnd.connector = auxNode;
-            } else if (connectorEnds.includes(srcAuxNode)) {
-                for (var existingConnector in connectors) {
+            } else if (architectureModel.connectorEnds.includes(srcAuxNode)) {
+                for (var existingConnector in architectureModel.connectors) {
                     if (existingConnector.ends.includes(srcAuxNode)) {
                         existingConnector.ends.push(srcEnd);
                         srcEnd.connector = existingConnector;
@@ -177,13 +187,13 @@ define([
                 }
             }
         }
-        for (var motif of connectors) {
+        for (var motif of architectureModel.connectors) {
             var matchingFactor = -1;
             for (var end of motif.ends) {
                 var degreeExpression = end.degree;
                 self.logger.debug('degreeExpression: ' + degreeExpression);
                 if (!/^[0-9]+$/.test(end.degree)) {
-                    for (var type of componentTypes) {
+                    for (var type of architectureModel.componentTypes) {
                         if (type.cardinalityParameter !== undefined && degreeExpression.includes(type.cardinalityParameter)) {
                             degreeExpression = degreeExpression.replace(type.cardinalityParameter, type.cardinalityValue);
                             self.logger.debug('degreeValue ' + degreeExpression);
@@ -194,7 +204,7 @@ define([
                 var multiplicityExpression = end.multiplicity;
                 self.logger.debug('multiplicityExpression: ' + multiplicityExpression);
                 if (!/^[0-9]+$/.test(end.multiplicity)) {
-                    for (var type of componentTypes) {
+                    for (var type of architectureModel.componentTypes) {
                         if (type.cardinalityParameter !== undefined && multiplicityExpression.includes(type.cardinalityParameter)) {
                             multiplicityExpression = multiplicityExpression.replace(type.cardinalityParameter, type.cardinalityValue);
                             self.logger.debug('multiplicityValue ' + multiplicityExpression);
@@ -233,7 +243,7 @@ define([
         return inconsistencies;
     };
 
-    JavaBIPEngine.prototype.startJavaBIPEngine = function () {
+    JavaBIPEngine.prototype.startJavaBIPEngine = function (architectureModel) {
 
     };
 
