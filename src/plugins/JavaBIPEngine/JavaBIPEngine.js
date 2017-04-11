@@ -244,7 +244,8 @@ define([
     };
 
     JavaBIPEngine.prototype.startJavaBIPEngine = function (architectureModel) {
-
+        for (var type of architectureModel.componentTypes) {
+        }
     };
 
     JavaBIPEngine.prototype.hasViolations = function (nodes) {
@@ -284,14 +285,9 @@ define([
         self.logger.debug(cardinalityRegEx);
 
         for (var end of connectorEnds) {
-            self.logger.debug('end: ' + end);
             // Checks multiplicities and degrees
-
             var multiplicity = self.core.getAttribute(end, 'multiplicity');
             var degree = self.core.getAttribute(end, 'degree');
-            self.logger.debug(multiplicity);
-            self.logger.debug(degree);
-
             try {
                 ArithmeticExpressionParser.parse(multiplicity);
             } catch (e) {
