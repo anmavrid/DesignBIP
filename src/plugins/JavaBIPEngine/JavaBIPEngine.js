@@ -58,7 +58,8 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this;
-        var architectureModel = {};
+        var architectureModel = {},
+        testInfo = {};
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
@@ -74,7 +75,11 @@ define([
                     architectureModel = self.getArchitectureModel(nodes);
                     var inconsistencies = self.checkConsistency(architectureModel, nodes);
                     if (inconsistencies.length === 0) {
-                        self.startJavaBIPEngine(architectureModel);
+                        testInfo = self.generateTestInfo(architectureModel);
+                        var filesToAdd = {};
+                        filesToAdd[filename] = ejs.render(caseStudyTemplate, testInfo);
+                        artifact = self.blobClient.createArtifact('test');
+                        return artifact.addFiles(filesToAdd);
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
@@ -156,7 +161,7 @@ define([
             }
         }
         return architectureModel;
-      };
+    };
 
     JavaBIPEngine.prototype.checkConsistency = function (architectureModel, nodes) {
         var self = this,
@@ -235,7 +240,7 @@ define([
                 } else {
                     inconsistencies.push({
                         node: end,
-                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer/'
+                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer'
                     });
                 }
             }
@@ -243,9 +248,15 @@ define([
         return inconsistencies;
     };
 
-    JavaBIPEngine.prototype.startJavaBIPEngine = function (architectureModel) {
-        for (var type of architectureModel.componentTypes) {
-        }
+    JavaBIPEngine.prototype.generateTestInfo = function (architectureModel) {
+        var self = this,
+        info = {
+            className: self.core.getAttribute(self.activeNode, 'name'),
+            gluePath: ''
+
+        };
+        info.className = info.className.replace(/\s+/g, '');
+        return info;
     };
 
     JavaBIPEngine.prototype.hasViolations = function (nodes) {
