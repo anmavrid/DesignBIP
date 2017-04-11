@@ -13,10 +13,7 @@ import org.javabip.engine.factory.EngineFactory;
 import org.javabip.exceptions.BIPException;
 import org.javabip.glue.GlueBuilder;
 import org.javabip.glue.TwoSynchronGlueBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 
 import akka.actor.ActorSystem;
 
@@ -24,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class <%=name%> {
+public class test<%=className%> {
 
 	  ActorSystem system;
 		EngineFactory engineFactory;
@@ -57,7 +54,6 @@ public class <%=name%> {
 				engine.specifyGlue(bipGlue);
 				engine.start();
         engine.execute();
-
 
 				while(noOfTransitions < <%noOfRequiredTransitions%>) {
 					try {
