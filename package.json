@@ -25,7 +25,7 @@
     "jshint": "2.9.3"
   },
   "dependencies": {
-    "diagram-designers": "github:webgme/diagram-designers#bip",
+    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors",
     "webgme-codeeditor": "^2.0.0"
   }
 }
