@@ -1,11 +1,5 @@
 [
   {
-    "id": "CodeEditor",
-    "title": "CodeEditor",
-    "panel": "panels/CodeEditor/CodeEditorPanel",
-    "DEBUG_ONLY": false
-  },
-  {
     "id": "BIPEditor",
     "title": "BIP Editor",
     "panel": "panels/ModelEditor/ModelEditorPanel",
@@ -15,6 +9,12 @@
     "id": "BIPExecutionViz",
     "title": "BIPExecutionViz",
     "panel": "panels/BIPExecutionViz/BIPExecutionVizPanel",
+    "DEBUG_ONLY": false
+  },
+  {
+    "id": "BIPCodeEditor",
+    "title": "BIPCodeEditor",
+    "panel": "panels/BIPCodeEditor/BIPCodeEditorPanel",
     "DEBUG_ONLY": false
   }
 ]
