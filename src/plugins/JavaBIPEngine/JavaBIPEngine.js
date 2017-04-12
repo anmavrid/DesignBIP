@@ -11,12 +11,16 @@ define([
     'plugin/PluginConfig',
     'text!./metadata.json',
     'plugin/PluginBase',
-     'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser'
+     'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser',
+     'common/util/ejs',
+     'text!./Templates/caseStudy.ejs'
 ], function (
     PluginConfig,
     pluginMetadata,
     PluginBase,
-    ArithmeticExpressionParser) {
+    ArithmeticExpressionParser,
+    ejs,
+    caseStudyTemplate) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -57,45 +61,56 @@ define([
     JavaBIPEngine.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
-        var self = this;
-        var architectureModel = {},
-        testInfo = {};
+        var self = this,
+        architectureModel = {},
+        testInfo = {},
+        filesToAdd = {},
+        artifact,
+        violations,
+        inconsistencies,
+        fileName;
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
                     self.logger.debug(Object.keys(nodes));
 
-                    var violations = self.hasViolations(nodes);
+                    violations = self.hasViolations(nodes);
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
                             self.createMessage(violation.node, violation.message, 'error');
                         });
-                        throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
+                        throw new Error('Model has ' + violations.length + ' violation(s), see messages for details');
                     }
                     architectureModel = self.getArchitectureModel(nodes);
-                    var inconsistencies = self.checkConsistency(architectureModel, nodes);
+                    inconsistencies = self.checkConsistency(architectureModel, nodes);
                     if (inconsistencies.length === 0) {
                         testInfo = self.generateTestInfo(architectureModel);
-                        var filesToAdd = {};
-                        filesToAdd[filename] = ejs.render(caseStudyTemplate, testInfo);
+                        fileName = testInfo.className + '.java';
+                        filesToAdd[fileName] = ejs.render(caseStudyTemplate, testInfo);
                         artifact = self.blobClient.createArtifact('test');
+
                         return artifact.addFiles(filesToAdd);
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
                         });
-                        throw new Error('Model has ' + inconsistencies.length + '  inconsistencies, see messages for details');
+                        throw new Error('Model has ' + inconsistencies.length + ' inconsistencies, see messages for details');
                     }
                 })
-        .then(function () {
-                        self.result.setSuccess(true);
-                        callback(null, self.result);
-                    })
-                    .catch(function (err) {
-                        self.logger.error(err.stack);
-                        // Result success is false at invocation.
-                        callback(err, self.result);
-                    });
+                .then(function (fileHash) {
+                    self.result.addArtifact(fileHash);
+                    return artifact.save();
+                })
+                .then(function () {
+                    //self.result.addArtifact(artifactHash);
+                    self.result.setSuccess(true);
+                    callback(null, self.result);
+                })
+                .catch(function (err) {
+                    self.logger.error(err.stack);
+                    // Result success is false at invocation.
+                    callback(err, self.result);
+                }) ;
     };
 
     JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
@@ -115,6 +130,7 @@ define([
                 var cardinality = self.core.getAttribute(node, 'cardinality');
                 var component = node;
                 architectureModel.componentTypes.push(component);
+                component.name  = self.core.getAttribute(node, 'name');
                 for (var child of self.core.getChildrenPaths(node)) {
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                         var port = nodes[child];
@@ -169,7 +185,6 @@ define([
 
         /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
         2. Checks equality of matching factors of the same connector */
-
         for (var connection of architectureModel.connections) {
             var end = nodes[self.core.getPointerPath(connection, 'src')];
             if (self.getMetaType(end) !== self.META.Connector) {
@@ -204,6 +219,7 @@ define([
                             self.logger.debug('degreeValue ' + degreeExpression);
                         }
                     }
+                    //TODO: Change the eval
                     end.degree = eval(degreeExpression);
                 }
                 var multiplicityExpression = end.multiplicity;
@@ -215,6 +231,7 @@ define([
                             self.logger.debug('multiplicityValue ' + multiplicityExpression);
                         }
                     }
+                    //TODO: Change the eval
                     end.multiplicity = eval(multiplicityExpression);
                     if (end.multiplicity > end.cardinality) {
                         inconsistencies.push({
@@ -252,9 +269,11 @@ define([
         var self = this,
         info = {
             className: self.core.getAttribute(self.activeNode, 'name'),
-            gluePath: ''
-
+            gluePath: 'src/',
+            componentType: architectureModel.componentTypes,
+            noOfRequiredTransitions: 50
         };
+        self.logger.info('length of component types' + info.componentType.length);
         info.className = info.className.replace(/\s+/g, '');
         return info;
     };
@@ -265,7 +284,9 @@ define([
         connectorEnds = [],
         self = this,
         nodePath,
-        node;
+        node,
+        regExpArray,
+        cardinalityRegEx;
 
         /* Check that multiplicities, degrees are valid arithmetic expressions of cardinalities */
         for (nodePath in nodes) {
@@ -284,15 +305,14 @@ define([
                 connectorEnds.push(node);
             }
         }
-        var regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
-
+        regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
         for (var c of cardinalities) {
             if (/^[a-z]$/.test(c)) {
                 regExpArray.push(c);
             }
         }
         regExpArray.push.apply(regExpArray, [']', '+$']);
-        var cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
+        cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
         self.logger.debug(cardinalityRegEx);
 
         for (var end of connectorEnds) {
