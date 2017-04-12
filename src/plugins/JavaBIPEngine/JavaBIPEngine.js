@@ -115,6 +115,7 @@ define([
 
     JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
         var self = this,
+        currentConfig = this.getCurrentConfig(),
         architectureModel = {
             componentTypes: [],
             ports: [],
@@ -140,7 +141,9 @@ define([
                             self.logger.debug('cardinalityParameter ' + component.cardinalityParameter);
                         }
                         while (/^[a-z]$/.test(cardinality) ) {
-                            cardinality = 3;
+                            cardinality = currentConfig.value;
+                            self.createMessage(cardinality);
+                            //cardinality = 3;
                             //cardinality = prompt('Please enter number of component instances for ' + //self.core.getAttribute(node, 'name') + 'component type');
                         }
                         self.logger.debug('cardinality: ' + cardinality);

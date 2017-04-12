@@ -10,6 +10,7 @@ define(['js/Dialogs/PluginConfig/PluginConfigDialog'], function (PluginConfigDia
     function ConfigWidget(params) {
         this._client = params.client;
         this._logger = params.logger.fork('ConfigWidget');
+        this.pluginConfigDialog = new PluginConfigDialog(params);
     }
 
     /**
@@ -28,25 +29,38 @@ define(['js/Dialogs/PluginConfig/PluginConfigDialog'], function (PluginConfigDia
     ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, prevPluginConfig, callback) {
         var pluginConfig = JSON.parse(JSON.stringify(prevPluginConfig)), // Make a copy of the prev config
             globalConfig = {},
-            pluginConfigDialog = new PluginConfigDialog(),
             activeNodeId = WebGMEGlobal.State.getActiveObject(),
             activeNode;
+        // // We use the default global config here..
+        // globalConfigStructure.forEach(function (globalOption) {
+        //     globalConfig[globalOption.name] = globalOption.value;
+        // });
+        //
+        // if (typeof activeNodeId === 'string') {
+        //     activeNode = this._client.getNode(activeNodeId);
+        //     pluginConfig.activeNodeName = activeNode.getAttribute('name');
+        // } else {
+        //     this._logger.error('No active node...');
+        //     callback(true); // abort execution
+        //     return;
+        // }
+        //
+        // callback(globalConfig, pluginConfig, false); // Set third argument to true to store config in user.
+        this.pluginConfigDialog.show(globalConfigStructure, pluginMetadata, prevPluginConfig, function (newGlobal, newPluginConfig, store) {
 
-        // We use the default global config here..
-        globalConfigStructure.forEach(function (globalOption) {
-            globalConfig[globalOption.name] = globalOption.value;
-        });
-
-        if (typeof activeNodeId === 'string') {
             activeNode = this._client.getNode(activeNodeId);
-            pluginConfig.activeNodeName = activeNode.getAttribute('name');
-        } else {
-            this._logger.error('No active node...');
-            callback(true); // abort execution
-            return;
-        }
+            for (var child of this._client.getChildrenPaths(activeNode)) {
+                if (this.isMetaTypeOf(this._client.getNode(child), this.META.ComponentType)) {
+                    var cardinality = child.getAttribute('cardinality');
+                    if (/^[a-z]$/.test(cardinality)) {
+                        this.createMessage(newPluginConfig.value);
+                        //pluginConfig.value
+                    }
+                }
+            }
 
-        callback(globalConfig, pluginConfig, false); // Set third argument to true to store config in user.
+            callback(newGlobal, newPluginConfig, store);
+        });
     };
 
     return ConfigWidget;
