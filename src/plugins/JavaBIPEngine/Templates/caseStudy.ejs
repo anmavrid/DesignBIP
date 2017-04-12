@@ -44,7 +44,7 @@ public class test<%=className%> {
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
 
-				<%for (var i=componentType.length-1; i>=0;i--) {%>
+				<%for (var i=componentType.length-1; i>0;i--) {%>
 					<%for (var j=componentType[i].cardinalityValue; j>=0;j--) {%>
 						<%=componentType[i].name%> component<%=componentType[i].name%><%=j%> = new <%=componentType[i].name%>();
 	          BIPActor actor<%=componentType[i].name%><%=j%> = engine.register(component<%=componentType[i].name%><%=j%>, "component<%=componentType[i].name%><%=j%>", true);
@@ -62,7 +62,7 @@ public class test<%=className%> {
 						e.printStackTrace();
 					}
 					noOfTransitions = 0;
-					<%for (var i=componentType.length-1; i>=0;i--) {%>
+					<%for (var i=componentType.length-1; i>0;i--) {%>
 						<%for (var j=componentType[i].cardinalityValue; j>=0;j--) { %>
 							noOfTransitions += component<%=componentType[i].name%><%=j%>.transitions
 						<%}%>
