@@ -345,26 +345,26 @@ define([
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
                         node: node,
-                        message: 'Dst of connector [' + nodePath + '] is null'
+                        message: 'Dst of connector [' + nodePath + '] is null.'
                     });
                 }
                 if (self.core.getPointerPath(node, 'src') === null) {
                     violations.push({
                         node: node,
-                        message: 'Src of connector [' + nodePath + '] is null'
+                        message: 'Src of connector [' + nodePath + '] is null.'
                     });
                 }
             } else if (this.isMetaTypeOf(node, this.META.Connection)) {
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
                         node: node,
-                        message: 'Dst of connection [' + nodePath + '] is null'
+                        message: 'Dst of connection [' + nodePath + '] is null.'
                     });
                 }
                 if (self.core.getPointerPath(node, 'src') === null) {
                     violations.push({
                         node: node,
-                        message: 'Src of connection [' + nodePath + '] is null'
+                        message: 'Src of connection [' + nodePath + '] is null.'
                     });
                 }
             } else if (this.isMetaTypeOf(node, this.META.Trigger) || this.isMetaTypeOf(node, this.META.Synchron)) {
@@ -379,7 +379,7 @@ define([
                 if (!isConnected) {
                     violations.push({
                         node: node,
-                        message: 'ConnectorEnd [' + nodePath + '] is not connected to any port'
+                        message: 'ConnectorEnd [' + nodePath + '] is not connected to any port.'
                     });
                 }
             } else {
@@ -389,7 +389,7 @@ define([
         }
         if (zeroEnforceableTransitions) {
             violations.push({
-                message: 'No Enforceable Transitions in the entire project, cannot generate Architecture specification'
+                message: 'No Enforceable Transitions in the entire project, cannot generate Architecture specification.'
             });
         }
         return violations;
