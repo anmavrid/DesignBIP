@@ -510,5 +510,4 @@ return new function () {
   };
 
 }()
-
 });
