@@ -23,17 +23,23 @@ define(['./bower_components/codemirror/lib/codemirror',
         this._el = container;
         this._container = null;
         this._codearea = null;
+        this._segmentedDocument = {
+            composition: [],
+            segments: {}
+        };
+        this._wholeDocument = null;
+        this._autoSaveTimer = null;
+        this._autoSaveInterval = 2000;
 
-        this.nodes = {};
         this._initialize();
-
         this._logger.debug('ctor finished');
     };
 
     BIPCodeEditorWidget.prototype._initialize = function () {
-        var width = this._el.width(),
-            height = this._el.height(),
-            self = this;
+        var self = this,
+            saving = function () {
+                self._autoSave();
+            };
 
         // set widget class
         this._el.addClass(WIDGET_CLASS);
@@ -43,7 +49,6 @@ define(['./bower_components/codemirror/lib/codemirror',
 
         this._container = this._el.find('#BIP_CODE_EDITOR_DIV').first();
         this._codearea = this._el.find('#codearea').first();
-        this._codearea.focus();
         this.editor = CodeMirror.fromTextArea(
             this._codearea.get(0),
             {
@@ -60,68 +65,217 @@ define(['./bower_components/codemirror/lib/codemirror',
             }
         );
 
-        // Registering to events can be done with jQuery (as normal)
-        this._el.on('dblclick', function (event) {
-            event.stopPropagation();
-            event.preventDefault();
-            self.onBackgroundDblClick();
+        this._wholeDocument = this.editor.getDoc();
+        this._wholeDocument.on('change', function (/*doc,changeObj*/) {
+            if (self._autoSaveTimer) {
+                clearTimeout(self._autoSaveTimer);
+                self._autoSaveTimer = setTimeout(saving, self._autoSaveInterval);
+            }
+            self._autoSaveTimer = setTimeout(saving, self._autoSaveInterval);
         });
     };
 
     BIPCodeEditorWidget.prototype.onWidgetContainerResize = function (width, height) {
+        var oldCursorPosition = this._wholeDocument.getCursor();
+
         this._logger.debug('Widget is resizing...');
         $(this._el).find('.CodeMirror').css({
+            width: width,
             height: height
         });
         this.editor.refresh();
-    };
-
-    // Adding/Removing/Updating items
-    BIPCodeEditorWidget.prototype.addNode = function (desc) {
-        if (desc) {
-            // Add node to a table of nodes
-            var node = document.createElement('div'),
-                label = 'children';
-
-            if (desc.childrenIds.length === 1) {
-                label = 'child';
-            }
-
-            this.nodes[desc.id] = desc;
-            node.innerHTML = 'Adding node "' + desc.name + '" (click to view). It has ' +
-                desc.childrenIds.length + ' ' + label + '.';
-
-            this._el.append(node);
-            node.onclick = this.onNodeClick.bind(this, desc.id);
-        }
-    };
-
-    BIPCodeEditorWidget.prototype.removeNode = function (gmeId) {
-        var desc = this.nodes[gmeId];
-        this._el.append('<div>Removing node "' + desc.name + '"</div>');
-        delete this.nodes[gmeId];
-    };
-
-    BIPCodeEditorWidget.prototype.updateNode = function (desc) {
-        if (desc) {
-            this._logger.debug('Updating node:', desc);
-            this._el.append('<div>Updating node "' + desc.name + '"</div>');
-        }
+        this._wholeDocument.setCursor(oldCursorPosition);
     };
 
     /* * * * * * * * Visualizer event handlers * * * * * * * */
-
-    BIPCodeEditorWidget.prototype.onNodeClick = function (/*id*/) {
-        // This currently changes the active node to the given id and
-        // this is overridden in the controller.
+    BIPCodeEditorWidget.prototype.onSave = function (/*segmentedDocumentObject*/) {
+        this._logger.info('The onSave event is not overwritten!');
     };
 
-    BIPCodeEditorWidget.prototype.onBackgroundDblClick = function () {
-        this._el.append('<div>Background was double-clicked!!</div>');
+    /* * * * * * * * Complex document management services  * * * * */
+    BIPCodeEditorWidget.prototype.setDocumentSegment = function (segmentName, segmentValue) {
+        if (this._segmentedDocument.segments[segmentName]) {
+            this._segmentedDocument.segments[segmentName].value = segmentValue;
+            this._rebuildCompleteDocument();
+        } else {
+            this._logger.error('unknown segment [' + segmentName + '] cannot be changed');
+        }
+    };
+
+    BIPCodeEditorWidget.prototype.setSegmentedDocument = function (segmentedDocumentObject) {
+        // we do not have to worry about cleaning, as setting the main document allegedly does it
+        var newDocument = {segments: {}},
+            i;
+
+        newDocument.composition = JSON.parse(JSON.stringify(segmentedDocumentObject.composition));
+
+        if (Array.isArray(newDocument.composition) !== true) {
+            this._logger.error('Invalid segmentedDocumentObject [should have a composition array tag]');
+            return;
+        }
+        if (typeof segmentedDocumentObject.segments !== 'object' || segmentedDocumentObject.segments === null) {
+            this._logger.error('Invalid segmentedDocumentObject ' +
+                '[should have a segments tag that is the collection of the segments]');
+            return;
+        }
+
+        for (i = 0; i < newDocument.composition.length; i += 1) {
+            if (typeof newDocument.composition[i] !== 'string') {
+                this._logger.error('Invalid segmentedDocumentObject [segment identification should be string based]');
+                return;
+            }
+
+            if (segmentedDocumentObject.segments.hasOwnProperty(newDocument.composition[i]) !== true) {
+                this._logger.error('Invalid segmentedDocumentObject [segment \'' +
+                    newDocument.composition[i] + '\' is missing]');
+                return;
+            }
+
+            if (segmentedDocumentObject.segments[newDocument.composition[i]].options &&
+                typeof segmentedDocumentObject.segments[newDocument.composition[i]].options !== 'object') {
+                this._logger.error('Invalid segmentedDocumentObject [segment \'' +
+                    newDocument.composition[i] + '\' has an invalid options field]');
+                return;
+            }
+
+            if (typeof segmentedDocumentObject.segments[newDocument.composition[i]].value !== 'string') {
+                this._logger.error('All document segment value has to be a string.');
+                return;
+            }
+            newDocument.segments[newDocument.composition[i]] = {
+                options: JSON.parse(
+                    JSON.stringify(segmentedDocumentObject.segments[newDocument.composition[i]].options || {})),
+                value: segmentedDocumentObject.segments[newDocument.composition[i]].value
+            };
+        }
+
+        this._segmentedDocument = newDocument;
+        this._rebuildCompleteDocument();
+        if (this._autoSaveTimer) {
+            clearTimeout(this._autoSaveTimer);
+            this._autoSaveTimer = null;
+        }
+    };
+
+    BIPCodeEditorWidget.prototype.getDocument = function () {
+        return this._wholeDocument.getValue();
+    };
+
+    BIPCodeEditorWidget.prototype.getDocumentSegment = function (segmentName) {
+        if (this._segmentedDocument.segments[segmentName]) {
+            return this._segmentedDocument.segments[segmentName].value;
+        } else {
+            this._logger.error('unknown segment [' + segmentName + ']');
+            return null;
+        }
+    };
+
+    BIPCodeEditorWidget.prototype.getChangedSegments = function () {
+        var segments = {},
+            segment, doc;
+
+        for (segment in this._segmentedDocument.segments) {
+            doc = this._segmentedDocument.segments[segment].doc.getValue();
+            if (doc !== this._segmentedDocument.segments[segment].value) {
+                segments[segment] = doc;
+            }
+        }
+
+        return segments;
+    };
+
+    BIPCodeEditorWidget.prototype._getNumberOfLinesOfSegment = function (segmentName) {
+        //TODO: check if this is enough or we need some more sophisticated thing
+        return this._segmentedDocument.segments[segmentName].value.split('\n').length;
+    };
+
+    BIPCodeEditorWidget.prototype._rebuildCompleteDocument = function () {
+        var i, segment, wholeDocument = '',
+            oldCursorPosition = this._wholeDocument.getCursor(),
+            lineIndex, segmentLines;
+
+        for (i = 0; i < this._segmentedDocument.composition.length; i += 1) {
+            segment = this._segmentedDocument.segments[this._segmentedDocument.composition[i]];
+            if (segment.doc) {
+                this._wholeDocument.unlinkDoc(segment.doc);
+                delete segment.doc;
+                if (segment.readOnlyMarker) {
+                    segment.readOnlyMarker.clear();
+                    delete segment.readOnlyMarker;
+                }
+            }
+            wholeDocument += segment.value + '\n';
+        }
+        this._wholeDocument.setValue(wholeDocument);
+        lineIndex = 0;
+        for (i = 0; i < this._segmentedDocument.composition.length; i += 1) {
+            segment = this._segmentedDocument.segments[this._segmentedDocument.composition[i]];
+            segmentLines = this._getNumberOfLinesOfSegment(this._segmentedDocument.composition[i]);
+            segment.doc = this._wholeDocument.linkedDoc({
+                sharedHist: true,
+                from: lineIndex,
+                to: lineIndex + segmentLines
+            });
+            lineIndex += segmentLines;
+            if (segment.options.readonly === true) {
+                this._setSegmentReadOnly(this._segmentedDocument.composition[i], true);
+            }
+        }
+
+        this.editor.refresh();
+        this._wholeDocument.setCursor(oldCursorPosition);
+    };
+
+    BIPCodeEditorWidget.prototype._setSegmentReadOnly = function (segmentName, readOnly) {
+        var segmentInfo,
+            fromLine,
+            toLine;
+        if (this._segmentedDocument.segments[segmentName]) {
+            segmentInfo = this._segmentedDocument.segments[segmentName];
+            if (segmentInfo.readOnlyMarker) {
+                segmentInfo.readOnlyMarker.clear();
+                delete segmentInfo.readOnlyMarker;
+            }
+
+            if (readOnly) {
+                fromLine = segmentInfo.doc.firstLine();
+                toLine = segmentInfo.doc.lastLine() + 1;
+
+                segmentInfo.readOnlyMarker = this._wholeDocument.markText(
+                    {line: fromLine, ch: 0},
+                    {line: toLine, ch: 0},
+                    {
+                        readonly: true,
+                        atomic: true,
+                        inclusiveLeft: true,
+                        inclusiveRight: false
+                    }
+                );
+            }
+        } else {
+            this._logger.error('unknown segment [' + segmentName + '] cannot be changed');
+        }
+    };
+
+    BIPCodeEditorWidget.prototype._autoSave = function () {
+        var changedSegments = this.getChangedSegments(),
+            segment;
+
+        this._autoSaveTimer = null;
+        if (Object.keys(changedSegments).length > 0) {
+            for (segment in changedSegments) {
+                this._segmentedDocument.segments[segment].value = changedSegments[segment];
+            }
+
+            this.onSave(changedSegments);
+        }
     };
 
     /* * * * * * * * Visualizer life cycle callbacks * * * * * * * */
     BIPCodeEditorWidget.prototype.destroy = function () {
+        if (this._autoSaveTimer) {
+            this._autoSave();
+        }
     };
 
     BIPCodeEditorWidget.prototype.onActivate = function () {
@@ -130,6 +284,9 @@ define(['./bower_components/codemirror/lib/codemirror',
 
     BIPCodeEditorWidget.prototype.onDeactivate = function () {
         this._logger.debug('BIPCodeEditorWidget has been deactivated');
+        if (this._autoSaveTimer) {
+            this._autoSave();
+        }
     };
 
     return BIPCodeEditorWidget;

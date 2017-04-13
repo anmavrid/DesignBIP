@@ -6,13 +6,9 @@
 
 define([
     'js/Constants',
-    'js/Utils/GMEConcepts',
-    'js/NodePropertyNames'
-], function (
-    CONSTANTS,
-    GMEConcepts,
-    nodePropertyNames
-) {
+    'q'
+], function (CONSTANTS,
+             Q) {
 
     'use strict';
 
@@ -24,21 +20,37 @@ define([
 
         this._client = options.client;
 
-        // Initialize core collections and variables
         this._widget = options.widget;
-
         this._currentNodeId = null;
-        this._currentNodeParentId = undefined;
+        this._currentGuards = {};
+        this._currentTransactions = {};
+        this._gatheringSegments = false;
+        this._missedEvents = false;
 
-        this._initWidgetEventHandlers();
+        this._territory = null;
+        this._segmentInfo = {};
+        this._UID = null;
+
+        this._initialize();
 
         this._logger.debug('ctor finished');
     };
 
+    BIPCodeEditorControl.prototype._initialize = function () {
+        var self = this;
+
+        this._UID = this._client.addUI(self, function (events) {
+            self._eventCallback(events);
+        });
+
+        this._initWidgetEventHandlers();
+    };
+
     BIPCodeEditorControl.prototype._initWidgetEventHandlers = function () {
-        this._widget.onNodeClick = function (id) {
-            // Change the current active object
-            WebGMEGlobal.State.registerActiveObject(id);
+        var self = this;
+        this._widget.onSave = function (segmentedDocumentObject) {
+            console.log(segmentedDocumentObject);
+            // self._SaveDocument(segmentedDocumentObject);
         };
     };
 
@@ -47,89 +59,140 @@ define([
     // defines the parts of the project that the visualizer is interested in
     // (this allows the browser to then only load those relevant parts).
     BIPCodeEditorControl.prototype.selectedObjectChanged = function (nodeId) {
-        var desc = this._getObjectDescriptor(nodeId),
-            self = this;
 
-        self._logger.debug('activeObject nodeId \'' + nodeId + '\'');
-
-        // Remove current territory patterns
-        if (self._currentNodeId) {
-            self._client.removeUI(self._territoryId);
-        }
-
-        self._currentNodeId = nodeId;
-        self._currentNodeParentId = undefined;
-
-        if (typeof self._currentNodeId === 'string') {
-            // Put new node's info into territory rules
-            self._selfPatterns = {};
-            self._selfPatterns[nodeId] = {children: 0};  // Territory "rule"
-
-            // self._widget.setTitle(desc.name.toUpperCase());
-
-            if (typeof desc.parentId === 'string') {
-                self.$btnModelHierarchyUp.show();
-            } else {
-                self.$btnModelHierarchyUp.hide();
-            }
-
-            self._currentNodeParentId = desc.parentId;
-
-            self._territoryId = self._client.addUI(self, function (events) {
-                self._eventCallback(events);
-            });
-
-            // Update the territory
-            self._client.updateTerritory(self._territoryId, self._selfPatterns);
-
-            self._selfPatterns[nodeId] = {children: 1};
-            self._client.updateTerritory(self._territoryId, self._selfPatterns);
+        if (typeof nodeId === 'string' &&
+            this._currentNodeId !== nodeId &&
+            this._client.getNode(this._client.getNode(nodeId).getMetaTypeId())
+                .getAttribute('name') === 'ComponentType') {
+            //we have a viable component type so let us change things
+            this._currentNodeId = nodeId;
+            this._selfPatterns = {};
+            this._selfPatterns[nodeId] = {children: 1};
+            this._client.updateTerritory(this._UID, this._selfPatterns);
+        } else {
+            this._logger.info('received unwanted object change event');
         }
     };
 
-    // This next function retrieves the relevant node information for the widget
-    BIPCodeEditorControl.prototype._getObjectDescriptor = function (nodeId) {
-        var node = this._client.getNode(nodeId),
-            objDescriptor;
-        if (node) {
-            objDescriptor = {
-                id: node.getId(),
-                name: node.getAttribute(nodePropertyNames.Attributes.name),
-                childrenIds: node.getChildrenIds(),
-                parentId: node.getParentId(),
-                isConnection: GMEConcepts.isConnection(nodeId)
-            };
-        }
+    BIPCodeEditorControl.prototype._buildSegmentInfo = function (nodeId) {
+        var deferred = Q.defer(),
+            segmentInfo = {},
+            context;
 
-        return objDescriptor;
+        Q.ninvoke(this._client, 'getCoreInstance', {})
+            .then(function (context_) {
+                context = context_;
+                return context.core.loadByPath(context.rootNode, nodeId);
+            })
+            .then(function (componentType) {
+
+                segmentInfo['*forwards*' + nodeId] = context.core.getAttribute(componentType, 'forwards');
+                segmentInfo['*definitions*' + nodeId] = context.core.getAttribute(componentType, 'definitions');
+                segmentInfo['*constructors*' + nodeId] = context.core.getAttribute(componentType, 'constructors');
+                return context.core.loadChildren(componentType);
+            })
+            .then(function (children) {
+                var i;
+
+                for (i = 0; i < children.length; i += 1) {
+                    if (context.core.isInstanceOf(children[i], 'TransitionBase')) {
+                        segmentInfo['*transition*' + nodeId] =
+                            context.core.getAttribute(children[i], 'transitionMethod');
+                    } else if (context.core.isInstanceOf(children[i], 'Guard')) {
+                        segmentInfo['*guard*' + nodeId] =
+                            context.core.getAttribute(children[i], 'guardMethod');
+                    }
+                }
+                deferred.resolve(segmentInfo);
+            })
+            .catch(deferred.reject);
+
+        return deferred.promise;
     };
 
     /* * * * * * * * Node Event Handling * * * * * * * */
     BIPCodeEditorControl.prototype._eventCallback = function (events) {
-        var i = events ? events.length : 0,
-            event;
+        var self = this,
+            needRefresh = false,
+            segmentedDocumentObject,
+            nodeType,
+            i;
 
-        this._logger.debug('_eventCallback \'' + i + '\' items');
+        for (i = 0; i < events.length; i += 1) {
+            switch (events[i].etype) {
+                case CONSTANTS.TERRITORY_EVENT_LOAD:
+                case CONSTANTS.TERRITORY_EVENT_UPDATE:
+                    if (events[i].eid === this._currentNodeId) {
+                        needRefresh = true;
+                    } else {
+                        nodeType = this._client.getNode(this._client.getNode(events[i].eid).getMetaTypeId())
+                            .getAttribute('name');
 
-        while (i--) {
-            event = events[i];
-            switch (event.etype) {
-
-            case CONSTANTS.TERRITORY_EVENT_LOAD:
-                this._onLoad(event.eid);
-                break;
-            case CONSTANTS.TERRITORY_EVENT_UPDATE:
-                this._onUpdate(event.eid);
-                break;
-            case CONSTANTS.TERRITORY_EVENT_UNLOAD:
-                this._onUnload(event.eid);
-                break;
-            default:
-                break;
+                        if (nodeType.indexOf('Transition') > 0) {
+                            this._currentTransactions[events[i].eid] = true;
+                            needRefresh = true;
+                        } else if (nodeType === 'Guard') {
+                            this._currentGuards[events[i].eid] = true;
+                            needRefresh = true;
+                        }
+                    }
+                    break;
+                case CONSTANTS.TERRITORY_EVENT_UNLOAD:
+                    if (events[i].eid === this._currentNodeId) {
+                        needRefresh = true;
+                    } else {
+                        if (this._currentGuards[events[i].eid]) {
+                            needRefresh = true;
+                            delete this._currentGuards[events[i].eid];
+                        } else if (this._currentTransactions[events[i].eid]) {
+                            needRefresh = true;
+                            delete this._currentTransactions[events[i].eid];
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
-        this._logger.debug('_eventCallback \'' + events.length + '\' items - DONE');
+        if (needRefresh) {
+            if (this._gatheringSegments) {
+                this._missedEvents = true;
+            } else {
+                this._buildSegmentInfo(this._currentNodeId)
+                    .then(function (segments) {
+                        self._gatheringSegments = false;
+                        if (self._missedEvents) {
+                            self._missedEvents = false;
+                            self._eventCallback([{eid: self._currentNodeId, etype: CONSTANTS.TERRITORY_EVENT_UPDATE}]);
+                        } else {
+                            segmentedDocumentObject = {
+                                composition: ['*forwards*' + self._currentNodeId,
+                                    '*definitions*' + self._currentNodeId,
+                                    '*constructors*' + self._currentNodeId],
+                                segments: {}
+                            };
+
+                            for (i = 0; i < segmentedDocumentObject.composition.length; i += 1) {
+                                segmentedDocumentObject.segments[segmentedDocumentObject.composition[i]] = {
+                                    value: segments[segmentedDocumentObject.composition[i]],
+                                    options: {readonly: false}
+                                }
+                            }
+
+                            self._widget.setSegmentedDocument(segmentedDocumentObject);
+                        }
+                    })
+                    .catch(function (err) {
+                        self._gatheringSegments = false;
+                        self._logger.error('error during segment info build:', err);
+                        if (self._missedEvents) {
+                            self._missedEvents = false;
+                            self._eventCallback([{eid: self._currentNodeId, etype: CONSTANTS.TERRITORY_EVENT_UPDATE}]);
+                        }
+                    });
+            }
+        }
     };
 
     BIPCodeEditorControl.prototype._onLoad = function (gmeId) {
