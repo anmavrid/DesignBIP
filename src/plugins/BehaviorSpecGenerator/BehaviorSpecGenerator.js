@@ -309,7 +309,7 @@ define([
                         totalStateNames[childName] = this.core.getPath(child);
                     }
 
-                    if ((this.isMetaTypeOf(child, this.META.EnforceableTransition)) || (this.isMetaTypeOf(child, this.META.SpontaneousTransition))) {
+                    if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition) || this.isMetaTypeOf(child, this.META.InternalTransition) ) {
 
                         if (this.core.getPointerPath(child, 'dst') === null) {
                             violations.push({
@@ -325,21 +325,6 @@ define([
                             });
                         }
 
-
-                        //uncommon
-                        if (this.core.getPointerPath(child, 'dst') != null) {
-                            var state = nodes[this.core.getPointerPath(child, 'dst')];
-                            var stateName = this.core.getAttribute(state, 'name');
-                            stateWithValidTransitions[stateName]= this.core.getPath(state);
-                        }
-
-                        //uncommon
-                        if (this.core.getPointerPath(child, 'src') != null) {
-                            var state = nodes[this.core.getPointerPath(child, 'src')];
-                            var stateName = this.core.getAttribute(state, 'name');
-                            stateWithValidTransitions[stateName]= this.core.getPath(state);
-                        }
-
                         var expression = this.core.getAttribute(child, 'guardName');
                         if(expression!=''){
                             guardExpressions.push(expression);
@@ -349,23 +334,14 @@ define([
                         if (transitionMethod === '') {
                             violations.push({
                                 node: node,
-                                message: childName + '(' + childPath + ') does not have transitionMethod attribute defined.'
+                                message: childName + '(' + childPath + ') in ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have transitionMethod attribute defined.'
                             });
                         }
-
-                        //uncommon
-                        if (transitionNames.hasOwnProperty(childName)) {
-                            violations.push({
-                                node: node,
-                                message: 'Duplicated transition [' + childName + '] shared with ' + transitionNames[childName]
-                            });
-                        }
-                        transitionNames[childName] = this.core.getPath(child);
                     }
 
-                    if (this.isMetaTypeOf(child, this.META.InternalTransition)) {
+                    if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition)) {
 
-                        if (this.core.getPointerPath(child, 'dst') === null) {
+/*                        if (this.core.getPointerPath(child, 'dst') === null) {
                             violations.push({
                                 node: node,
                                 message:'Connection, ' +childName+'(' +childPath+ ') , with no destination encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
@@ -389,7 +365,31 @@ define([
                                 node: node,
                                 message: childName + '(' + childPath + ') does not have transitionMethod attribute defined.'
                             });
+                        }*/
+
+
+                        //uncommon
+                        if (this.core.getPointerPath(child, 'dst') != null) {
+                            var state = nodes[this.core.getPointerPath(child, 'dst')];
+                            var stateName = this.core.getAttribute(state, 'name');
+                            stateWithValidTransitions[stateName]= this.core.getPath(state);
                         }
+
+                        //uncommon
+                        if (this.core.getPointerPath(child, 'src') != null) {
+                            var state = nodes[this.core.getPointerPath(child, 'src')];
+                            var stateName = this.core.getAttribute(state, 'name');
+                            stateWithValidTransitions[stateName]= this.core.getPath(state);
+                        }
+
+                        //uncommon
+                        if (transitionNames.hasOwnProperty(childName)) {
+                            violations.push({
+                                node: node,
+                                message: 'Duplicated transition [' + childName + '] shared with ' + transitionNames[childName]
+                            });
+                        }
+                        transitionNames[childName] = this.core.getPath(child);
                     }
 
 
@@ -451,7 +451,7 @@ define([
 
                 for(var stateName in totalStateNames) {
                     if (!stateWithValidTransitions.hasOwnProperty(stateName)) {
-                        this.logger.warn('State '+ stateName +' with path '+ totalStateNames[stateName] +' has no transitions associated with it.Check your model.');
+                        this.logger.warn('State '+ stateName +'(' + totalStateNames[stateName] +') in ComponentType ' +name+'(' +componentTypeNames[name] + ') has no transitions associated with it.Check your model.');
                     }
                 }
 
