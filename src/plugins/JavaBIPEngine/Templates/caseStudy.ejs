@@ -44,10 +44,10 @@ public class test<%=className%> {
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
 
-				<%for (var i=componentType.length-1; i>0;i--) {%>
-					<%for (var j=componentType[i].cardinalityValue; j>=0;j--) {%>
-						<%=componentType[i].name%> component<%=componentType[i].name%><%=j%> = new <%=componentType[i].name%>();
-	          BIPActor actor<%=componentType[i].name%><%=j%> = engine.register(component<%=componentType[i].name%><%=j%>, "component<%=componentType[i].name%><%=j%>", true);
+				<%for (var i=componentType.length; i>0;i--) {%>
+					<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) {%>
+						<%=componentType[i-1].name%> component<%=componentType[i-1].name%><%=j%> = new <%=componentType[i-1].name%>();
+	          BIPActor actor<%=componentType[i-1].name%><%=j%> = engine.register(component<%=componentType[i-1].name%><%=j%>, "component<%=componentType[i-1].name%><%=j%>", true);
 					<%}%>
 				<%}%>
 
@@ -62,9 +62,9 @@ public class test<%=className%> {
 						e.printStackTrace();
 					}
 					noOfTransitions = 0;
-					<%for (var i=componentType.length-1; i>0;i--) {%>
-						<%for (var j=componentType[i].cardinalityValue; j>=0;j--) { %>
-							noOfTransitions += component<%=componentType[i].name%><%=j%>.transitions
+					<%for (var i=componentType.length; i>0;i--) {%>
+						<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) { %>
+							noOfTransitions += component<%=componentType[i-1].name%><%=j%>.transitions
 						<%}%>
 					<%}%>
 				}
