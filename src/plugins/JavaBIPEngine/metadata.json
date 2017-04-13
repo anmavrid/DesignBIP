@@ -10,6 +10,7 @@
   "disableServerSideExecution": false,
   "disableBrowserSideExecution": false,
   "writeAccessRequired": false,
+  "configWidget":"plugin/JavaBIPEngine/JavaBIPEngine/Widgets/ConfigWidget",
   "configStructure": [
    {
      "name": "cardinality",
