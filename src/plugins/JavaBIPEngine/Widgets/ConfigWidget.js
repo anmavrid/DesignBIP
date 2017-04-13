@@ -43,13 +43,15 @@ ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, p
                 var cardinality = core.getAttribute(child, 'cardinality');
                 if (/^[a-z]$/.test(cardinality) && !cardinalities.includes(cardinality)) {
                     cardinalities.push(cardinality);
-                    console.log(cardinalities.length);
+                    //console.log(cardinalities.length);
                     if (cardinalities.length>1) {
                         //create shallow copy of pluginMetadata.configStructure[0]
                         pluginMetadata.configStructure.push(Object.assign({}, pluginMetadata.configStructure[0]));
                         pluginMetadata.configStructure[cardinalities.length - 1].displayName = cardinality;
+                        pluginMetadata.configStructure[cardinalities.length - 1].name = cardinality;
                     } else {
                         pluginMetadata.configStructure[0].displayName = cardinality;
+                        pluginMetadata.configStructure[0].name = cardinality;
                     }
                 }
             }
@@ -58,9 +60,10 @@ ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, p
                 core.loadByPath(result.rootNode, childrenPaths[nextChildID], getCardinalities);
             } else {
                 self.pluginConfigDialog.show(globalConfigStructure, pluginMetadata, prevPluginConfig, function (newGlobal, newPluginConfig, store) {
+                    //newPluginConfig = pluginMetadata.configStructure;
                     callback(newGlobal, newPluginConfig, store);
                 });
-                pluginMetadata.configStructure.splice(1, pluginMetadata.configStructure.length-1);
+                //pluginMetadata.configStructure.splice(1, pluginMetadata.configStructure.length-1);
             }
         };
         core = result.core;
