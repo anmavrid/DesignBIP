@@ -62,37 +62,69 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-            artifact;
+            artifact,
+            path,
+            fs;
 
 
         // Using the logger.
         self.logger.debug('This is a debug message.');
+        path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path');
 
+        if(path){
+          path += '/'+self.core.getAttribute(self.activeNode, 'name');
+          path = path.replace(/\s+/g, '');
+          try {
+            fs = require('fs');
+          } catch (e){
+            self.logger.error('To save directly to file system, plugin needs to run on server!');
+          }
+          console.log(path);
+        }
         self.extractDataModel(self.activeNode)
             .then(function (nodes) {
                 var violations = self.hasViolations(nodes),
                     componentInfos,
                     dataModelStr;
 
-                if (violations.length > 0) {
-                    violations.forEach(function (violation) {
-                        self.createMessage(violation.node, violation.message, 'error');
-                    });
-                    throw new Error('Model has ' + violations.length + '  violation(s), see messages for details..');
-                }
+                // if (violations.length > 0) {
+                //     violations.forEach(function (violation) {
+                //         self.createMessage(violation.node, violation.message, 'error');
+                //     });
+                //     throw new Error('Model has ' + violations.length + '  violation(s), see messages for details..');
+                // }
 
                 componentInfos = self.makeModelObject(nodes);
                 dataModelStr = JSON.stringify(componentInfos, null, 4);
                 self.componentInfos = componentInfos;
                 //self.logger.info('************DataModel***********\n', dataModelStr);
-
                 var filesToAdd = {};
-
                 for (var i = 0; i<componentInfos.length; i++) {
-                    var fileName = componentInfos[i].name + '.java';
+                    var fileName = componentInfos[i].name + '.java',
+                    pathArrayForFile = fileName.split('/'),
+                    tempPath = path,
+                    j;
                     filesToAdd[fileName] = ejs.render(componentTypeTemplate, componentInfos[i]);
+                    //self.logger.info(pathArrayForFile);
+                    //self.logger.info(pathArrayForFile.length);
+                    if (path) {
+                      if(pathArrayForFile.length >= 1){
+                        for(j=0;j<=pathArrayForFile.length-1;j+=1){
+                          tempPath += '/'+pathArrayForFile[j];
+                          //self.logger.info(path);
+                          try {
+                              fs.statSync(path);
+                          } catch (err) {
+                              if (err.code === 'ENOENT') {
+                                  fs.mkdirSync(path);
+                              }
+                                }
+                      }
+                      fs.writeFileSync(path+'/'+fileName,filesToAdd[fileName],'utf8');
+                    }
                     //self.logger.info('************LangModel***********\n', filesToAdd[fileName]);
                 }
+              }
 
                 artifact = self.blobClient.createArtifact('BehaviorSpecifications');
 
