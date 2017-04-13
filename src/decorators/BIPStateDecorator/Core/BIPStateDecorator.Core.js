@@ -1,8 +1,9 @@
-/*globals define, _, $*/
+/*globals define, $*/
 /*jshint browser: true*/
 
 /**
  * @author pmeijer / https://github.com/pmeijer
+ * @author dung tran / https://github.com/trhoangdung
  */
 
 
@@ -62,8 +63,8 @@ define([
         // Store the current one as previous for next iteration.
         this.prevMetaTypeName = this.metaTypeName;
 
-         // If state is InitialState then, the border color is red
-        if (this.metaTypeName === "InitialState") {
+        // If state is InitialState then, the border color is red
+        if (this.metaTypeName === 'InitialState') {
             this.skinParts.$svg.find('circle').css('stroke', 'red');
 
         }
