@@ -73,13 +73,12 @@ define([
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
                     self.logger.debug(Object.keys(nodes));
-
                     violations = self.hasViolations(nodes);
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
                             self.createMessage(violation.node, violation.message, 'error');
                         });
-                        throw new Error('Model has ' + violations.length + ' violation(s), see messages for details');
+                        throw new Error('Model has ' + violations.length + ' violation(s), see messages for details.');
                     }
                     architectureModel = self.getArchitectureModel(nodes);
                     inconsistencies = self.checkConsistency(architectureModel, nodes);
@@ -94,7 +93,7 @@ define([
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
                         });
-                        throw new Error('Model has ' + inconsistencies.length + ' inconsistencies, see messages for details');
+                        throw new Error('Model has ' + inconsistencies.length + ' inconsistencies, see messages for details.');
                     }
                 })
                 .then(function (fileHash) {
@@ -139,19 +138,14 @@ define([
                         if (/^[a-z]$/.test(cardinality)) {
                             component.cardinalityParameter = cardinality;
                             self.logger.debug('cardinalityParameter ' + component.cardinalityParameter);
-                        }
-                        while (/^[a-z]$/.test(cardinality) ) {
-                            cardinality = currentConfig.value;
-                            self.createMessage(cardinality);
-                            //cardinality = 3;
-                            //cardinality = prompt('Please enter number of component instances for ' + //self.core.getAttribute(node, 'name') + 'component type');
+                            cardinality = currentConfig[cardinality];
                         }
                         self.logger.debug('cardinality: ' + cardinality);
                         nodes[child].cardinality = cardinality;
                     }
                 }
                 component.cardinalityValue = cardinality;
-                self.logger.debug('cardinalityValue ' + component.cardinalityValue);
+                console.log('cardinalityValue ' + component.cardinalityValue);
 
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 /* If the connector is binary */
@@ -239,7 +233,7 @@ define([
                     if (end.multiplicity > end.cardinality) {
                         inconsistencies.push({
                             node: end,
-                            message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type'
+                            message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type.'
                         });
                     }
                 }
@@ -253,14 +247,14 @@ define([
                     } else if (matchingFactor !== newMatchingFactor) {
                         inconsistencies.push({
                             node: motif,
-                            message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
+                            message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal.'
                         });
                         break;
                     }
                 } else {
                     inconsistencies.push({
                         node: end,
-                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer'
+                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer.'
                     });
                 }
             }
@@ -301,7 +295,7 @@ define([
                 } else {
                     violations.push({
                         node: node,
-                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character'
+                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character.'
                     });
                 }
             } else if (self.isMetaTypeOf(node, this.META.Synchron) || self.isMetaTypeOf(node, this.META.Trigger)) {
@@ -342,14 +336,14 @@ define([
             if (!(cardinalityRegEx.test(multiplicity))) {
                 violations.push({
                     node: end,
-                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters.'
                 });
             }
             cardinalityRegEx.lastIndex = 0;
             if (!cardinalityRegEx.test(degree)) {
                 violations.push({
                         node: end,
-                        message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
+                        message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters.'
                     });
             }
         }
