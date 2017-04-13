@@ -58,7 +58,22 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-            artifact;
+            artifact,
+            path,
+            fs;
+
+            path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path');
+
+            if(path){
+              path += '/'+self.core.getAttribute(self.activeNode, 'name');
+              path = path.replace(/\s+/g, '');
+              try {
+                fs = require('fs');
+              } catch (e){
+                self.logger.error('To save directly to file system, plugin needs to run on server!');
+              }
+              console.log(path);
+            }
 
 
         self.loadNodeMap(self.activeNode)
@@ -111,7 +126,26 @@ define([
                     }
                     var xml = {glue: {accepts: {accept: accept}, requires: {require: require}}};
                     var filesToAdd = {};
+                    var pathArrayForFile = 'Glue.xml'.split('/'),
+                    tempPath = path,
+                    j;
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
+
+                    if (path) {
+                      if(pathArrayForFile.length >= 1){
+                        for(j=0;j<=pathArrayForFile.length-1;j+=1){
+                          tempPath += '/'+pathArrayForFile[j];
+                          try {
+                              fs.statSync(path);
+                          } catch (err) {
+                              if (err.code === 'ENOENT') {
+                                  fs.mkdirSync(path);
+                              }
+                                }
+                      }
+                      fs.writeFileSync(path+'/'+'Glue.xml',filesToAdd['Glue.xml'],'utf8');
+                    }
+                    }
                     artifact = self.blobClient.createArtifact('GlueSpecification');
                     return artifact.addFiles(filesToAdd);
                 })
