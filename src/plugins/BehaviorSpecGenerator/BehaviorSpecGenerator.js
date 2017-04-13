@@ -234,19 +234,15 @@ define([
             componentTypeNames = {},
             name,
             nodePath,
-            totalguardNames = {},
-            guardNames = {},
-            guardExpressions = [],
-            stateswithvalidTransitions = {},
-            totalStateNames = {},
             node;
 
         for (nodePath in nodes) {
-            guardNames = {};
-            guardExpressions = [];
-            stateswithvalidTransitions = {};
-            totalStateNames = {};
+            var guardNames = {};
+            var guardExpressions = [];
+            var stateWithValidTransitions = {};
+            var totalStateNames = {};
             var transitionNames = {};
+            var totalguardNames = {};
             node = nodes[nodePath];
             name = this.core.getAttribute(node, 'name');
 
@@ -255,8 +251,10 @@ define([
             if (this.isMetaTypeOf(node, this.META.ComponentType)) {
                 // This will be a java class - no special characters etc.
                 // The example is incomplete and also allows leading numbers, try at https://regex101.com/
+
                 //if (/^[0-9a-zA-Z_]+$/.test(name) === false) {
                 if (/^(?!abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|intanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|Abstract|Continue|For|New|Switch|Assert|Default|Goto|Package|Synchronized|Boolean|Do|If|Private|This|Break|Double|Implements|Protected|Throw|Byte|Else|Import|Public|Throws|Case|Enum|Intanceof|Return|Transient|Catch|Extends|Int|Short|Try|Char|Final|Interface|Static|Void|Class|Finally|Long|Strictfp|Volatile|Const|Float|Native|Super|While)[A-Z][0-9a-zA-Z]+$/.test(name) === false) {
+                //if (ConstantsFile.REGEXPS.JAVA_CLASS_NAME.test(name) === false) {
                     violations.push({
                         node: node,
                         message: 'Illegal ComponentType name [' + name + '] \nIt is an illegal java class name.'
@@ -276,24 +274,25 @@ define([
                 if (constructors == '') {
                     violations.push({
                         node: node,
-                        message: 'Constructors empty for' + componentTypeNames[name]
+                        message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a constructors attribute defined.',
                     });
                 }
                 var definitions = this.core.getAttribute(node, 'definitions');
                 if (definitions == '') {
                     violations.push({
                         node: node,
-                        message: 'Definitions empty for' + componentTypeNames[name]
+                        message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a definitions attribute defined.',
                     });
                 }
                 var forwards = this.core.getAttribute(node, 'forwards');
                 if (definitions == '') {
                     violations.push({
                         node: node,
-                        message: 'forwards empty for' + componentTypeNames[name]
+                        message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a forwards attribute defined.',
                     });
                 }
 
+                //ComponentType MyComponent does not have a forwards attribute defined.
                 // check for states,guards and transitions in each componentType
 
                 for (var childPath of this.core.getChildrenPaths(node)) {
@@ -314,27 +313,31 @@ define([
 
                         if (this.core.getPointerPath(child, 'dst') === null) {
                             violations.push({
-                                    node: node,
-                                message: 'Dst of connector [' + childPath + '] is null'
+                                node: node,
+                                //message: 'Dst of connector [' + childPath + '] is null'
+                                message:'Connection, ' +childName+'(' +childPath+ ') , with no destination encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
                             });
                         }
                         if (this.core.getPointerPath(child, 'src') === null) {
                             violations.push({
                                 node: node,
-                                message: 'Src of connector [' + childPath + '] is null'
+                                message:'Connection, ' +childName+'(' +childPath+ ') , with no source encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
                             });
                         }
 
+
+                        //uncommon
                         if (this.core.getPointerPath(child, 'dst') != null) {
                             var state = nodes[this.core.getPointerPath(child, 'dst')];
                             var stateName = this.core.getAttribute(state, 'name');
-                            stateswithvalidTransitions[stateName]= this.core.getPath(state);
+                            stateWithValidTransitions[stateName]= this.core.getPath(state);
                         }
 
+                        //uncommon
                         if (this.core.getPointerPath(child, 'src') != null) {
-                            var state = nodes[this.core.getPointerPath(child, 'dst')];
+                            var state = nodes[this.core.getPointerPath(child, 'src')];
                             var stateName = this.core.getAttribute(state, 'name');
-                            stateswithvalidTransitions[stateName]= this.core.getPath(state);
+                            stateWithValidTransitions[stateName]= this.core.getPath(state);
                         }
 
                         var expression = this.core.getAttribute(child, 'guardName');
@@ -346,10 +349,11 @@ define([
                         if (transitionMethod === '') {
                             violations.push({
                                 node: node,
-                                message: 'transitionMethod empty for ' + childName + ' with path ' + childPath
+                                message: childName + '(' + childPath + ') does not have transitionMethod attribute defined.'
                             });
                         }
 
+                        //uncommon
                         if (transitionNames.hasOwnProperty(childName)) {
                             violations.push({
                                 node: node,
@@ -357,7 +361,6 @@ define([
                             });
                         }
                         transitionNames[childName] = this.core.getPath(child);
-                        //this.logger.info("*******",stateNames[childPath]);
                     }
 
                     if (this.isMetaTypeOf(child, this.META.InternalTransition)) {
@@ -365,13 +368,13 @@ define([
                         if (this.core.getPointerPath(child, 'dst') === null) {
                             violations.push({
                                 node: node,
-                                message: 'Dst of connector [' + childPath + '] is null'
+                                message:'Connection, ' +childName+'(' +childPath+ ') , with no destination encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
                             });
                         }
                         if (this.core.getPointerPath(child, 'src') === null) {
                             violations.push({
                                 node: node,
-                                message: 'Src of connector [' + childPath + '] is null'
+                                message:'Connection, ' +childName+'(' +childPath+ ') , with no source encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
                             });
                         }
 
@@ -384,7 +387,7 @@ define([
                         if (transitionMethod === '') {
                             violations.push({
                                 node: node,
-                                message: 'transitionMethod empty for ' + childName + ' with path ' + childPath
+                                message: childName + '(' + childPath + ') does not have transitionMethod attribute defined.'
                             });
                         }
                     }
@@ -403,7 +406,7 @@ define([
                         if (guardMathod === '') {
                             violations.push({
                                 node: node,
-                                message: 'GuardMethod empty for ' + childName + ' with path ' + childPath
+                                message: childName + '(' + childPath + ') does not have guardMethod attribute defined.'
                             });
                         }
                     }
@@ -422,8 +425,6 @@ define([
                     regExpArray.push(name);
                 }
                 regExpArray.push('|');
-
-                // ^(g1|abs2r3|[\!\&\(\)\|])+$
 
                 regExpArray.push.apply(regExpArray, ['[\!\&\(\)\|])+$']);
                 var guardRegEx = new RegExp(regExpArray.join(''), 'g');
@@ -449,55 +450,13 @@ define([
                 }
 
                 for(var stateName in totalStateNames) {
-                    if (!stateswithvalidTransitions.hasOwnProperty(stateName)) {
+                    if (!stateWithValidTransitions.hasOwnProperty(stateName)) {
                         this.logger.warn('State '+ stateName +' with path '+ totalStateNames[stateName] +' has no transitions associated with it.Check your model.');
                     }
                 }
 
             }
         }
-
-
-
-        // ^(g1|abs2r3|[\!\&\(\)\|])+$
-
-        /*var regExpArray = ['^('];
-        this.logger.info('regExpArray ' + regExpArray);
-
-        var j=0;
-        for (var name in guardNames) {
-            if(j!=0) {
-                regExpArray.push('|');
-            }
-            j++;
-            this.logger.info('***',name);
-            regExpArray.push(name);
-        }
-        regExpArray.push('|');
-
-        regExpArray.push.apply(regExpArray, ['[\!\&\(\)\|])+]']);
-        var guardRegEx = new RegExp(regExpArray.join(''), 'g');
-        this.logger.info('guardRegEx ' + guardRegEx);
-
-        for(var i=0;i<guardExpressions.length;i++){
-            try {
-                GuardExpressionParser.parse(guardExpressions[i]);
-            } catch (e) {
-                violations.push({
-//                    node: end,
-                    message: 'GuardExpression [' + guardExpressions[i] + '] is not a valid boolean expression'
-                });
-            }
-
-            guardRegEx.lastIndex = 0;
-            if (!(guardRegEx.test(guardExpressions[i]))) {
-                violations.push({
-  //                  node: end,
-                    message: 'Guard Expression '+ guardExpressions[i] + ' does not contain valid guard names.'
-                });
-            }
-        }
-        */
         return violations;
     };
 
