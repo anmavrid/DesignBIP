@@ -341,48 +341,18 @@ define([
 
                     if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition)) {
 
-/*                        if (this.core.getPointerPath(child, 'dst') === null) {
-                            violations.push({
-                                node: node,
-                                message:'Connection, ' +childName+'(' +childPath+ ') , with no destination encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
-                            });
-                        }
-                        if (this.core.getPointerPath(child, 'src') === null) {
-                            violations.push({
-                                node: node,
-                                message:'Connection, ' +childName+'(' +childPath+ ') , with no source encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
-                            });
-                        }
-
-                        //this.logger.info('***guardname is: ',this.core.getAttribute(child, 'guardName'));
-                        var expression = this.core.getAttribute(child, 'guardName');
-                        if(expression!=''){
-                            guardExpressions.push(expression);
-                        }
-                        var transitionMethod = this.core.getAttribute(child, 'transitionMethod');
-                        if (transitionMethod === '') {
-                            violations.push({
-                                node: node,
-                                message: childName + '(' + childPath + ') does not have transitionMethod attribute defined.'
-                            });
-                        }*/
-
-
-                        //uncommon
                         if (this.core.getPointerPath(child, 'dst') != null) {
                             var state = nodes[this.core.getPointerPath(child, 'dst')];
                             var stateName = this.core.getAttribute(state, 'name');
                             stateWithValidTransitions[stateName]= this.core.getPath(state);
                         }
 
-                        //uncommon
                         if (this.core.getPointerPath(child, 'src') != null) {
                             var state = nodes[this.core.getPointerPath(child, 'src')];
                             var stateName = this.core.getAttribute(state, 'name');
                             stateWithValidTransitions[stateName]= this.core.getPath(state);
                         }
 
-                        //uncommon
                         if (transitionNames.hasOwnProperty(childName)) {
                             violations.push({
                                 node: node,
