@@ -6,9 +6,13 @@
 
 define([
     'js/Constants',
-    'q'
+    'q',
+    'common/util/ejs',
+    './../../../templates/ejsCache'
 ], function (CONSTANTS,
-             Q) {
+             Q,
+             ejs,
+             ejsCache) {
 
     'use strict';
 
@@ -86,7 +90,10 @@ define([
             })
             .then(function (componentType) {
 
-                segmentInfo['*forwards*' + nodeId] = context.core.getAttribute(componentType, 'forwards');
+                segmentInfo['*forwards*' + nodeId] = ejs.render(
+                    ejsCache.userImports,
+                    {forwards: context.core.getAttribute(componentType, 'forwards')}
+                );
                 segmentInfo['*definitions*' + nodeId] = context.core.getAttribute(componentType, 'definitions');
                 segmentInfo['*constructors*' + nodeId] = context.core.getAttribute(componentType, 'constructors');
                 return context.core.loadChildren(componentType);

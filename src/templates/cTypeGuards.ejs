@@ -1,0 +1,7 @@
+
+<%
+for(var i = 0; i < guards.length; i += 1){
+%>@Guard(name = "<%= guards[i].name %>")
+<%= guards[i].guardMethod %>
+<%
+} %>

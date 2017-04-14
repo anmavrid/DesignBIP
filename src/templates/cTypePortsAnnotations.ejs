@@ -1,0 +1,10 @@
+
+z@Ports({<% for(var i = 0; i < transitions.length; i += 1){
+if(transitions[i].type === "SpontaneousTransition"){ %>
+@Port(name ="<%= transitions[i].name %>", type = PortType.spontaneous),
+<% }
+if(transitions[i].type === "EnforceableTransition"){ %>
+@Port(name ="<%= transitions[i].name %>", type = PortType.enforceable),
+<% }
+} %>
+})
