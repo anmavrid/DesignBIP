@@ -26,8 +26,6 @@ define([
 
         this._widget = options.widget;
         this._currentNodeId = null;
-        this._currentGuards = {};
-        this._currentTransactions = {};
         this._gatheringSegments = false;
         this._missedEvents = false;
 
@@ -78,39 +76,209 @@ define([
         }
     };
 
-    BIPCodeEditorControl.prototype._buildSegmentInfo = function (nodeId) {
-        var deferred = Q.defer(),
-            segmentInfo = {},
-            context;
+    BIPCodeEditorControl.prototype._basicModel2TransitionModel = function (core, transitionNode, path2Name, basicModel) {
+        basicModel.src = path2Name[core.getPointerPath(transitionNode, 'src')];
+        basicModel.dst = path2Name[core.getPointerPath(transitionNode, 'dst')];
+        basicModel.guard = core.getAttribute(transitionNode, 'guardName');
+        basicModel.transitionMethod = core.getAttribute(transitionNode, 'transitionMethod');
+    };
 
-        Q.ninvoke(this._client, 'getCoreInstance', {})
+    BIPCodeEditorControl.prototype._basicModel2GuardModel = function (core, guardNode, basicModel) {
+        basicModel.guardMethod = core.getAttribute(guardNode, 'guardMethod');
+    };
+
+    BIPCodeEditorControl.prototype._getBasicModel = function (core, node) {
+        return {
+            name: core.getAttribute(node, 'name'),
+            type: core.getAttribute(core.getMetaType(node), 'name'),
+            path: core.getPath(node)
+        };
+    };
+
+    BIPCodeEditorControl.prototype._getComponentTypeModel = function (cTypeId) {
+        var self = this,
+            deferred = Q.defer(),
+            model = {},
+            context,
+            nameBasedSort = function (nodeA, nodeB) {
+                var nameA = context.core.getAttribute(nodeA, 'name'),
+                    nameB = context.core.getAttribute(nodeB, 'name');
+                if (nameA < nameB) {
+                    return -1;
+                } else if (nameA > nameB) {
+                    return 1;
+                }
+                return 0;
+            };
+
+        Q.ninvoke(self._client, 'getCoreInstance', {})
             .then(function (context_) {
                 context = context_;
-                return context.core.loadByPath(context.rootNode, nodeId);
+                return context.core.loadByPath(context.rootNode, cTypeId);
             })
             .then(function (componentType) {
+                model.path = cTypeId;
+                model.name = context.core.getAttribute(componentType, 'name');
+                model.cardinality = context.core.getAttribute(componentType, 'cardinality');
+                model.definitions = context.core.getAttribute(componentType, 'definitions');
+                model.forwards = context.core.getAttribute(componentType, 'forwards');
+                model.constructors = context.core.getAttribute(componentType, 'constructors');
+                model.initial = '';
+                model.transitions = [];
+                model.states = [];
+                model.guards = [];
 
-                segmentInfo['*forwards*' + nodeId] = ejs.render(
-                    ejsCache.userImports,
-                    {forwards: context.core.getAttribute(componentType, 'forwards')}
-                );
-                segmentInfo['*definitions*' + nodeId] = context.core.getAttribute(componentType, 'definitions');
-                segmentInfo['*constructors*' + nodeId] = context.core.getAttribute(componentType, 'constructors');
                 return context.core.loadChildren(componentType);
             })
             .then(function (children) {
-                var i;
+                var i, childModel,
+                    path2Name = {};
+
+                children.sort(nameBasedSort);
 
                 for (i = 0; i < children.length; i += 1) {
-                    if (context.core.isInstanceOf(children[i], 'TransitionBase')) {
-                        segmentInfo['*transition*' + nodeId] =
-                            context.core.getAttribute(children[i], 'transitionMethod');
-                    } else if (context.core.isInstanceOf(children[i], 'Guard')) {
-                        segmentInfo['*guard*' + nodeId] =
-                            context.core.getAttribute(children[i], 'guardMethod');
+                    path2Name[context.core.getPath(children[i])] = context.core.getAttribute(children[i], 'name');
+                }
+
+                for (i = 0; i < children.length; i += 1) {
+                    childModel = self._getBasicModel(context.core, children[i]);
+                    //TODO not the nicest way and not too change-resistant
+                    switch (childModel.type) {
+                        case 'EnforceableTransition':
+                        case 'SpontaneousTransition':
+                        case 'InternalTransition':
+                            self._basicModel2TransitionModel(context.core, children[i], path2Name, childModel);
+                            model.transitions.push(childModel);
+                            break;
+                        case 'Guard':
+                            self._basicModel2GuardModel(context.core, children[i], childModel);
+                            model.guards.push(childModel);
+                            break;
+                        case 'InitialState':
+                            model.initial = childModel.name;
+                        case 'State':
+                            model.states.push(childModel);
+                            break;
                     }
                 }
-                deferred.resolve(segmentInfo);
+                deferred.resolve(model);
+            })
+            .catch(deferred.reject);
+
+        return deferred.promise;
+    };
+
+    BIPCodeEditorControl.prototype._buildSegmentInfo = function (nodeId) {
+        var self = this,
+            deferred = Q.defer(),
+            model,
+            segmentedDocument = {composition: [], segments: {}};
+
+        self._getComponentTypeModel(nodeId)
+            .then(function (model_) {
+                var segmentId, i;
+
+                model = model_;
+                // <%- constantImports %>
+                // <%- userImports %>
+                // <%- portsAnnotations %>
+                // <%- classStart %>
+                // <%- userDefinitions %>
+                // <%- classInitializations %>
+                // <%- userConstructors %>
+                // <%- transactions %>
+                // <%- guards %>
+                // <%- classEnd %>
+
+                segmentId = 'constantImports*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.constantImports, model),
+                    options: {readonly: true}
+                };
+
+                segmentId = 'userImports*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.userImports, model),
+                    options: {readonly: false}
+                };
+
+                segmentId = 'portsAnnotations*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.portsAnnotations, model),
+                    options: {readonly: true}
+                };
+
+                segmentId = 'classStart*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.classStart, model),
+                    options: {readonly: true}
+                };
+
+                segmentId = 'userDefinitions*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.userDefinitions, model),
+                    options: {readonly: false}
+                };
+
+                segmentId = 'classInitializations*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.classInitializations, model),
+                    options: {readonly: true}
+                };
+
+                segmentId = 'userConstructors*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.userConstructors, model),
+                    options: {readonly: true}
+                };
+
+                for (i = 0; i < model.transitions.length; i += 1) {
+                    segmentId = 'singleTransitionnAnnotation*' + model.transitions[i].path;
+                    segmentedDocument.composition.push(segmentId);
+                    segmentedDocument.segments[segmentId] = {
+                        value: ejs.render(ejsCache.singleTransitionAnnotation, model.transitions[i]),
+                        options: {readonly: true}
+                    };
+
+                    segmentId = 'singleTransition*' + model.transitions[i].path;
+                    segmentedDocument.composition.push(segmentId);
+                    segmentedDocument.segments[segmentId] = {
+                        value: ejs.render(ejsCache.singleTransition, model.transitions[i]),
+                        options: {readonly: false}
+                    };
+                }
+
+                for (i = 0; i < model.guards.length; i += 1) {
+                    segmentId = 'singleGuardAnnotation*' + model.guards[i].path;
+                    segmentedDocument.composition.push(segmentId);
+                    segmentedDocument.segments[segmentId] = {
+                        value: ejs.render(ejsCache.singleGuardAnnotation, model.guards[i]),
+                        options: {readonly: true}
+                    };
+
+                    segmentId = 'singleGuard*' + model.guards[i].path;
+                    segmentedDocument.composition.push(segmentId);
+                    segmentedDocument.segments[segmentId] = {
+                        value: ejs.render(ejsCache.singleGuard, model.guards[i]),
+                        options: {readonly: false}
+                    };
+                }
+
+                segmentId = 'classEnd*' + model.path;
+                segmentedDocument.composition.push(segmentId);
+                segmentedDocument.segments[segmentId] = {
+                    value: ejs.render(ejsCache.classEnd, model),
+                    options: {readonly: true}
+                };
+
+                deferred.resolve(segmentedDocument);
             })
             .catch(deferred.reject);
 
@@ -118,75 +286,24 @@ define([
     };
 
     /* * * * * * * * Node Event Handling * * * * * * * */
+    //TODO needs a better change management
     BIPCodeEditorControl.prototype._eventCallback = function (events) {
-        var self = this,
-            needRefresh = false,
-            segmentedDocumentObject,
-            nodeType,
-            i;
+        var self = this;
 
-        for (i = 0; i < events.length; i += 1) {
-            switch (events[i].etype) {
-                case CONSTANTS.TERRITORY_EVENT_LOAD:
-                case CONSTANTS.TERRITORY_EVENT_UPDATE:
-                    if (events[i].eid === this._currentNodeId) {
-                        needRefresh = true;
-                    } else {
-                        nodeType = this._client.getNode(this._client.getNode(events[i].eid).getMetaTypeId())
-                            .getAttribute('name');
-
-                        if (nodeType.indexOf('Transition') > 0) {
-                            this._currentTransactions[events[i].eid] = true;
-                            needRefresh = true;
-                        } else if (nodeType === 'Guard') {
-                            this._currentGuards[events[i].eid] = true;
-                            needRefresh = true;
-                        }
-                    }
-                    break;
-                case CONSTANTS.TERRITORY_EVENT_UNLOAD:
-                    if (events[i].eid === this._currentNodeId) {
-                        needRefresh = true;
-                    } else {
-                        if (this._currentGuards[events[i].eid]) {
-                            needRefresh = true;
-                            delete this._currentGuards[events[i].eid];
-                        } else if (this._currentTransactions[events[i].eid]) {
-                            needRefresh = true;
-                            delete this._currentTransactions[events[i].eid];
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (needRefresh) {
-            if (this._gatheringSegments) {
-                this._missedEvents = true;
+        if (events.length > 1) {
+            if (self._gatheringSegments) {
+                self._missedEvents = true;
             } else {
-                this._buildSegmentInfo(this._currentNodeId)
-                    .then(function (segments) {
+                self._buildSegmentInfo(this._currentNodeId)
+                    .then(function (segmentedDocumentObject) {
                         self._gatheringSegments = false;
                         if (self._missedEvents) {
                             self._missedEvents = false;
-                            self._eventCallback([{eid: self._currentNodeId, etype: CONSTANTS.TERRITORY_EVENT_UPDATE}]);
+                            self._eventCallback([{
+                                eid: self._currentNodeId,
+                                etype: CONSTANTS.TERRITORY_EVENT_UPDATE
+                            }, {}]);
                         } else {
-                            segmentedDocumentObject = {
-                                composition: ['*forwards*' + self._currentNodeId,
-                                    '*definitions*' + self._currentNodeId,
-                                    '*constructors*' + self._currentNodeId],
-                                segments: {}
-                            };
-
-                            for (i = 0; i < segmentedDocumentObject.composition.length; i += 1) {
-                                segmentedDocumentObject.segments[segmentedDocumentObject.composition[i]] = {
-                                    value: segments[segmentedDocumentObject.composition[i]],
-                                    options: {readonly: false}
-                                }
-                            }
-
                             self._widget.setSegmentedDocument(segmentedDocumentObject);
                         }
                     })
@@ -195,7 +312,10 @@ define([
                         self._logger.error('error during segment info build:', err);
                         if (self._missedEvents) {
                             self._missedEvents = false;
-                            self._eventCallback([{eid: self._currentNodeId, etype: CONSTANTS.TERRITORY_EVENT_UPDATE}]);
+                            self._eventCallback([{
+                                eid: self._currentNodeId,
+                                etype: CONSTANTS.TERRITORY_EVENT_UPDATE
+                            }, {}]);
                         }
                     });
             }

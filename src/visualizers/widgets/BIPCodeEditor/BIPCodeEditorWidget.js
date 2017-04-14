@@ -7,11 +7,10 @@
 
 define(['./bower_components/codemirror/lib/codemirror',
     './bower_components/codemirror/mode/clike/clike',
-    'text!./BIPCodeEditor.html',
     'css!./styles/BIPCodeEditorWidget.css',
-    'css!./bower-components/codemirror/lib/codemirror.css',
+    'css!./bower_components/codemirror/lib/codemirror.css',
     'css!./bower_components/codemirror/theme/monokai.css'
-], function (CodeMirror, CodeMirrorModeClike, CodeEditorHtml) {
+], function (CodeMirror, CodeMirrorModeClike) {
     'use strict';
 
     var BIPCodeEditorWidget,
@@ -21,8 +20,6 @@ define(['./bower_components/codemirror/lib/codemirror',
         this._logger = logger.fork('Widget');
 
         this._el = container;
-        this._container = null;
-        this._codearea = null;
         this._segmentedDocument = {
             composition: [],
             segments: {}
@@ -44,26 +41,38 @@ define(['./bower_components/codemirror/lib/codemirror',
         // set widget class
         this._el.addClass(WIDGET_CLASS);
 
-        // Create a dummy header 
-        this._el.append(CodeEditorHtml);
-
         this._container = this._el.find('#BIP_CODE_EDITOR_DIV').first();
         this._codearea = this._el.find('#codearea').first();
-        this.editor = CodeMirror.fromTextArea(
-            this._codearea.get(0),
-            {
-                readOnly: false,
-                lineNumbers: true,
-                matchBrackets: true,
-                lint: false,
-                path: './bower_components/codemirror/lib/',
-                theme: 'monokai',
-                mode: 'text/x-java',
-                autofocus: true,
-                dragDrop: false,
-                gutters: ["CodeMirror-linenumbers"]
-            }
-        );
+
+        // The code editor.
+        this.editor = CodeMirror(this._el[0], {
+            readOnly: false,
+            lineNumbers: true,
+            matchBrackets: true,
+            lint: false,
+            path: './bower_components/codemirror/lib/',
+            theme: 'monokai',
+            mode: 'text/x-java',
+            autofocus: true,
+            dragDrop: false,
+            gutters: ["CodeMirror-linenumbers"]
+        });
+        $(this.editor.getWrapperElement()).addClass('code-editor');
+        // this.editor = CodeMirror.fromTextArea(
+        //     this._codearea.get(0),
+        //     {
+        //         readOnly: false,
+        //         lineNumbers: true,
+        //         matchBrackets: true,
+        //         lint: false,
+        //         path: './bower_components/codemirror/lib/',
+        //         theme: 'monokai',
+        //         mode: 'text/x-java',
+        //         autofocus: true,
+        //         dragDrop: false,
+        //         gutters: ["CodeMirror-linenumbers"]
+        //     }
+        // );
 
         this._wholeDocument = this.editor.getDoc();
         this._wholeDocument.on('change', function (/*doc,changeObj*/) {
@@ -83,6 +92,7 @@ define(['./bower_components/codemirror/lib/codemirror',
             width: width,
             height: height
         });
+        this.editor.focus();
         this.editor.refresh();
         this._wholeDocument.setCursor(oldCursorPosition);
     };
@@ -222,6 +232,7 @@ define(['./bower_components/codemirror/lib/codemirror',
             }
         }
 
+        this.editor.focus();
         this.editor.refresh();
         this._wholeDocument.setCursor(oldCursorPosition);
     };
@@ -248,7 +259,8 @@ define(['./bower_components/codemirror/lib/codemirror',
                         readonly: true,
                         atomic: true,
                         inclusiveLeft: true,
-                        inclusiveRight: false
+                        inclusiveRight: false,
+                        className: 'read-only-code'
                     }
                 );
             }

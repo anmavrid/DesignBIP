@@ -1,15 +1,15 @@
-<% var i; %>
-private String componentPath = "<%= path %>";
+<% var i;
+%>private String componentPath = "<%= path %>";
 private String componentType = "<%= name %>";
 private Map<String, String> stateToPath = new HashMap<String, String>();
 private Map<String, String> transitionToPath = new HashMap<String, String>();
 
-<%
-for(i=0;i<states.length; i+=1 ) {
-%>this.stateToPath.put("<%= states[i].name %>","<%= states[i].path %>");
-<%
+public <%= name %>() {<%
+for(i=0;i<states.length; i+=1 ) { %>
+  this.stateToPath.put("<%= states[i].name %>","<%= states[i].path %>");<%
 }
-for(i=0; i<transitions.length; i+=1){
-%>this.transitionToPath.put("<%= transitions[i].name %>","<%=transitions[i].path%>");
-<%
+
+for(i=0; i<transitions.length; i+=1){ %>
+  this.transitionToPath.put("<%= transitions[i].name %>","<%=transitions[i].path%>");<%
 } %>
+}
