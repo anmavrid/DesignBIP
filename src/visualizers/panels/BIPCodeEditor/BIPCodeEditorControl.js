@@ -8,11 +8,13 @@ define([
     'js/Constants',
     'q',
     'common/util/ejs',
-    './../../../templates/ejsCache'
+    './../../../templates/ejsCache',
+    './../../../parsers/java'
 ], function (CONSTANTS,
              Q,
              ejs,
-             ejsCache) {
+             ejsCache,
+             javaParser) {
 
     'use strict';
 
@@ -181,11 +183,22 @@ define([
                     options: {readonly: readonly === true}
                 };
             },
-            segmentedDocument = {composition: [], segments: {}};
+            segmentedDocument = {composition: [], segments: {}, errors: []};
 
         self._getComponentTypeModel(nodeId)
             .then(function (model_) {
-                var segmentId, i;
+                var i,
+                    wholeDocument = ejs.render(ejsCache.complete, model_),
+                    parseResult;
+
+                try {
+                    parseResult = javaParser.parse(wholeDocument);
+                    console.log(parseResult);
+
+                } catch (e) {
+                    console.log(e);
+                    segmentedDocument.errors.push({line: e.location.start.line, msg: e.message});
+                }
 
                 model = model_;
                 addSegment('constantImports', model.path, model, true);

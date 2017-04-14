@@ -10,11 +10,12 @@ define(['./bower_components/codemirror/lib/codemirror',
     'css!./styles/BIPCodeEditorWidget.css',
     'css!./bower_components/codemirror/lib/codemirror.css',
     'css!./bower_components/codemirror/theme/monokai.css'
-], function (CodeMirror, CodeMirrorModeClike) {
+], function (CodeMirror) {
     'use strict';
 
     var BIPCodeEditorWidget,
-        WIDGET_CLASS = 'b-i-p-code-editor';
+        WIDGET_CLASS = 'b-i-p-code-editor',
+        SYNTAX_GUTTER = 'code-syntax';
 
     BIPCodeEditorWidget = function (logger, container) {
         this._logger = logger.fork('Widget');
@@ -26,7 +27,7 @@ define(['./bower_components/codemirror/lib/codemirror',
         };
         this._wholeDocument = null;
         this._autoSaveTimer = null;
-        this._autoSaveInterval = 2000;
+        this._autoSaveInterval = 3000;
 
         this._initialize();
         this._logger.debug('ctor finished');
@@ -41,9 +42,6 @@ define(['./bower_components/codemirror/lib/codemirror',
         // set widget class
         this._el.addClass(WIDGET_CLASS);
 
-        this._container = this._el.find('#BIP_CODE_EDITOR_DIV').first();
-        this._codearea = this._el.find('#codearea').first();
-
         // The code editor.
         this.editor = CodeMirror(this._el[0], {
             readOnly: false,
@@ -55,33 +53,26 @@ define(['./bower_components/codemirror/lib/codemirror',
             mode: 'text/x-java',
             autofocus: true,
             dragDrop: false,
-            gutters: ["CodeMirror-linenumbers"]
+            gutters: [SYNTAX_GUTTER, "CodeMirror-linenumbers"]
         });
         $(this.editor.getWrapperElement()).addClass('code-editor');
-        // this.editor = CodeMirror.fromTextArea(
-        //     this._codearea.get(0),
-        //     {
-        //         readOnly: false,
-        //         lineNumbers: true,
-        //         matchBrackets: true,
-        //         lint: false,
-        //         path: './bower_components/codemirror/lib/',
-        //         theme: 'monokai',
-        //         mode: 'text/x-java',
-        //         autofocus: true,
-        //         dragDrop: false,
-        //         gutters: ["CodeMirror-linenumbers"]
-        //     }
-        // );
-
         this._wholeDocument = this.editor.getDoc();
         this._wholeDocument.on('change', function (/*doc,changeObj*/) {
+            self.editor.clearGutter(SYNTAX_GUTTER);
             if (self._autoSaveTimer) {
                 clearTimeout(self._autoSaveTimer);
                 self._autoSaveTimer = setTimeout(saving, self._autoSaveInterval);
             }
             self._autoSaveTimer = setTimeout(saving, self._autoSaveInterval);
         });
+    };
+
+    BIPCodeEditorWidget.prototype._setSyntaxError = function (lineNumber, message) {
+        var marker = document.createElement("i");
+        marker.className = "glyphicon glyphicon-exclamation-sign";
+        marker.style.color = "#822";
+        marker.title = message;
+        this.editor.setGutterMarker(lineNumber - 1, SYNTAX_GUTTER, marker);
     };
 
     BIPCodeEditorWidget.prototype.onWidgetContainerResize = function (width, height) {
@@ -154,6 +145,11 @@ define(['./bower_components/codemirror/lib/codemirror',
 
         this._segmentedDocument = newDocument;
         this._rebuildCompleteDocument();
+        if (segmentedDocumentObject.errors) {
+            for (i = 0; i < segmentedDocumentObject.errors.length; i += 1) {
+                this._setSyntaxError(segmentedDocumentObject.errors[i].line, segmentedDocumentObject.errors[i].msg);
+            }
+        }
         if (this._autoSaveTimer) {
             clearTimeout(this._autoSaveTimer);
             this._autoSaveTimer = null;
@@ -197,6 +193,7 @@ define(['./bower_components/codemirror/lib/codemirror',
             oldCursorPosition = this._wholeDocument.getCursor(),
             lineIndex, segmentLines;
 
+        this.editor.clearGutter(SYNTAX_GUTTER);
         for (i = 0; i < this._segmentedDocument.composition.length; i += 1) {
             segment = this._segmentedDocument.segments[this._segmentedDocument.composition[i]];
             if (segment.doc) {
