@@ -85,16 +85,9 @@ define(['./bower_components/codemirror/lib/codemirror',
     };
 
     BIPCodeEditorWidget.prototype.onWidgetContainerResize = function (width, height) {
-        var oldCursorPosition = this._wholeDocument.getCursor();
-
+        this._el.width(width);
+        this._el.height(height);
         this._logger.debug('Widget is resizing...');
-        $(this._el).find('.CodeMirror').css({
-            width: width,
-            height: height
-        });
-        this.editor.focus();
-        this.editor.refresh();
-        this._wholeDocument.setCursor(oldCursorPosition);
     };
 
     /* * * * * * * * Visualizer event handlers * * * * * * * */

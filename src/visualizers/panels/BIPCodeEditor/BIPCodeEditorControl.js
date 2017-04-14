@@ -51,8 +51,8 @@ define([
     BIPCodeEditorControl.prototype._initWidgetEventHandlers = function () {
         var self = this;
         this._widget.onSave = function (segmentedDocumentObject) {
-            console.log(segmentedDocumentObject);
-            // self._SaveDocument(segmentedDocumentObject);
+            // console.log(segmentedDocumentObject);
+            self._SaveDocument(segmentedDocumentObject);
         };
     };
 
@@ -172,6 +172,15 @@ define([
         var self = this,
             deferred = Q.defer(),
             model,
+            addSegment = function (segmentId, segmentPath, segmentModel, readonly) {
+                var fullSegmentId = segmentId + '*' + segmentPath;
+
+                segmentedDocument.composition.push(fullSegmentId);
+                segmentedDocument.segments[fullSegmentId] = {
+                    value: ejs.render(ejsCache[segmentId], segmentModel),
+                    options: {readonly: readonly === true}
+                };
+            },
             segmentedDocument = {composition: [], segments: {}};
 
         self._getComponentTypeModel(nodeId)
@@ -179,110 +188,61 @@ define([
                 var segmentId, i;
 
                 model = model_;
-                // <%- constantImports %>
-                // <%- userImports %>
-                // <%- portsAnnotations %>
-                // <%- classStart %>
-                // <%- userDefinitions %>
-                // <%- classInitializations %>
-                // <%- userConstructors %>
-                // <%- transactions %>
-                // <%- guards %>
-                // <%- classEnd %>
-
-                segmentId = 'constantImports*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.constantImports, model),
-                    options: {readonly: true}
-                };
-
-                segmentId = 'userImports*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.userImports, model),
-                    options: {readonly: false}
-                };
-
-                segmentId = 'portsAnnotations*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.portsAnnotations, model),
-                    options: {readonly: true}
-                };
-
-                segmentId = 'classStart*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.classStart, model),
-                    options: {readonly: true}
-                };
-
-                segmentId = 'userDefinitions*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.userDefinitions, model),
-                    options: {readonly: false}
-                };
-
-                segmentId = 'classInitializations*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.classInitializations, model),
-                    options: {readonly: true}
-                };
-
-                segmentId = 'userConstructors*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.userConstructors, model),
-                    options: {readonly: true}
-                };
+                addSegment('constantImports', model.path, model, true);
+                addSegment('userImports', model.path, model);
+                addSegment('portsAnnotations', model.path, model, true);
+                addSegment('classStart', model.path, model, true);
+                addSegment('userDefinitions', model.path, model);
+                addSegment('classInitializations', model.path, model, true);
+                addSegment('userConstructors', model.path, model);
 
                 for (i = 0; i < model.transitions.length; i += 1) {
-                    segmentId = 'singleTransitionnAnnotation*' + model.transitions[i].path;
-                    segmentedDocument.composition.push(segmentId);
-                    segmentedDocument.segments[segmentId] = {
-                        value: ejs.render(ejsCache.singleTransitionAnnotation, model.transitions[i]),
-                        options: {readonly: true}
-                    };
-
-                    segmentId = 'singleTransition*' + model.transitions[i].path;
-                    segmentedDocument.composition.push(segmentId);
-                    segmentedDocument.segments[segmentId] = {
-                        value: ejs.render(ejsCache.singleTransition, model.transitions[i]),
-                        options: {readonly: false}
-                    };
+                    addSegment('singleTransitionAnnotation', model.transitions[i].path, model.transitions[i], true);
+                    addSegment('singleTransition', model.transitions[i].path, model.transitions[i]);
                 }
 
                 for (i = 0; i < model.guards.length; i += 1) {
-                    segmentId = 'singleGuardAnnotation*' + model.guards[i].path;
-                    segmentedDocument.composition.push(segmentId);
-                    segmentedDocument.segments[segmentId] = {
-                        value: ejs.render(ejsCache.singleGuardAnnotation, model.guards[i]),
-                        options: {readonly: true}
-                    };
-
-                    segmentId = 'singleGuard*' + model.guards[i].path;
-                    segmentedDocument.composition.push(segmentId);
-                    segmentedDocument.segments[segmentId] = {
-                        value: ejs.render(ejsCache.singleGuard, model.guards[i]),
-                        options: {readonly: false}
-                    };
+                    addSegment('singleGuardAnnotation', model.guards[i].path, model.guards[i], true);
+                    addSegment('singleGuard', model.guards[i].path, model.guards[i]);
                 }
 
-                segmentId = 'classEnd*' + model.path;
-                segmentedDocument.composition.push(segmentId);
-                segmentedDocument.segments[segmentId] = {
-                    value: ejs.render(ejsCache.classEnd, model),
-                    options: {readonly: true}
-                };
+                addSegment('classEnd', model.path, model, true);
 
                 deferred.resolve(segmentedDocument);
             })
             .catch(deferred.reject);
 
         return deferred.promise;
+    };
+
+    BIPCodeEditorControl.prototype._SaveDocument = function (changedSegments) {
+        var segment,
+            segmentId;
+
+        this._client.startTransaction();
+        for (segmentId in changedSegments) {
+            segment = changedSegments[segmentId];
+            segmentId = segmentId.split('*');
+
+            switch (segmentId[0]) {
+                case 'userImports':
+                    this._client.setAttribute(segmentId[1], 'forwards', segment);
+                    break;
+                case 'userDefinitions':
+                    this._client.setAttribute(segmentId[1], 'definitions', segment);
+                    break;
+                case 'userConstructors':
+                    this._client.setAttribute(segmentId[1], 'constructors', segment);
+                    break;
+                case 'singleTransition':
+                    this._client.setAttribute(segmentId[1], 'transitionMethod', segment);
+                    break;
+                case 'singleGuard':
+                    this._client.setAttribute(segmentId[1], 'guardMethod', segment);
+                    break;
+            }
+        }
+        this._client.completeTransaction();
     };
 
     /* * * * * * * * Node Event Handling * * * * * * * */
