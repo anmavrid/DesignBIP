@@ -9,7 +9,7 @@ define([
     'q',
     'common/util/ejs',
     './../../../templates/ejsCache',
-    './../../../parsers/java'
+    './../../../parsers/javaExtra'
 ], function (CONSTANTS,
              Q,
              ejs,
@@ -170,10 +170,24 @@ define([
         return deferred.promise;
     };
 
+    BIPCodeEditorControl.prototype._getSegmentOffset = function (segmentedDocument, segmentId) {
+        var compiledText = '',
+            index = 0,
+            sId = segmentedDocument.composition[0] || null;
+
+        while (sId !== null && sId !== segmentId && index < segmentedDocument.composition.length) {
+            compiledText += segmentedDocument.segments[sId].value + '\n';
+            sId = segmentedDocument.composition[++index];
+        }
+
+        return compiledText.split('\n').length;
+    };
+
     BIPCodeEditorControl.prototype._buildSegmentInfo = function (nodeId) {
         var self = this,
             deferred = Q.defer(),
             model,
+            segmentId,
             addSegment = function (segmentId, segmentPath, segmentModel, readonly) {
                 var fullSegmentId = segmentId + '*' + segmentPath;
 
@@ -182,6 +196,8 @@ define([
                     value: ejs.render(ejsCache[segmentId], segmentModel),
                     options: {readonly: readonly === true}
                 };
+
+                return fullSegmentId;
             },
             segmentedDocument = {composition: [], segments: {}, errors: []};
 
@@ -191,13 +207,10 @@ define([
                     wholeDocument = ejs.render(ejsCache.complete, model_),
                     parseResult;
 
-                try {
-                    parseResult = javaParser.parse(wholeDocument);
-                    console.log(parseResult);
+                parseResult = javaParser.checkWholeFile(wholeDocument);
 
-                } catch (e) {
-                    console.log(e);
-                    segmentedDocument.errors.push({line: e.location.start.line, msg: e.message});
+                if (parseResult) {
+                    segmentedDocument.errors.push(parseResult);
                 }
 
                 model = model_;
@@ -211,12 +224,29 @@ define([
 
                 for (i = 0; i < model.transitions.length; i += 1) {
                     addSegment('singleTransitionAnnotation', model.transitions[i].path, model.transitions[i], true);
-                    addSegment('singleTransition', model.transitions[i].path, model.transitions[i]);
+                    segmentId = addSegment('singleTransition', model.transitions[i].path, model.transitions[i]);
+
+                    parseResult = javaParser.checkForSingleFunction(
+                        segmentedDocument.segments[segmentId].value,
+                        null,
+                        'public',
+                        self._getSegmentOffset(segmentedDocument, segmentId));
+                    if (parseResult) {
+                        segmentedDocument.errors.push(parseResult);
+                    }
                 }
 
                 for (i = 0; i < model.guards.length; i += 1) {
                     addSegment('singleGuardAnnotation', model.guards[i].path, model.guards[i], true);
-                    addSegment('singleGuard', model.guards[i].path, model.guards[i]);
+                    segmentId = addSegment('singleGuard', model.guards[i].path, model.guards[i]);
+                    parseResult = javaParser.checkForSingleFunction(
+                        segmentedDocument.segments[segmentId].value,
+                        'boolean',
+                        'public',
+                        self._getSegmentOffset(segmentedDocument, segmentId));
+                    if (parseResult) {
+                        segmentedDocument.errors.push(parseResult);
+                    }
                 }
 
                 addSegment('classEnd', model.path, model, true);

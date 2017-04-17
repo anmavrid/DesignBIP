@@ -191,6 +191,7 @@ define(['./bower_components/codemirror/lib/codemirror',
     BIPCodeEditorWidget.prototype._rebuildCompleteDocument = function () {
         var i, segment, wholeDocument = '',
             oldCursorPosition = this._wholeDocument.getCursor(),
+            oldScrollInfo = this.editor.getScrollInfo(),
             lineIndex, segmentLines;
 
         this.editor.clearGutter(SYNTAX_GUTTER);
@@ -225,6 +226,7 @@ define(['./bower_components/codemirror/lib/codemirror',
         this.editor.focus();
         this.editor.refresh();
         this._wholeDocument.setCursor(oldCursorPosition);
+        this.editor.scrollTo(oldScrollInfo.left, oldScrollInfo.top);
     };
 
     BIPCodeEditorWidget.prototype._setSegmentReadOnly = function (segmentName, readOnly) {
