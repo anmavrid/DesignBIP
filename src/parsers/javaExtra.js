@@ -86,7 +86,14 @@ define(['./java'], function (java) {
             }
             return null;
         } catch (e) {
-            return {msg: e.message, line: e.location.start.line - 1 + (lineOffset || 0)};
+            /* TODO it is not too sophisticated but the java parser tends to point to the closing '}'
+               as the source of the erro which does not give too much information.
+             */
+            
+            return {
+                msg: 'The syntax of the function is not correct.',
+                line: lineOffset || 0
+            };
         }
     }
 
