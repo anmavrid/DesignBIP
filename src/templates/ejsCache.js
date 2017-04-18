@@ -17,7 +17,8 @@ define([
     'text!./cTypeUserConstructors.ejs',
     'text!./cTypeUserDefinitions.ejs',
     'text!./cTypeUserImports.ejs',
-    'text!./cTypeComplete.ejs'
+    'text!./cTypeComplete.ejs',
+    'text!./guardExpression.ejs'
 ], function (ejs,
              classInitializations,
              classStart,
@@ -33,33 +34,38 @@ define([
              userConstructors,
              userDefinitions,
              userImports,
-             complete) {
+             complete,
+             guardExpression) {
+
     return {
-        classInitializations: classInitializations,
-        classStart: classStart,
-        classEnd: classEnd,
-        constantImports: constantImports,
-        guards: guards,
-        portsAnnotations: portsAnnotations,
-        singleGuard: singleGuard,
-        singleGuardAnnotation: singleGuardAnnotation,
-        singleTransition: singleTransition,
-        singleTransitionAnnotation: singleTransitionAnnotation,
-        transitions: transitions,
-        userConstructors: userConstructors,
-        userDefinitions: userDefinitions,
-        userImports: userImports,
-        complete: ejs.render(complete, {
+        componentType: {
             classInitializations: classInitializations,
             classStart: classStart,
             classEnd: classEnd,
             constantImports: constantImports,
             guards: guards,
             portsAnnotations: portsAnnotations,
+            singleGuard: singleGuard,
+            singleGuardAnnotation: singleGuardAnnotation,
+            singleTransition: singleTransition,
+            singleTransitionAnnotation: singleTransitionAnnotation,
             transitions: transitions,
             userConstructors: userConstructors,
             userDefinitions: userDefinitions,
-            userImports: userImports
-        })
+            userImports: userImports,
+            complete: ejs.render(complete, {
+                classInitializations: classInitializations,
+                classStart: classStart,
+                classEnd: classEnd,
+                constantImports: constantImports,
+                guards: guards,
+                portsAnnotations: portsAnnotations,
+                transitions: transitions,
+                userConstructors: userConstructors,
+                userDefinitions: userDefinitions,
+                userImports: userImports
+            })
+        },
+        guardExpression: guardExpression
     };
 });

@@ -17,6 +17,7 @@
     "tests"
   ],
   "dependencies": {
-    "codemirror": "^5.25.0"
+    "codemirror": "^5.25.0",
+    "pegjs": "0.10.0"
   }
 }

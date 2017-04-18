@@ -1,0 +1,13 @@
+expr = "!" expr  / disjunction
+disjunction = primary "|" expr / conjunction
+conjunction = primary "&" expr / primary
+primary = symbol / "(" expr ")"
+symbol = <%
+for(var i=0;i<guardNames.length;i+=1){
+    if(i>0){
+        %> / "<%= guardNames[i] %>"<%
+    } else {
+        %>"<%= guardNames[i] %>"<%
+    }
+}
+%>

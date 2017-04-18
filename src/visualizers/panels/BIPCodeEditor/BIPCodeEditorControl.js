@@ -14,13 +14,15 @@ define([
     'common/util/ejs',
     './../../../templates/ejsCache',
     './../../../parsers/javaExtra',
-    './../../../utils'
+    './../../../util/utils',
+    './../../../bower_components/pegjs/peg-0.10.0'
 ], function (CONSTANTS,
              Q,
              ejs,
              ejsCache,
              javaParser,
-             utils) {
+             utils,
+             peg) {
 
     'use strict';
 
@@ -122,12 +124,14 @@ define([
             deferred = Q.defer(),
             model,
             segmentId,
+            guardNames = [],
+            guardExpressionParser,
             addSegment = function (segmentId, segmentPath, segmentModel, readonly) {
                 var fullSegmentId = segmentId + '*' + segmentPath;
 
                 segmentedDocument.composition.push(fullSegmentId);
                 segmentedDocument.segments[fullSegmentId] = {
-                    value: ejs.render(ejsCache[segmentId], segmentModel),
+                    value: ejs.render(ejsCache.componentType[segmentId], segmentModel),
                     options: {readonly: readonly === true}
                 };
 
@@ -138,16 +142,21 @@ define([
         self._getComponentTypeModel(nodeId)
             .then(function (model_) {
                 var i,
-                    wholeDocument = ejs.render(ejsCache.complete, model_),
+                    wholeDocument = ejs.render(ejsCache.componentType.complete, model_),
                     parseResult;
 
+                model = model_;
                 parseResult = javaParser.checkWholeFile(wholeDocument);
 
                 if (parseResult) {
                     segmentedDocument.errors.push(parseResult);
                 }
 
-                model = model_;
+                for (i = 0; i < model.guards.length; i += 1) {
+                    guardNames.push(model.guards[i].name);
+                }
+                guardExpressionParser = peg.generate(ejs.render(ejsCache.guardExpression, {guardNames: guardNames}));
+
                 addSegment('constantImports', model.path, model, true);
                 addSegment('userImports', model.path, model);
                 addSegment('portsAnnotations', model.path, model, true);
@@ -157,7 +166,22 @@ define([
                 addSegment('userConstructors', model.path, model);
 
                 for (i = 0; i < model.transitions.length; i += 1) {
-                    addSegment('singleTransitionAnnotation', model.transitions[i].path, model.transitions[i], true);
+                    segmentId = addSegment('singleTransitionAnnotation',
+                        model.transitions[i].path, model.transitions[i], true);
+
+                    //FIXME should we allow empty string or have a constant 'true' in case of no expression
+                    if (model.transitions[i].guard.length > 0) {
+                        try {
+                            parseResult = guardExpressionParser.parse(model.transitions[i].guard);
+                        } catch (e) {
+                            segmentedDocument.errors.push({
+                                msg: 'Guard expression should be a logical expression ' +
+                                'that has only defined guard names as symbols.',
+                                line: self._getSegmentOffset(segmentedDocument, segmentId)
+                            });
+                        }
+                    }
+
                     segmentId = addSegment('singleTransition', model.transitions[i].path, model.transitions[i]);
 
                     parseResult = javaParser.checkForSingleFunction(
