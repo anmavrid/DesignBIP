@@ -7,7 +7,6 @@
  */
 
 
-// TODO: Make svgs for each type of state.
 define([
     'text!./svgs/state.svg',
     'text!./svgs/state-highlight.svg'
@@ -25,7 +24,7 @@ define([
         this.skinParts.$svgContainer = null;
         this.prevMetaTypeName = null;
         this.metaTypeName = null;
-        this.highlightColors = ['blue'];
+        this.highlightColors = [];
     }
 
     function getCoordinatesForPercent(percent) {
@@ -63,7 +62,7 @@ define([
                     pathEl,
                     pathData,
                     end;
-
+                //https://hackernoon.com/a-simple-pie-chart-in-svg-dbdd653b6936
                 // each slice starts where the last slice ended, so keep a cumulative percent
                 cumulativePercent += slicePercent;
                 //console.log('cumPer', cumulativePercent);
