@@ -351,34 +351,34 @@ define([
     };
 
     BIPCodeEditorControl.prototype._initializeToolbar = function () {
-        var self = this,
-            toolBar = WebGMEGlobal.Toolbar;
+        // var self = this,
+        //     toolBar = WebGMEGlobal.Toolbar;
 
         this._toolbarItems = [];
 
-        this._toolbarItems.push(toolBar.addSeparator());
-
-        /************** Go to hierarchical parent button ****************/
-        this.$btnModelHierarchyUp = toolBar.addButton({
-            title: 'Go to parent',
-            icon: 'glyphicon glyphicon-circle-arrow-up',
-            clickFn: function (/*data*/) {
-                WebGMEGlobal.State.registerActiveObject(self._currentNodeParentId);
-            }
-        });
-        this._toolbarItems.push(this.$btnModelHierarchyUp);
-        this.$btnModelHierarchyUp.hide();
-
-        /************** Checkbox example *******************/
-
-        this.$cbShowConnection = toolBar.addCheckBox({
-            title: 'toggle checkbox',
-            icon: 'gme icon-gme_diagonal-arrow',
-            checkChangedFn: function (data, checked) {
-                self._logger.debug('Checkbox has been clicked!');
-            }
-        });
-        this._toolbarItems.push(this.$cbShowConnection);
+        // this._toolbarItems.push(toolBar.addSeparator());
+        //
+        // /************** Go to hierarchical parent button ****************/
+        // this.$btnModelHierarchyUp = toolBar.addButton({
+        //     title: 'Go to parent',
+        //     icon: 'glyphicon glyphicon-circle-arrow-up',
+        //     clickFn: function (/*data*/) {
+        //         WebGMEGlobal.State.registerActiveObject(self._currentNodeParentId);
+        //     }
+        // });
+        // this._toolbarItems.push(this.$btnModelHierarchyUp);
+        // this.$btnModelHierarchyUp.hide();
+        //
+        // /************** Checkbox example *******************/
+        //
+        // this.$cbShowConnection = toolBar.addCheckBox({
+        //     title: 'toggle checkbox',
+        //     icon: 'gme icon-gme_diagonal-arrow',
+        //     checkChangedFn: function (data, checked) {
+        //         self._logger.debug('Checkbox has been clicked!');
+        //     }
+        // });
+        // this._toolbarItems.push(this.$cbShowConnection);
 
         this._toolbarInitialized = true;
     };
