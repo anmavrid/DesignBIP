@@ -5,6 +5,7 @@
   font-weight: normal; }
   .bip-state-decorator .svg-container {
     width: 48px;
+    height: 48px;
     display: inline-block; }
   .bip-state-decorator .connector {
     border: blue solid 1px;

@@ -1,9 +1,11 @@
 .part-browser .bip-state-decorator {
-  height: auto;
+  height: 50px;
   line-height: 18px;
   width: 50px;
   text-align: center; }
   .part-browser .bip-state-decorator .svg-container {
-    width: 40px;
+    width: 48px;
+    height: 48px;
     display: inline-block; }
 
+/*# sourceMappingURL=BIPStateDecorator.PartBrowserWidget.css.map */

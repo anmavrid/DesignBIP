@@ -10,14 +10,14 @@
 // TODO: Make svgs for each type of state.
 define([
     'text!./svgs/state.svg',
-    'text!./svgs/state.svg'
+    'text!./svgs/state-highlight.svg'
 ], function (STATE_SVG,
-             INIT_STATE_SVG) {
+    HIGHLIGHT_SVG) {
 
     'use strict';
     var META_TO_TEMPLATE = {
         State: STATE_SVG,
-        InitState: INIT_STATE_SVG
+        InitialState: STATE_SVG
     };
 
     function BIPStateDecoratorCore() {
@@ -25,28 +25,83 @@ define([
         this.skinParts.$svgContainer = null;
         this.prevMetaTypeName = null;
         this.metaTypeName = null;
+        this.highlightColors = ['blue'];
+    }
+
+    function getCoordinatesForPercent(percent) {
+        return {
+            x: Math.cos(2 * Math.PI * percent),
+            y: Math.sin(2 * Math.PI * percent)
+        };
     }
 
     BIPStateDecoratorCore.prototype.updateSvg = function () {
-        var template = META_TO_TEMPLATE[this.metaTypeName] || STATE_SVG; // TODO: Make a fall back svg.
+        var self = this,
+            template = META_TO_TEMPLATE[this.metaTypeName] || STATE_SVG,
+            cumulativePercent = 0,
+            slicePercent;
 
-        if (this.prevMetaTypeName !== this.metaTypeName) {
+        if (this.skinParts.$svgHighlight) {
+            this.skinParts.$svgHighlight.remove();
+            delete this.skinParts.$svgHighlight;
+        }
+
+        if (this.highlightColors.length > 0) {
             this.skinParts.$svgContainer = this.$el.find('.svg-container');
             this.skinParts.$svgContainer.empty();
 
             this.skinParts.$svg = $(template);
             this.skinParts.$name = this.skinParts.$svg.find('.name');
-            this.skinParts.$svgContainer.append(this.skinParts.$svg);
+
+            this.skinParts.$svg.find('g').css('fill-opacity', 0); // Make default circle transparent
+            this.skinParts.$svgHighlight = $(HIGHLIGHT_SVG);
+            slicePercent = 1 / this.highlightColors.length;
+
+            this.highlightColors.forEach(function (color) {
+                var start = getCoordinatesForPercent(cumulativePercent),
+                    largeArcFlag = slicePercent > 0.5 ? 1 : 0,
+                    pathEl,
+                    pathData,
+                    end;
+
+                // each slice starts where the last slice ended, so keep a cumulative percent
+                cumulativePercent += slicePercent;
+                //console.log('cumPer', cumulativePercent);
+                end = getCoordinatesForPercent(cumulativePercent);
+
+                // create an array and join it just for code readability
+                pathData = [
+                    'M', start.x, start.y, // Move
+                    'A 1 1 0', largeArcFlag, '1', end.x, end.y, // Arc
+                    'L 0 0', // Line
+                ].join(' ');
+
+                // create a <path> and append it to the <svg> element
+                pathEl = $(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
+                pathEl.attr('d', pathData);
+                pathEl.attr('fill', color);
+                self.skinParts.$svgHighlight.append(pathEl);
+            });
+
+            self.skinParts.$svgContainer.append(self.skinParts.$svgHighlight);
+        } else if (this.prevMetaTypeName !== this.metaTypeName) {
+            this.skinParts.$svgContainer = this.$el.find('.svg-container');
+            this.skinParts.$svgContainer.empty();
+
+            this.skinParts.$svg = $(template);
+            this.skinParts.$name = this.skinParts.$svg.find('.name');
         }
 
+        this.skinParts.$svgContainer.append(this.skinParts.$svg);
+
         if (this.name) {
-            // TODO: Find the threshold and how to cut it when it exceeds.
             if (this.name.length < 8) {
                 this.skinParts.$name.text(this.name);
             } else {
                 this.skinParts.$name.text(this.name.substring(0, 5).concat('...'));
+            }
 
-                //TODO: If we need to show a pop-over (for showing the full name or some other data).
+            if (this.name.length > 7 || this.highlightColors.length > 1) {
                 this.skinParts.$svgContainer.popover({
                     delay: {
                         show: 150,
@@ -56,7 +111,6 @@ define([
                     trigger: 'hover',
                     content: this.name
                 });
-
             }
         }
 
@@ -66,9 +120,13 @@ define([
         // If state is InitialState then, the border color is red
         if (this.metaTypeName === 'InitialState') {
             this.skinParts.$svg.find('circle').css('stroke', 'red');
-
         }
+    };
 
+
+    BIPStateDecoratorCore.prototype.setHighlightColors = function (colors) {
+        this.highlightColors = colors;
+        this.updateSvg();
     };
 
     return BIPStateDecoratorCore;
