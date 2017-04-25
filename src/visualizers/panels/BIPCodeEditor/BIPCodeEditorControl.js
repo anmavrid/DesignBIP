@@ -98,7 +98,12 @@ define([
                 return context.core.loadByPath(context.rootNode, cTypeId);
             })
             .then(function (componentType) {
-                return utils.getModelOfComponentType(context.core, componentType);
+                if (componentType) {
+                    return utils.getModelOfComponentType(context.core, componentType);
+                }
+                else {
+                    throw new Error('Component was removed!');
+                }
             })
             .then(deferred.resolve)
             .catch(deferred.reject);
@@ -155,7 +160,11 @@ define([
                 for (i = 0; i < model.guards.length; i += 1) {
                     guardNames.push(model.guards[i].name);
                 }
-                guardExpressionParser = peg.generate(ejs.render(ejsCache.guardExpression, {guardNames: guardNames}));
+                if (guardNames.length > 0) {
+                    guardExpressionParser = peg.generate(
+                        ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
+                    );
+                }
 
                 addSegment('constantImports', model.path, model, true);
                 addSegment('userImports', model.path, model);
@@ -249,36 +258,46 @@ define([
     /* * * * * * * * Node Event Handling * * * * * * * */
     //TODO needs a better change management
     BIPCodeEditorControl.prototype._eventCallback = function (events) {
-        var self = this;
+        var self = this,
+            componentRemoved = false,
+            i;
 
         if (events.length > 1) {
             if (self._gatheringSegments) {
                 self._missedEvents = true;
             } else {
-                self._buildSegmentInfo(this._currentNodeId)
-                    .then(function (segmentedDocumentObject) {
-                        self._gatheringSegments = false;
-                        if (self._missedEvents) {
-                            self._missedEvents = false;
-                            self._eventCallback([{
-                                eid: self._currentNodeId,
-                                etype: CONSTANTS.TERRITORY_EVENT_UPDATE
-                            }, {}]);
-                        } else {
-                            self._widget.setSegmentedDocument(segmentedDocumentObject);
-                        }
-                    })
-                    .catch(function (err) {
-                        self._gatheringSegments = false;
-                        self._logger.error('error during segment info build:', err);
-                        if (self._missedEvents) {
-                            self._missedEvents = false;
-                            self._eventCallback([{
-                                eid: self._currentNodeId,
-                                etype: CONSTANTS.TERRITORY_EVENT_UPDATE
-                            }, {}]);
-                        }
-                    });
+                for (i = 0; i < events.length; i += 1) {
+                    if (events[i].eid === this._currentNodeId && events[i].etype === CONSTANTS.TERRITORY_EVENT_UNLOAD) {
+                        componentRemoved = true;
+                        break;
+                    }
+                }
+                if (componentRemoved !== true) {
+                    self._buildSegmentInfo(this._currentNodeId)
+                        .then(function (segmentedDocumentObject) {
+                            self._gatheringSegments = false;
+                            if (self._missedEvents) {
+                                self._missedEvents = false;
+                                self._eventCallback([{
+                                    eid: self._currentNodeId,
+                                    etype: CONSTANTS.TERRITORY_EVENT_UPDATE
+                                }, {}]);
+                            } else {
+                                self._widget.setSegmentedDocument(segmentedDocumentObject);
+                            }
+                        })
+                        .catch(function (err) {
+                            self._gatheringSegments = false;
+                            self._logger.error('error during segment info build:', err);
+                            if (self._missedEvents) {
+                                self._missedEvents = false;
+                                self._eventCallback([{
+                                    eid: self._currentNodeId,
+                                    etype: CONSTANTS.TERRITORY_EVENT_UPDATE
+                                }, {}]);
+                            }
+                        });
+                }
             }
         }
     };
