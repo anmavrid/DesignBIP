@@ -89,6 +89,8 @@ define([
 
             this.skinParts.$svg = $(template);
             this.skinParts.$name = this.skinParts.$svg.find('.name');
+        } else {
+            this.skinParts.$svg.find('g').css('fill-opacity', 1); // Make default circle is white again.
         }
 
         this.skinParts.$svgContainer.append(this.skinParts.$svg);
