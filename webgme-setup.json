@@ -19,7 +19,15 @@
         "src": "src/seeds/BIP"
       }
     },
-    "visualizers": {},
+    "visualizers": {
+      "BIPCodeEditor": {
+        "src": "panels/BIPCodeEditor/BIPCodeEditorPanel",
+        "title": "BIPCodeEditor",
+        "panel": "src/visualizers/panels/BIPCodeEditor",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/BIPCodeEditor"
+      }
+    },
     "decorators": {
       "BIPComponentTypeDecorator": {
         "src": "src/decorators/BIPComponentTypeDecorator"
@@ -30,20 +38,15 @@
       "BIPStateDecorator": {
         "src": "src/decorators/BIPStateDecorator"
       }
-    }
+    },
+    "addons": {},
+    "layouts": {},
+    "routers": {}
   },
   "dependencies": {
     "plugins": {},
     "seeds": {},
     "visualizers": {
-      "CodeEditor": {
-        "src": "panels/CodeEditor/CodeEditorPanel",
-        "title": "CodeEditor",
-        "panel": "src/visualizers/panels/CodeEditor",
-        "secondary": false,
-        "widget": "src/visualizers/widgets/CodeEditor",
-        "project": "webgme-codeeditor"
-      },
       "BIPEditor": {
         "src": "panels/ModelEditor/ModelEditorPanel",
         "title": "BIP Editor",
@@ -61,6 +64,9 @@
         "project": "webgme-bip-editors"
       }
     },
-    "decorators": {}
+    "decorators": {},
+    "addons": {},
+    "layouts": {},
+    "routers": {}
   }
 }

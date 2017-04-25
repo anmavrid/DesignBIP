@@ -13,8 +13,8 @@ config.seedProjects.basePaths.push(__dirname + '/../src/seeds/BIP');
 
 
 
-config.visualization.panelPaths.push(__dirname + '/../node_modules/webgme-codeeditor/src/visualizers/panels');
 config.visualization.panelPaths.push(__dirname + '/../node_modules/webgme-bip-editors/src/visualizers/panels');
+config.visualization.panelPaths.push(__dirname + '/../src/visualizers/panels');
 
 
 
@@ -25,18 +25,15 @@ config.visualization.visualizerDescriptors.push(__dirname + '/../src/visualizers
 config.requirejsPaths = {
   'BIPExecutionViz': 'panels/BIPExecutionViz/BIPExecutionVizPanel',
   'BIPEditor': 'panels/ModelEditor/ModelEditorPanel',
-  'CodeEditor': 'panels/CodeEditor/CodeEditorPanel',
   'panels': './src/visualizers/panels',
   'widgets': './src/visualizers/widgets',
   'panels/BIPExecutionViz': './node_modules/webgme-bip-editors/src/visualizers/panels/BIPExecutionViz',
   'widgets/BIPExecutionViz': './node_modules/webgme-bip-editors/src/visualizers/widgets/BIPExecutionViz',
   'panels/ModelEditor': './node_modules/webgme-bip-editors/src/visualizers/panels/ModelEditor',
-  'widgets/ModelEditor': './node_modules/webgme-bip-editors/src/visualizers/widgets/ModelEditor',
-  'panels/CodeEditor': './node_modules/webgme-codeeditor/src/visualizers/panels/CodeEditor',
-  'widgets/CodeEditor': './node_modules/webgme-codeeditor/src/visualizers/widgets/CodeEditor'
+  'widgets/ModelEditor': './node_modules/webgme-bip-editors/src/visualizers/widgets/ModelEditor'
 };
 
 
-config.mongo.uri = 'mongodb://127.0.0.1:27017/bip';
+config.mongo.uri = 'mongodb://127.0.0.1:27017/webgme_bip';
 validateConfig(config);
 module.exports = config;

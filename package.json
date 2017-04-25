@@ -11,7 +11,8 @@
     "plugin": "node ./node_modules/webgme/src/bin/run_plugin.js",
     "pluginHook": "node ./node_modules/webgme/src/bin/plugin_hook.js",
     "users": "node ./node_modules/webgme/src/bin/usermanager.js",
-    "clean_up": "node ./node_modules/webgme/src/bin/clean_up.js"
+    "clean_up": "node ./node_modules/webgme/src/bin/clean_up.js",
+    "postinstall": "bower install"
   },
   "version": "1.0.0",
   "peerDependencies": {
@@ -25,7 +26,6 @@
     "jshint": "2.9.3"
   },
   "dependencies": {
-    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors",
-    "webgme-codeeditor": "^2.0.0"
+    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors"
   }
 }

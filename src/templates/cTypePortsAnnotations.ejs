@@ -1,0 +1,22 @@
+<% var i, notFirst = false; %>
+@Ports({<%
+for(i = 0; i < transitions.length; i += 1){
+    if(transitions[i].type === "SpontaneousTransition") {
+        if(notFirst) {
+            %>,<%
+        }
+        notFirst = true;
+%>
+  @Port(name ="<%= transitions[i].name %>", type = PortType.spontaneous)<%
+    }
+    if(transitions[i].type === "EnforceableTransition") {
+        if(notFirst) {
+            %>,<%
+        }
+        notFirst = true;
+
+%>
+  @Port(name ="<%= transitions[i].name %>", type = PortType.enforceable)<%
+    }
+} %>
+})
