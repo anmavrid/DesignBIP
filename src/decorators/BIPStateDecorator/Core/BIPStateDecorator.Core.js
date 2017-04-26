@@ -128,5 +128,11 @@ define([
         }
     };
 
+
+    BIPStateDecoratorCore.prototype.setHighlightColors = function (colors) {
+        this.highlightColors = colors;
+        this.updateSvg();
+    };
+
     return BIPStateDecoratorCore;
 });
