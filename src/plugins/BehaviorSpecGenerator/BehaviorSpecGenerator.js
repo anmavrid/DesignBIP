@@ -11,16 +11,22 @@ define([
     'plugin/PluginConfig',
     'text!./metadata.json',
     'plugin/PluginBase',
+    'q',
     'common/util/ejs',
-    'text!./Templates/componentType.ejs',
-    'plugin/BehaviorSpecGenerator/BehaviorSpecGenerator/GuardExpressionParser'
+    'bipsrc/util/utils',
+    'bipsrc/templates/ejsCache',
+    'bipsrc/parsers/javaExtra',
+    'bipsrc/bower_components/pegjs/peg-0.10.0'
 ], function (
     PluginConfig,
     pluginMetadata,
     PluginBase,
+    Q,
     ejs,
-    componentTypeTemplate,
-    GuardExpressionParser) {
+    utils,
+    ejsCache,
+    javaParser,
+    peg) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -60,61 +66,111 @@ define([
      */
     BehaviorSpecGenerator.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
-        // These are all instantiated at this point.
-        // Use self to access core, project, result, logger etc from PluginBase.
-        // These are all instantiated at this point.
+        // These are all instantiated at this point
         var self = this,
-            artifact;
-
-
-        // Using the logger.
-        self.logger.debug('This is a debug message.');
+            artifact,
+            filesToAdd = {},
+            violations = [],
+            componentTypes = [],
+            guardExpressionParser, i;
 
         self.extractDataModel(self.activeNode)
-            .then(function (nodes) {
-                var violations = self.hasViolations(nodes),
-                    componentInfos,
-                    dataModelStr;
-
-                if (violations.length > 0) {
-                    violations.forEach(function (violation) {
-                        self.createMessage(violation.node, violation.message, 'error');
-                    });
-                    throw new Error('Model has ' + violations.length + '  violation(s), see messages for details..');
-                }
-
-                componentInfos = self.makeModelObject(nodes);
-                dataModelStr = JSON.stringify(componentInfos, null, 4);
-                self.componentInfos = componentInfos;
-                //self.logger.info('************DataModel***********\n', dataModelStr);
-
-                var filesToAdd = {};
-
-                for (var i = 0; i<componentInfos.length; i++) {
-                    var fileName = componentInfos[i].name + '.java';
-                    filesToAdd[fileName] = ejs.render(componentTypeTemplate, componentInfos[i]);
-                    //self.logger.info('************LangModel***********\n', filesToAdd[fileName]);
-                }
-
-                artifact = self.blobClient.createArtifact('BehaviorSpecifications');
-
-                return artifact.addFiles(filesToAdd);
-            })
-            .then(function (fileHash) {
-                self.result.addArtifact(fileHash);
-                return artifact.save();
-            })
-            .then(function (artifactHash) {
-                self.result.addArtifact(artifactHash);
-                self.result.setSuccess(true);
-                callback(null, self.result);
-            })
-            .catch(function (err) {
-                self.logger.error(err.stack);
-                // Result success is false at invocation.
-                callback(err, self.result);
-            }) ;
+          .then(function (nodes) {
+                    componentTypes = self.getComponentTypeNodes(nodes);
+                    for (var type of componentTypes) {
+                        var fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
+                        var componentModel = utils.getModelOfComponentType(self.core, nodes[type]);
+                        filesToAdd[fileName] = ejs.render(ejsCache.componentType.complete, componentModel);
+                        var parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
+                        if (parseResult) {
+                            violations.push(parseResult);
+                        }
+                        guardExpressionParser = self.getGuardExpression(componentModel);
+                        for (i = 0; i < componentModel.transitions.length; i += 1) {
+                            if (componentModel.transitions[i].guard.length > 0) {
+                                try {
+                                    parseResult = guardExpressionParser.parse(componentModel.transitions[i].guard);
+                                } catch (e) {
+                                    violations.push({
+                                        msg: 'Guard expression should be a logical expression ' +
+                                        'that has only defined guard names as symbols.',
+                                        node: componentModel.transitions[i]
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    violations.push(self.hasViolations(componentTypes));
+                    if (violations.length > 0) {
+                        violations.forEach(function (violation) {
+                            self.createMessage(violation.node, violation.message, 'error');
+                        });
+                        throw new Error ('Model has ' + violations.length + 'violation(s). See messages for details.');
+                    }
+                    artifact = self.blobClient.createArtifact('BehaviorSpecifications');
+                    return artifact.addFiles(filesToAdd);
+                })
+                .then(function (fileHash) {
+                    self.result.addArtifact(fileHash);
+                    return artifact.save();
+                })
+                .then(function (artifactHash) {
+                    self.result.addArtifact(artifactHash);
+                    self.result.setSuccess(true);
+                    callback(null, self.result);
+                })
+                .catch(function (err) {
+                    self.logger.error(err.stack);
+                    // Result success is false at invocation.
+                    callback(err, self.result);
+                }) ;
     };
+
+        // self.extractDataModel(self.activeNode)
+        //     .then(function (nodes) {
+        //         var violations = self.hasViolations(nodes),
+        //             componentInfos,
+        //             dataModelStr;
+        //
+        //         if (violations.length > 0) {
+        //             violations.forEach(function (violation) {
+        //                 self.createMessage(violation.node, violation.message, 'error');
+        //             });
+        //             throw new Error('Model has ' + violations.length + '  violation(s), see messages for details..');
+        //         }
+        //
+        //         componentInfos = self.makeModelObject(nodes);
+        //         dataModelStr = JSON.stringify(componentInfos, null, 4);
+        //         self.componentInfos = componentInfos;
+        //         //self.logger.info('************DataModel***********\n', dataModelStr);
+        //
+        //         var filesToAdd = {};
+        //
+        //         for (var i = 0; i<componentInfos.length; i++) {
+        //             var fileName = componentInfos[i].name + '.java';
+        //             filesToAdd[fileName] = ejs.render(componentTypeTemplate, componentInfos[i]);
+        //             //self.logger.info('************LangModel***********\n', filesToAdd[fileName]);
+        //         }
+        //
+        //         artifact = self.blobClient.createArtifact('BehaviorSpecifications');
+        //
+        //         return artifact.addFiles(filesToAdd);
+        //     })
+        //     .then(function (fileHash) {
+        //         self.result.addArtifact(fileHash);
+        //         return artifact.save();
+        //     })
+        //     .then(function (artifactHash) {
+        //         self.result.addArtifact(artifactHash);
+        //         self.result.setSuccess(true);
+        //         callback(null, self.result);
+        //     })
+        //     .catch(function (err) {
+        //         self.logger.error(err.stack);
+        //         // Result success is false at invocation.
+        //         callback(err, self.result);
+        //     }) ;
+    //};
 
     BehaviorSpecGenerator.prototype.extractDataModel = function (node) {
         var self = this;
@@ -129,7 +185,47 @@ define([
             });
     };
 
-    BehaviorSpecGenerator.prototype.makeModelObject = function (nodes) {
+    BehaviorSpecGenerator.prototype._getComponentTypeModel = function (cTypeId) {
+        var self = this,
+            deferred = Q.defer(),
+            model = {},
+            context;
+
+        Q.ninvoke(self._client, 'getCoreInstance', {})
+            .then(function (context_) {
+                context = context_;
+                return self.core.loadByPath(self.rootNode, cTypeId);
+            })
+            .then(function (componentType) {
+                if (componentType) {
+                    return utils.getModelOfComponentType(self.core, componentType);
+                }
+                else {
+                    throw new Error('Component was removed!');
+                }
+            })
+            .then(deferred.resolve)
+            .catch(deferred.reject);
+
+        return deferred.promise;
+    };
+
+    BehaviorSpecGenerator.prototype.getGuardExpression = function (componentModel){
+      var guardNames,
+          i,
+          guardExpressionParser;
+      for (i = 0; i < componentModel.guards.length; i += 1) {
+          guardNames.push(componentModel.guards[i].name);
+      }
+      if (guardNames.length > 0) {
+          guardExpressionParser = peg.generate(
+              ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
+          );
+      }
+      return guardExpressionParser;
+    }
+
+    BehaviorSpecGenerator.prototype.getComponentTypeNodes = function (nodes) {
         var self = this,
             path,
             node,
@@ -137,97 +233,112 @@ define([
 
         for (path in nodes) {
             node = nodes[path];
-
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
-                componentTypes.push(self.getComponentData(node, nodes));
+                componentTypes.push(path);
             }
         }
         return componentTypes;
     };
 
-    BehaviorSpecGenerator.prototype.getComponentData = function (ctNode, nodes) {
-        var info = {
-            name: this.core.getAttribute(ctNode, 'name'),
-            path: this.core.getPath(ctNode),
-            cardinality: this.core.getAttribute(ctNode, 'cardinality'),
-            definitions: this.core.getAttribute(ctNode, 'definitions'),
-            forwards: this.core.getAttribute(ctNode, 'forwards'),
-            constructors: this.core.getAttribute(ctNode, 'constructors'),
-            transitions: [],
-            states: [],
-            guards: []
-        },
-            childrenPaths = this.core.getChildrenPaths(ctNode),
-            childNode,
-            i;
-        //todo populate the
+    // BehaviorSpecGenerator.prototype.makeModelObject = function (nodes) {
+    //     var self = this,
+    //         path,
+    //         node,
+    //         componentTypes = [];
+    //
+    //     for (path in nodes) {
+    //         node = nodes[path];
+    //
+    //         if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+    //             componentTypes.push(self.getComponentData(node, nodes));
+    //         }
+    //     }
+    //     return componentTypes;
+    // };
 
-        for (i = 0; i<childrenPaths.length; i++) {
-            childNode = nodes[childrenPaths[i]];
-            if (this.isMetaTypeOf(childNode, this.META.TransitionBase)) {
-                info.transitions.push(this.getTransitionInfo(childNode, nodes));
-            } else if (this.isMetaTypeOf(childNode, this.META.StateBase)) {
-                info.states.push(this.getStateInfo(childNode, nodes));
-            } else if (this.isMetaTypeOf(childNode, this.META.Guard)) {
-                info.guards.push(this.getGuardInfo(childNode, nodes));
-            }
-        }
-        return info;
-    };
-
-    BehaviorSpecGenerator.prototype.getGuardInfo = function (node/*, nodes*/) {
-        var info = {
-            name: this.core.getAttribute(node, 'name'),
-            type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
-            path: this.core.getPath(node),
-            guardMethod: this.core.getAttribute(node, 'guardMethod')
-        };
-        return info;
-    };
-
-    BehaviorSpecGenerator.prototype.getTransitionInfo = function (node, nodes) {
-        var info = {
-                name: this.core.getAttribute(node, 'name'),
-                type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
-                path: this.core.getPath(node),
-                src: '',
-                dst: '',
-                guard: this.core.getAttribute(node, 'guardName'),
-                transitionMethod: this.core.getAttribute(node, 'transitionMethod')
-            };
-        var srcNode;
-        var dstNode;
-
-        var srcPath = this.core.getPointerPath(node, 'src');
-        //this.logger.info('************srcPath***********\n',srcPath);
-        var dstPath = this.core.getPointerPath(node, 'dst');
-        //this.logger.info('************dstPath***********\n',dstPath);
-
-        if (srcPath) {
-            srcNode = nodes[srcPath];
-            info.src = this.core.getAttribute(srcNode, 'name');
-            //this.logger.info('************srcNode Name***********\n',info.src);
-        }
-
-        if (dstPath) {
-            dstNode = nodes[dstPath];
-            info.dst = this.core.getAttribute(dstNode, 'name');
-            //this.logger.info('************dstNode Name***********\n',info.dst);
-        }
-
-        return info;
-
-    };
-
-    BehaviorSpecGenerator.prototype.getStateInfo = function (node/*,nodes*/) {
-        var info = {
-            name: this.core.getAttribute(node, 'name'),
-            type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
-            path: this.core.getPath(node)
-        };
-
-        return info;
-    };
+    // BehaviorSpecGenerator.prototype.getComponentData = function (ctNode, nodes) {
+    //     var info = {
+    //         name: this.core.getAttribute(ctNode, 'name'),
+    //         path: this.core.getPath(ctNode),
+    //         cardinality: this.core.getAttribute(ctNode, 'cardinality'),
+    //         definitions: this.core.getAttribute(ctNode, 'definitions'),
+    //         forwards: this.core.getAttribute(ctNode, 'forwards'),
+    //         constructors: this.core.getAttribute(ctNode, 'constructors'),
+    //         transitions: [],
+    //         states: [],
+    //         guards: []
+    //     },
+    //         childrenPaths = this.core.getChildrenPaths(ctNode),
+    //         childNode,
+    //         i;
+    //     //todo populate the
+    //
+    //     for (i = 0; i<childrenPaths.length; i++) {
+    //         childNode = nodes[childrenPaths[i]];
+    //         if (this.isMetaTypeOf(childNode, this.META.TransitionBase)) {
+    //             info.transitions.push(this.getTransitionInfo(childNode, nodes));
+    //         } else if (this.isMetaTypeOf(childNode, this.META.StateBase)) {
+    //             info.states.push(this.getStateInfo(childNode, nodes));
+    //         } else if (this.isMetaTypeOf(childNode, this.META.Guard)) {
+    //             info.guards.push(this.getGuardInfo(childNode, nodes));
+    //         }
+    //     }
+    //     return info;
+    // };
+    //
+    // BehaviorSpecGenerator.prototype.getGuardInfo = function (node/*, nodes*/) {
+    //     var info = {
+    //         name: this.core.getAttribute(node, 'name'),
+    //         type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
+    //         path: this.core.getPath(node),
+    //         guardMethod: this.core.getAttribute(node, 'guardMethod')
+    //     };
+    //     return info;
+    // };
+    //
+    // BehaviorSpecGenerator.prototype.getTransitionInfo = function (node, nodes) {
+    //     var info = {
+    //             name: this.core.getAttribute(node, 'name'),
+    //             type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
+    //             path: this.core.getPath(node),
+    //             src: '',
+    //             dst: '',
+    //             guard: this.core.getAttribute(node, 'guardName'),
+    //             transitionMethod: this.core.getAttribute(node, 'transitionMethod')
+    //         };
+    //     var srcNode;
+    //     var dstNode;
+    //
+    //     var srcPath = this.core.getPointerPath(node, 'src');
+    //     //this.logger.info('************srcPath***********\n',srcPath);
+    //     var dstPath = this.core.getPointerPath(node, 'dst');
+    //     //this.logger.info('************dstPath***********\n',dstPath);
+    //
+    //     if (srcPath) {
+    //         srcNode = nodes[srcPath];
+    //         info.src = this.core.getAttribute(srcNode, 'name');
+    //         //this.logger.info('************srcNode Name***********\n',info.src);
+    //     }
+    //
+    //     if (dstPath) {
+    //         dstNode = nodes[dstPath];
+    //         info.dst = this.core.getAttribute(dstNode, 'name');
+    //         //this.logger.info('************dstNode Name***********\n',info.dst);
+    //     }
+    //
+    //     return info;
+    //
+    // };
+    //
+    // BehaviorSpecGenerator.prototype.getStateInfo = function (node/*,nodes*/) {
+    //     var info = {
+    //         name: this.core.getAttribute(node, 'name'),
+    //         type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
+    //         path: this.core.getPath(node)
+    //     };
+    //
+    //     return info;
+    // };
 
     BehaviorSpecGenerator.prototype.hasViolations = function (nodes) {
         var violations = [],
@@ -238,29 +349,29 @@ define([
 
         for (nodePath in nodes) {
             var guardNames = {};
-            var guardExpressions = [];
+            //var guardExpressions = [];
             var stateWithValidTransitions = {};
             var totalStateNames = {};
             var transitionNames = {};
-            var totalguardNames = {};
+            //var totalguardNames = {};
             node = nodes[nodePath];
             name = this.core.getAttribute(node, 'name');
 
 
             // TODO: check all expected types and more constraints.
-            if (this.isMetaTypeOf(node, this.META.ComponentType)) {
-                // This will be a java class - no special characters etc.
-                // The example is incomplete and also allows leading numbers, try at https://regex101.com/
-
-                //if (/^[0-9a-zA-Z_]+$/.test(name) === false) {
-                if (/^(?!abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|intanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|Abstract|Continue|For|New|Switch|Assert|Default|Goto|Package|Synchronized|Boolean|Do|If|Private|This|Break|Double|Implements|Protected|Throw|Byte|Else|Import|Public|Throws|Case|Enum|Intanceof|Return|Transient|Catch|Extends|Int|Short|Try|Char|Final|Interface|Static|Void|Class|Finally|Long|Strictfp|Volatile|Const|Float|Native|Super|While)[A-Z][0-9a-zA-Z]+$/.test(name) === false) {
-                //if (ConstantsFile.REGEXPS.JAVA_CLASS_NAME.test(name) === false) {
-                    violations.push({
-                        node: node,
-                        message: 'Illegal ComponentType name [' + name + '] \nIt is an illegal java class name.'
-                    });
-                    this.logger.info('Improper Java class name');
-                }
+            // if (this.isMetaTypeOf(node, this.META.ComponentType)) {
+            //     // This will be a java class - no special characters etc.
+            //     // The example is incomplete and also allows leading numbers, try at https://regex101.com/
+            //
+            //     //if (/^[0-9a-zA-Z_]+$/.test(name) === false) {
+            //     if (/^(?!abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|intanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|Abstract|Continue|For|New|Switch|Assert|Default|Goto|Package|Synchronized|Boolean|Do|If|Private|This|Break|Double|Implements|Protected|Throw|Byte|Else|Import|Public|Throws|Case|Enum|Intanceof|Return|Transient|Catch|Extends|Int|Short|Try|Char|Final|Interface|Static|Void|Class|Finally|Long|Strictfp|Volatile|Const|Float|Native|Super|While)[A-Z][0-9a-zA-Z]+$/.test(name) === false) {
+            //     //if (ConstantsFile.REGEXPS.JAVA_CLASS_NAME.test(name) === false) {
+            //         violations.push({
+            //             node: node,
+            //             message: 'Illegal ComponentType name [' + name + '] \nIt is an illegal java class name.'
+            //         });
+            //         this.logger.info('Improper Java class name');
+            //     }
 
                 if (componentTypeNames.hasOwnProperty(name)) {
                     violations.push({
@@ -270,27 +381,27 @@ define([
                 }
                 componentTypeNames[name] = this.core.getPath(node);
 
-                var constructors = this.core.getAttribute(node, 'constructors');
-                if (constructors == '') {
-                    violations.push({
-                        node: node,
-                        message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a constructors attribute defined.',
-                    });
-                }
-                var definitions = this.core.getAttribute(node, 'definitions');
-                if (definitions == '') {
-                    violations.push({
-                        node: node,
-                        message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a definitions attribute defined.',
-                    });
-                }
-                var forwards = this.core.getAttribute(node, 'forwards');
-                if (definitions == '') {
-                    violations.push({
-                        node: node,
-                        message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a forwards attribute defined.',
-                    });
-                }
+                // var constructors = this.core.getAttribute(node, 'constructors');
+                // if (constructors == '') {
+                //     violations.push({
+                //         node: node,
+                //         message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a constructors attribute defined.',
+                //     });
+                // }
+                // var definitions = this.core.getAttribute(node, 'definitions');
+                // if (definitions == '') {
+                //     violations.push({
+                //         node: node,
+                //         message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a definitions attribute defined.',
+                //     });
+                // }
+                // var forwards = this.core.getAttribute(node, 'forwards');
+                // if (definitions == '') {
+                //     violations.push({
+                //         node: node,
+                //         message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a forwards attribute defined.',
+                //     });
+                // }
 
                 //ComponentType MyComponent does not have a forwards attribute defined.
                 // check for states,guards and transitions in each componentType
@@ -325,10 +436,10 @@ define([
                             });
                         }
 
-                        var expression = this.core.getAttribute(child, 'guardName');
-                        if(expression!=''){
-                            guardExpressions.push(expression);
-                        }
+                        // var expression = this.core.getAttribute(child, 'guardName');
+                        // if(expression!=''){
+                        //     guardExpressions.push(expression);
+                        // }
 
                         var transitionMethod = this.core.getAttribute(child, 'transitionMethod');
                         if (transitionMethod === '') {
@@ -341,13 +452,13 @@ define([
 
                     if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition)) {
 
-                        if (this.core.getPointerPath(child, 'dst') != null) {
+                        if (this.core.getPointerPath(child, 'dst') !== null) {
                             var state = nodes[this.core.getPointerPath(child, 'dst')];
                             var stateName = this.core.getAttribute(state, 'name');
                             stateWithValidTransitions[stateName]= this.core.getPath(state);
                         }
 
-                        if (this.core.getPointerPath(child, 'src') != null) {
+                        if (this.core.getPointerPath(child, 'src') !== null) {
                             var state = nodes[this.core.getPointerPath(child, 'src')];
                             var stateName = this.core.getAttribute(state, 'name');
                             stateWithValidTransitions[stateName]= this.core.getPath(state);
@@ -382,42 +493,42 @@ define([
                     }
                 }
 
-                var regExpArray = ['^('];
-                this.logger.info('regExpArray ' + regExpArray);
+                // var regExpArray = ['^('];
+                // this.logger.info('regExpArray ' + regExpArray);
+                //
+                // var j=0;
+                // for (var name in guardNames) {
+                //     if(j!=0) {
+                //         regExpArray.push('|');
+                //     }
+                //     j++;
+                //     this.logger.info('***',name);
+                //     regExpArray.push(name);
+                // }
+                // regExpArray.push('|');
 
-                var j=0;
-                for (var name in guardNames) {
-                    if(j!=0) {
-                        regExpArray.push('|');
-                    }
-                    j++;
-                    this.logger.info('***',name);
-                    regExpArray.push(name);
-                }
-                regExpArray.push('|');
-
-                regExpArray.push.apply(regExpArray, ['[\!\&\(\)\|])+$']);
-                var guardRegEx = new RegExp(regExpArray.join(''), 'g');
-                this.logger.info('guardRegEx ' + guardRegEx);
-
-                for(var i=0;i<guardExpressions.length;i++){
-                    try {
-                        GuardExpressionParser.parse(guardExpressions[i]);
-                    } catch (e) {
-                        violations.push({
-//                    node: end,
-                            message: 'GuardExpression [' + guardExpressions[i] + '] is not a valid boolean expression'
-                        });
-                    }
-
-                    guardRegEx.lastIndex = 0;
-                    if (!(guardRegEx.test(guardExpressions[i]))) {
-                        violations.push({
-                            //                  node: end,
-                            message: 'Guard Expression '+ guardExpressions[i] + ' does not contain valid guard names.'
-                        });
-                    }
-                }
+//                 regExpArray.push.apply(regExpArray, ['[\!\&\(\)\|])+$']);
+//                 var guardRegEx = new RegExp(regExpArray.join(''), 'g');
+//                 this.logger.info('guardRegEx ' + guardRegEx);
+//
+//                 for(var i=0;i<guardExpressions.length;i++){
+//                     try {
+//                         GuardExpressionParser.parse(guardExpressions[i]);
+//                     } catch (e) {
+//                         violations.push({
+// //                    node: end,
+//                             message: 'GuardExpression [' + guardExpressions[i] + '] is not a valid boolean expression'
+//                         });
+//                     }
+//
+//                     guardRegEx.lastIndex = 0;
+//                     if (!(guardRegEx.test(guardExpressions[i]))) {
+//                         violations.push({
+//                             //                  node: end,
+//                             message: 'Guard Expression '+ guardExpressions[i] + ' does not contain valid guard names.'
+//                         });
+//                     }
+//                 }
 
                 for(var stateName in totalStateNames) {
                     if (!stateWithValidTransitions.hasOwnProperty(stateName)) {
@@ -426,9 +537,10 @@ define([
                 }
 
             }
-        }
-        return violations;
-    };
+            return violations;
+        };
+
+    // };
 
     return BehaviorSpecGenerator;
 });
