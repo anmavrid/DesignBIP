@@ -25,6 +25,7 @@ define([
         this.prevMetaTypeName = null;
         this.metaTypeName = null;
         this.highlightColors = [];
+        this.colorToPathEl = {};
     }
 
     function getCoordinatesForPercent(percent) {
@@ -46,6 +47,7 @@ define([
         }
 
         if (this.highlightColors.length > 0) {
+            this.colorToPathEl = {};
             this.skinParts.$svgContainer = this.$el.find('.svg-container');
             this.skinParts.$svgContainer.empty();
 
@@ -79,6 +81,8 @@ define([
                 pathEl = $(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
                 pathEl.attr('d', pathData);
                 pathEl.attr('fill', color);
+                pathEl.attr('opacity', 0);
+                self.colorToPathEl[color] = pathEl;
                 self.skinParts.$svgHighlight.append(pathEl);
             });
 
@@ -122,12 +126,6 @@ define([
         if (this.metaTypeName === 'InitialState') {
             this.skinParts.$svg.find('circle').css('stroke', 'red');
         }
-    };
-
-
-    BIPStateDecoratorCore.prototype.setHighlightColors = function (colors) {
-        this.highlightColors = colors;
-        this.updateSvg();
     };
 
     return BIPStateDecoratorCore;
