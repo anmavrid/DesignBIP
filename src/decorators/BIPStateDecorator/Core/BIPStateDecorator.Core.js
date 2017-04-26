@@ -83,6 +83,9 @@ define([
                 pathEl.attr('fill', color);
                 pathEl.attr('opacity', 0);
                 self.colorToPathEl[color] = pathEl;
+                // Append a white clone to ensure the decorator isn't transparent when transitioning.
+                self.skinParts.$svgHighlight.append(pathEl.clone().attr('fill', 'white').attr('opacity', 1));
+
                 self.skinParts.$svgHighlight.append(pathEl);
             });
 
