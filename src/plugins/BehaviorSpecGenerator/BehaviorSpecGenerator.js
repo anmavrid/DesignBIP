@@ -70,46 +70,52 @@ define([
         var self = this,
             artifact,
             filesToAdd = {},
-            violations = [],
-            componentTypes = [],
-            guardExpressionParser, i;
+            violations = [], nodes,
+            componentTypes = [], nextComponentType, fileName,
+            guardExpressionParser, i, checkComponentModel;
 
-        self.extractDataModel(self.activeNode)
-          .then(function (nodes) {
-                    componentTypes = self.getComponentTypeNodes(nodes);
-                    for (var type of componentTypes) {
-                        var fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
-                        var componentModel = utils.getModelOfComponentType(self.core, nodes[type]);
-                        filesToAdd[fileName] = ejs.render(ejsCache.componentType.complete, componentModel);
-                        var parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
-                        if (parseResult) {
-                            violations.push(parseResult);
-                        }
-                        guardExpressionParser = self.getGuardExpression(componentModel);
-                        for (i = 0; i < componentModel.transitions.length; i += 1) {
-                            if (componentModel.transitions[i].guard.length > 0) {
-                                try {
-                                    parseResult = guardExpressionParser.parse(componentModel.transitions[i].guard);
-                                } catch (e) {
-                                    violations.push({
-                                        msg: 'Guard expression should be a logical expression ' +
-                                        'that has only defined guard names as symbols.',
-                                        node: componentModel.transitions[i]
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    violations.push(self.hasViolations(componentTypes));
-                    if (violations.length > 0) {
-                        violations.forEach(function (violation) {
-                            self.createMessage(violation.node, violation.message, 'error');
-                        });
-                        throw new Error ('Model has ' + violations.length + 'violation(s). See messages for details.');
-                    }
-                    artifact = self.blobClient.createArtifact('BehaviorSpecifications');
-                    return artifact.addFiles(filesToAdd);
-                })
+            checkComponentModel = function (componentModel) {
+              self.logger.info("nextComponentType " + nextComponentType);
+              filesToAdd[fileName] = ejs.render(ejsCache.componentType.complete, componentModel);
+              var parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
+              if (parseResult) {
+                  violations.push(parseResult);
+              }
+              self.logger.info("foobar " + nextComponentType);
+              self.logger.info(JSON.stringify(componentModel));
+              guardExpressionParser = self.getGuardExpression(componentModel);
+              self.logger.info("transitions length"+componentModel.transitions.length);
+              for (i = 0; i < componentModel.transitions.length; i += 1) {
+                  if (componentModel.transitions[i].guard.length > 0) {
+                      try {
+                          parseResult = guardExpressionParser.parse(componentModel.transitions[i].guard);
+                      } catch (e) {
+                          violations.push({
+                              msg: 'Guard expression should be a logical expression ' +
+                              'that has only defined guard names as symbols.',
+                              node: componentModel.transitions[i]
+                          });
+                      }
+                  }
+              }
+
+              nextComponentType++;
+              self.logger.info("nextComponentType " + nextComponentType);
+              if (nextComponentType < componentTypes.length) {
+                var componentType = componentTypes[nextComponentType];
+                fileName = self.core.getAttribute(nodes[componentType], 'name') + '.java';
+                utils.getModelOfComponentType(self.core, nodes[componentType]).then(checkComponentModel);
+              }
+              else {
+                //violations.push(self.hasViolations(componentTypes));
+                if (violations.length > 0) {
+                    violations.forEach(function (violation) {
+                        self.createMessage(violation.node, violation.message, 'error');
+                    });
+                    throw new Error ('Model has ' + violations.length + 'violation(s). See messages for details.');
+                }
+                artifact = self.blobClient.createArtifact('BehaviorSpecifications');
+                 artifact.addFiles(filesToAdd)
                 .then(function (fileHash) {
                     self.result.addArtifact(fileHash);
                     return artifact.save();
@@ -124,6 +130,21 @@ define([
                     // Result success is false at invocation.
                     callback(err, self.result);
                 }) ;
+              }
+            };
+
+        self.extractDataModel(self.activeNode)
+          .then(function (nodes_) {
+                nodes = nodes_;
+                componentTypes = self.getComponentTypeNodes(nodes);
+
+                nextComponentType = 0;
+                var componentType = componentTypes[nextComponentType];
+                fileName = self.core.getAttribute(nodes[componentType], 'name') + '.java';
+                self.logger.info(fileName);
+                utils.getModelOfComponentType(self.core, nodes[componentType]).then(checkComponentModel);
+                });
+
     };
 
         // self.extractDataModel(self.activeNode)
@@ -185,38 +206,17 @@ define([
             });
     };
 
-    BehaviorSpecGenerator.prototype._getComponentTypeModel = function (cTypeId) {
-        var self = this,
-            deferred = Q.defer(),
-            model = {},
-            context;
-
-        Q.ninvoke(self._client, 'getCoreInstance', {})
-            .then(function (context_) {
-                context = context_;
-                return self.core.loadByPath(self.rootNode, cTypeId);
-            })
-            .then(function (componentType) {
-                if (componentType) {
-                    return utils.getModelOfComponentType(self.core, componentType);
-                }
-                else {
-                    throw new Error('Component was removed!');
-                }
-            })
-            .then(deferred.resolve)
-            .catch(deferred.reject);
-
-        return deferred.promise;
-    };
 
     BehaviorSpecGenerator.prototype.getGuardExpression = function (componentModel){
-      var guardNames,
-          i,
+      var guardNames =[],
+          i, self =this,
           guardExpressionParser;
+                self.logger.info('hey');
+                self.logger.info('guardNames length'+guardNames.length);
       for (i = 0; i < componentModel.guards.length; i += 1) {
           guardNames.push(componentModel.guards[i].name);
       }
+      self.logger.info('guardNames length'+guardNames.length);
       if (guardNames.length > 0) {
           guardExpressionParser = peg.generate(
               ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
