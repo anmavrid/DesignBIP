@@ -68,23 +68,28 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point
         var self = this,
-            artifact,
             filesToAdd = {},
-            violations = [], nodes,
-            componentTypes = [], nextComponentType, fileName,
-            guardExpressionParser, i, checkComponentModel;
+
+            nodes,
+            componentTypes = [],
+            nextComponentType,
+            fileName,
+            checkComponentModel;
 
             checkComponentModel = function (componentModel) {
-              self.logger.info("nextComponentType " + nextComponentType);
+              var artifact,
+              guardExpressionParser,
+              i,
+              violations = [],
+              parseResult;
+
               filesToAdd[fileName] = ejs.render(ejsCache.componentType.complete, componentModel);
-              var parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
+              parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
               if (parseResult) {
                   violations.push(parseResult);
               }
-              self.logger.info("foobar " + nextComponentType);
-              self.logger.info(JSON.stringify(componentModel));
+              self.logger.debug(JSON.stringify(componentModel));
               guardExpressionParser = self.getGuardExpression(componentModel);
-              self.logger.info("transitions length"+componentModel.transitions.length);
               for (i = 0; i < componentModel.transitions.length; i += 1) {
                   if (componentModel.transitions[i].guard.length > 0) {
                       try {
@@ -100,7 +105,6 @@ define([
               }
 
               nextComponentType++;
-              self.logger.info("nextComponentType " + nextComponentType);
               if (nextComponentType < componentTypes.length) {
                 var componentType = componentTypes[nextComponentType];
                 fileName = self.core.getAttribute(nodes[componentType], 'name') + '.java';
@@ -144,54 +148,7 @@ define([
                 self.logger.info(fileName);
                 utils.getModelOfComponentType(self.core, nodes[componentType]).then(checkComponentModel);
                 });
-
     };
-
-        // self.extractDataModel(self.activeNode)
-        //     .then(function (nodes) {
-        //         var violations = self.hasViolations(nodes),
-        //             componentInfos,
-        //             dataModelStr;
-        //
-        //         if (violations.length > 0) {
-        //             violations.forEach(function (violation) {
-        //                 self.createMessage(violation.node, violation.message, 'error');
-        //             });
-        //             throw new Error('Model has ' + violations.length + '  violation(s), see messages for details..');
-        //         }
-        //
-        //         componentInfos = self.makeModelObject(nodes);
-        //         dataModelStr = JSON.stringify(componentInfos, null, 4);
-        //         self.componentInfos = componentInfos;
-        //         //self.logger.info('************DataModel***********\n', dataModelStr);
-        //
-        //         var filesToAdd = {};
-        //
-        //         for (var i = 0; i<componentInfos.length; i++) {
-        //             var fileName = componentInfos[i].name + '.java';
-        //             filesToAdd[fileName] = ejs.render(componentTypeTemplate, componentInfos[i]);
-        //             //self.logger.info('************LangModel***********\n', filesToAdd[fileName]);
-        //         }
-        //
-        //         artifact = self.blobClient.createArtifact('BehaviorSpecifications');
-        //
-        //         return artifact.addFiles(filesToAdd);
-        //     })
-        //     .then(function (fileHash) {
-        //         self.result.addArtifact(fileHash);
-        //         return artifact.save();
-        //     })
-        //     .then(function (artifactHash) {
-        //         self.result.addArtifact(artifactHash);
-        //         self.result.setSuccess(true);
-        //         callback(null, self.result);
-        //     })
-        //     .catch(function (err) {
-        //         self.logger.error(err.stack);
-        //         // Result success is false at invocation.
-        //         callback(err, self.result);
-        //     }) ;
-    //};
 
     BehaviorSpecGenerator.prototype.extractDataModel = function (node) {
         var self = this;
@@ -206,17 +163,14 @@ define([
             });
     };
 
-
     BehaviorSpecGenerator.prototype.getGuardExpression = function (componentModel){
       var guardNames =[],
-          i, self =this,
+          i,
           guardExpressionParser;
-                self.logger.info('hey');
-                self.logger.info('guardNames length'+guardNames.length);
+
       for (i = 0; i < componentModel.guards.length; i += 1) {
           guardNames.push(componentModel.guards[i].name);
       }
-      self.logger.info('guardNames length'+guardNames.length);
       if (guardNames.length > 0) {
           guardExpressionParser = peg.generate(
               ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
@@ -240,105 +194,6 @@ define([
         return componentTypes;
     };
 
-    // BehaviorSpecGenerator.prototype.makeModelObject = function (nodes) {
-    //     var self = this,
-    //         path,
-    //         node,
-    //         componentTypes = [];
-    //
-    //     for (path in nodes) {
-    //         node = nodes[path];
-    //
-    //         if (self.isMetaTypeOf(node, self.META.ComponentType)) {
-    //             componentTypes.push(self.getComponentData(node, nodes));
-    //         }
-    //     }
-    //     return componentTypes;
-    // };
-
-    // BehaviorSpecGenerator.prototype.getComponentData = function (ctNode, nodes) {
-    //     var info = {
-    //         name: this.core.getAttribute(ctNode, 'name'),
-    //         path: this.core.getPath(ctNode),
-    //         cardinality: this.core.getAttribute(ctNode, 'cardinality'),
-    //         definitions: this.core.getAttribute(ctNode, 'definitions'),
-    //         forwards: this.core.getAttribute(ctNode, 'forwards'),
-    //         constructors: this.core.getAttribute(ctNode, 'constructors'),
-    //         transitions: [],
-    //         states: [],
-    //         guards: []
-    //     },
-    //         childrenPaths = this.core.getChildrenPaths(ctNode),
-    //         childNode,
-    //         i;
-    //     //todo populate the
-    //
-    //     for (i = 0; i<childrenPaths.length; i++) {
-    //         childNode = nodes[childrenPaths[i]];
-    //         if (this.isMetaTypeOf(childNode, this.META.TransitionBase)) {
-    //             info.transitions.push(this.getTransitionInfo(childNode, nodes));
-    //         } else if (this.isMetaTypeOf(childNode, this.META.StateBase)) {
-    //             info.states.push(this.getStateInfo(childNode, nodes));
-    //         } else if (this.isMetaTypeOf(childNode, this.META.Guard)) {
-    //             info.guards.push(this.getGuardInfo(childNode, nodes));
-    //         }
-    //     }
-    //     return info;
-    // };
-    //
-    // BehaviorSpecGenerator.prototype.getGuardInfo = function (node/*, nodes*/) {
-    //     var info = {
-    //         name: this.core.getAttribute(node, 'name'),
-    //         type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
-    //         path: this.core.getPath(node),
-    //         guardMethod: this.core.getAttribute(node, 'guardMethod')
-    //     };
-    //     return info;
-    // };
-    //
-    // BehaviorSpecGenerator.prototype.getTransitionInfo = function (node, nodes) {
-    //     var info = {
-    //             name: this.core.getAttribute(node, 'name'),
-    //             type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
-    //             path: this.core.getPath(node),
-    //             src: '',
-    //             dst: '',
-    //             guard: this.core.getAttribute(node, 'guardName'),
-    //             transitionMethod: this.core.getAttribute(node, 'transitionMethod')
-    //         };
-    //     var srcNode;
-    //     var dstNode;
-    //
-    //     var srcPath = this.core.getPointerPath(node, 'src');
-    //     //this.logger.info('************srcPath***********\n',srcPath);
-    //     var dstPath = this.core.getPointerPath(node, 'dst');
-    //     //this.logger.info('************dstPath***********\n',dstPath);
-    //
-    //     if (srcPath) {
-    //         srcNode = nodes[srcPath];
-    //         info.src = this.core.getAttribute(srcNode, 'name');
-    //         //this.logger.info('************srcNode Name***********\n',info.src);
-    //     }
-    //
-    //     if (dstPath) {
-    //         dstNode = nodes[dstPath];
-    //         info.dst = this.core.getAttribute(dstNode, 'name');
-    //         //this.logger.info('************dstNode Name***********\n',info.dst);
-    //     }
-    //
-    //     return info;
-    //
-    // };
-    //
-    // BehaviorSpecGenerator.prototype.getStateInfo = function (node/*,nodes*/) {
-    //     var info = {
-    //         name: this.core.getAttribute(node, 'name'),
-    //         type: this.core.getAttribute(this.core.getMetaType(node), 'name'),
-    //         path: this.core.getPath(node)
-    //     };
-    //
-    //     return info;
-    // };
 
     BehaviorSpecGenerator.prototype.hasViolations = function (nodes) {
         var violations = [],
@@ -349,30 +204,11 @@ define([
 
         for (nodePath in nodes) {
             var guardNames = {};
-            //var guardExpressions = [];
             var stateWithValidTransitions = {};
             var totalStateNames = {};
             var transitionNames = {};
-            //var totalguardNames = {};
             node = nodes[nodePath];
             name = this.core.getAttribute(node, 'name');
-
-
-            // TODO: check all expected types and more constraints.
-            // if (this.isMetaTypeOf(node, this.META.ComponentType)) {
-            //     // This will be a java class - no special characters etc.
-            //     // The example is incomplete and also allows leading numbers, try at https://regex101.com/
-            //
-            //     //if (/^[0-9a-zA-Z_]+$/.test(name) === false) {
-            //     if (/^(?!abstract|continue|for|new|switch|assert|default|goto|package|synchronized|boolean|do|if|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|intanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|Abstract|Continue|For|New|Switch|Assert|Default|Goto|Package|Synchronized|Boolean|Do|If|Private|This|Break|Double|Implements|Protected|Throw|Byte|Else|Import|Public|Throws|Case|Enum|Intanceof|Return|Transient|Catch|Extends|Int|Short|Try|Char|Final|Interface|Static|Void|Class|Finally|Long|Strictfp|Volatile|Const|Float|Native|Super|While)[A-Z][0-9a-zA-Z]+$/.test(name) === false) {
-            //     //if (ConstantsFile.REGEXPS.JAVA_CLASS_NAME.test(name) === false) {
-            //         violations.push({
-            //             node: node,
-            //             message: 'Illegal ComponentType name [' + name + '] \nIt is an illegal java class name.'
-            //         });
-            //         this.logger.info('Improper Java class name');
-            //     }
-
 
                 if (componentTypeNames.hasOwnProperty(name)) {
                     violations.push({
@@ -382,35 +218,10 @@ define([
                 }
                 componentTypeNames[name] = this.core.getPath(node);
 
-                // var constructors = this.core.getAttribute(node, 'constructors');
-                // if (constructors == '') {
-                //     violations.push({
-                //         node: node,
-                //         message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a constructors attribute defined.',
-                //     });
-                // }
-                // var definitions = this.core.getAttribute(node, 'definitions');
-                // if (definitions == '') {
-                //     violations.push({
-                //         node: node,
-                //         message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a definitions attribute defined.',
-                //     });
-                // }
-                // var forwards = this.core.getAttribute(node, 'forwards');
-                // if (definitions == '') {
-                //     violations.push({
-                //         node: node,
-                //         message: 'ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have a forwards attribute defined.',
-                //     });
-                // }
-
-                //ComponentType MyComponent does not have a forwards attribute defined.
                 // check for states,guards and transitions in each componentType
-
                 for (var childPath of this.core.getChildrenPaths(node)) {
                     var child = nodes[childPath];
                     var childName = this.core.getAttribute(child, 'name');
-
                     if ((this.isMetaTypeOf(child, this.META.State)) || (this.isMetaTypeOf(child, this.META.InitialState))) {
                         if (totalStateNames.hasOwnProperty(childName)) {
                             violations.push({
@@ -422,11 +233,9 @@ define([
                     }
 
                     if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition) || this.isMetaTypeOf(child, this.META.InternalTransition) ) {
-
                         if (this.core.getPointerPath(child, 'dst') === null) {
                             violations.push({
                                 node: node,
-                                //message: 'Dst of connector [' + childPath + '] is null'
                                 message:'Connection, ' +childName+'(' +childPath+ ') , with no destination encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
                             });
                         }
@@ -436,11 +245,6 @@ define([
                                 message:'Connection, ' +childName+'(' +childPath+ ') , with no source encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
                             });
                         }
-                        // var expression = this.core.getAttribute(child, 'guardName');
-                        // if(expression!=''){
-                        //     guardExpressions.push(expression);
-                        // }
-
                         var transitionMethod = this.core.getAttribute(child, 'transitionMethod');
                         if (transitionMethod === '') {
                             violations.push({
@@ -449,7 +253,6 @@ define([
                             });
                         }
                     }
-
                     if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition)) {
 
                         if (this.core.getPointerPath(child, 'dst') !== null) {
@@ -473,8 +276,6 @@ define([
                         }
                         transitionNames[childName] = this.core.getPath(child);
                     }
-
-
                     if (this.isMetaTypeOf(child, this.META.Guard)) {
                         if (guardNames.hasOwnProperty(childName)) {
                             violations.push({
@@ -493,44 +294,6 @@ define([
                         }
                     }
                 }
-
-                // var regExpArray = ['^('];
-                // this.logger.info('regExpArray ' + regExpArray);
-                //
-                // var j=0;
-                // for (var name in guardNames) {
-                //     if(j!=0) {
-                //         regExpArray.push('|');
-                //     }
-                //     j++;
-                //     this.logger.info('***',name);
-                //     regExpArray.push(name);
-                // }
-                // regExpArray.push('|');
-
-//                 regExpArray.push.apply(regExpArray, ['[\!\&\(\)\|])+$']);
-//                 var guardRegEx = new RegExp(regExpArray.join(''), 'g');
-//                 this.logger.info('guardRegEx ' + guardRegEx);
-//
-//                 for(var i=0;i<guardExpressions.length;i++){
-//                     try {
-//                         GuardExpressionParser.parse(guardExpressions[i]);
-//                     } catch (e) {
-//                         violations.push({
-// //                    node: end,
-//                             message: 'GuardExpression [' + guardExpressions[i] + '] is not a valid boolean expression'
-//                         });
-//                     }
-//
-//                     guardRegEx.lastIndex = 0;
-//                     if (!(guardRegEx.test(guardExpressions[i]))) {
-//                         violations.push({
-//                             //                  node: end,
-//                             message: 'Guard Expression '+ guardExpressions[i] + ' does not contain valid guard names.'
-//                         });
-//                     }
-//                 }
-
                 for(var stateName in totalStateNames) {
                     if (!stateWithValidTransitions.hasOwnProperty(stateName)) {
                         this.logger.warn('State '+ stateName +'(' + totalStateNames[stateName] +') in ComponentType ' +name+'(' +componentTypeNames[name] + ') has no transitions associated with it.Check your model.');
@@ -540,8 +303,5 @@ define([
             }
             return violations;
         };
-
-    // };
-
     return BehaviorSpecGenerator;
 });
