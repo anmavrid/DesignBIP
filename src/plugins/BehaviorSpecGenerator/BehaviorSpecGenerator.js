@@ -373,6 +373,7 @@ define([
             //         this.logger.info('Improper Java class name');
             //     }
 
+
                 if (componentTypeNames.hasOwnProperty(name)) {
                     violations.push({
                         node: node,
@@ -435,7 +436,6 @@ define([
                                 message:'Connection, ' +childName+'(' +childPath+ ') , with no source encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
                             });
                         }
-
                         // var expression = this.core.getAttribute(child, 'guardName');
                         // if(expression!=''){
                         //     guardExpressions.push(expression);
@@ -465,6 +465,7 @@ define([
                         }
 
                         if (transitionNames.hasOwnProperty(childName)) {
+
                             violations.push({
                                 node: node,
                                 message: 'Duplicated transition [' + childName + '] shared with ' + transitionNames[childName]
