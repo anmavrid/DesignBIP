@@ -83,6 +83,8 @@ define([
                 filesToAdd[fileName] = ejs.render(ejsCache.componentType.complete, componentModel);
                 var parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
                 if (parseResult) {
+                    self.logger.debug(parseResult.line);
+                    self.logger.debug(parseResult.msg);
                     violations.push(parseResult);
                 }
                 guardExpressionParser = self.getGuardExpression(componentModel);
@@ -115,7 +117,7 @@ define([
                     self.logger.debug(componentTypes.length);
                     for (type of componentTypes) {
                         fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
-                        self.logger.info('filename ' + fileName);
+                        self.logger.debug('filename ' + fileName);
                         promises.push(checkComponentModel(type, fileName));
                     }
                     return Q.all(promises);})
