@@ -147,7 +147,7 @@ define(['./../../bower_components/codemirror/lib/codemirror',
         this._rebuildCompleteDocument();
         if (segmentedDocumentObject.errors) {
             for (i = 0; i < segmentedDocumentObject.errors.length; i += 1) {
-                this._setSyntaxError(segmentedDocumentObject.errors[i].line, segmentedDocumentObject.errors[i].msg);
+                this._setSyntaxError(segmentedDocumentObject.errors[i].line, segmentedDocumentObject.errors[i].message);
             }
         }
         if (this._autoSaveTimer) {

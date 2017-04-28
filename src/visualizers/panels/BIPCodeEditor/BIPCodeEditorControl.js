@@ -184,7 +184,7 @@ define([
                             parseResult = guardExpressionParser.parse(model.transitions[i].guard);
                         } catch (e) {
                             segmentedDocument.errors.push({
-                                msg: 'Guard expression should be a logical expression ' +
+                                message: 'Guard expression should be a logical expression ' +
                                 'that has only defined guard names as symbols.',
                                 line: self._getSegmentOffset(segmentedDocument, segmentId)
                             });

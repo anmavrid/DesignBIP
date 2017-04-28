@@ -14,7 +14,7 @@ define(['./java'], function (java) {
      *
      * @example
      * {
-     *  msg: "Not a single function."
+     *  message: "Not a single function."
      *  line: 2
      * }
      */
@@ -30,12 +30,12 @@ define(['./java'], function (java) {
 
             if (parseResult.types.length !== 1) {
                 return {
-                    msg: 'There should be a single function definition.',
+                    message: 'There should be a single function definition.',
                     line: lineOffset || 0
                 };
             } else if (parseResult.types[0].bodyDeclarations.length !== 1) {
                 return {
-                    msg: 'Expecting a single function definition.',
+                    message: 'Expecting a single function definition.',
                     line: lineOffset || 0
                 };
             } else {
@@ -43,28 +43,28 @@ define(['./java'], function (java) {
 
                 if (methodInfo.node !== 'MethodDeclaration') {
                     return {
-                        msg: 'Only method declaration allowed.',
+                        message: 'Only method declaration allowed.',
                         line: lineOffset || 0
                     };
                 }
 
                 if (methodInfo.constructor !== false) {
                     return {
-                        msg: 'No constructor declaration allowed.',
+                        message: 'No constructor declaration allowed.',
                         line: lineOffset || 0
                     };
                 }
 
                 if (methodInfo.node !== 'MethodDeclaration') {
                     return {
-                        msg: 'Only method declaration allowed.',
+                        message: 'Only method declaration allowed.',
                         line: lineOffset || 0
                     };
                 }
 
                 if (expectedReturnType && methodInfo.returnType2.primitiveTypeCode !== expectedReturnType) {
                     return {
-                        msg: 'The function should return \'' + expectedReturnType + '\'.',
+                        message: 'The function should return \'' + expectedReturnType + '\'.',
                         line: lineOffset || 0
                     };
                 }
@@ -78,7 +78,7 @@ define(['./java'], function (java) {
                     }
                     if (scopeFound === false) {
                         return {
-                            msg: 'The function should be in \'' + expectedScope + '\' scope.',
+                            message: 'The function should be in \'' + expectedScope + '\' scope.',
                             line: lineOffset || 0
                         };
                     }
@@ -89,9 +89,9 @@ define(['./java'], function (java) {
             /* TODO it is not too sophisticated but the java parser tends to point to the closing '}'
                as the source of the erro which does not give too much information.
              */
-            
+
             return {
-                msg: 'The syntax of the function is not correct.',
+                message: 'The syntax of the function is not correct.',
                 line: lineOffset || 0
             };
         }
@@ -104,7 +104,7 @@ define(['./java'], function (java) {
             parseResult = java.parse(input);
             return null;
         } catch (e) {
-            return {msg: e.message, line: e.location.start.line};
+            return {message: e.message, line: e.location.start.line};
         }
     }
 
