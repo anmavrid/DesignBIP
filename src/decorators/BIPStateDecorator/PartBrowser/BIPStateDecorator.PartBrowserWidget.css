@@ -7,5 +7,5 @@
     width: 48px;
     height: 48px;
     display: inline-block; }
-
-/*# sourceMappingURL=BIPStateDecorator.PartBrowserWidget.css.map */
+    .part-browser .bip-state-decorator .svg-container .state-circle {
+      position: relative; }
