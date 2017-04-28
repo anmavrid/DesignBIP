@@ -69,57 +69,71 @@ define([
         // These are all instantiated at this point
         var self = this,
             filesToAdd = {},
-
+            violations = [],
             nodes,
+            artifact,
             componentTypes = [],
-            nextComponentType,
-            fileName,
-            checkComponentModel;
+            guardExpressionParser,
+            i;
 
-            checkComponentModel = function (componentModel) {
-              var artifact,
-              guardExpressionParser,
-              i,
-              violations = [],
-              parseResult;
+        function checkComponentModel (componentType, fileName) {
+            var deferred = Q.defer();
 
-              filesToAdd[fileName] = ejs.render(ejsCache.componentType.complete, componentModel);
-              parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
-              if (parseResult) {
-                  violations.push(parseResult);
-              }
-              self.logger.debug(JSON.stringify(componentModel));
-              guardExpressionParser = self.getGuardExpression(componentModel);
-              for (i = 0; i < componentModel.transitions.length; i += 1) {
-                  if (componentModel.transitions[i].guard.length > 0) {
-                      try {
-                          parseResult = guardExpressionParser.parse(componentModel.transitions[i].guard);
-                      } catch (e) {
-                          violations.push({
-                              msg: 'Guard expression should be a logical expression ' +
-                              'that has only defined guard names as symbols.',
-                              node: componentModel.transitions[i]
-                          });
-                      }
-                  }
-              }
-
-              nextComponentType++;
-              if (nextComponentType < componentTypes.length) {
-                var componentType = componentTypes[nextComponentType];
-                fileName = self.core.getAttribute(nodes[componentType], 'name') + '.java';
-                utils.getModelOfComponentType(self.core, nodes[componentType]).then(checkComponentModel);
-              }
-              else {
-                //violations.push(self.hasViolations(componentTypes));
-                if (violations.length > 0) {
-                    violations.forEach(function (violation) {
-                        self.createMessage(violation.node, violation.message, 'error');
-                    });
-                    throw new Error ('Model has ' + violations.length + 'violation(s). See messages for details.');
+            utils.getModelOfComponentType(self.core, nodes[componentType]).then(function (componentModel) {
+                filesToAdd[fileName] = ejs.render(ejsCache.componentType.complete, componentModel);
+                var parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
+                if (parseResult) {
+                    violations.push(parseResult);
                 }
-                artifact = self.blobClient.createArtifact('BehaviorSpecifications');
-                 artifact.addFiles(filesToAdd)
+                guardExpressionParser = self.getGuardExpression(componentModel);
+                for (i = 0; i < componentModel.transitions.length; i += 1) {
+                    if (componentModel.transitions[i].guard.length > 0) {
+                        try {
+                            parseResult = guardExpressionParser.parse(componentModel.transitions[i].guard);
+                        } catch (e) {
+                            violations.push({
+                                message: 'Guard expression should be a logical expression ' +
+                                'that has only defined guard names as symbols.',
+                                node: componentModel.transitions[i]
+                            });
+                        }
+                    }
+                }
+                deferred.resolve();
+            });
+            return deferred.promise;
+        }
+
+        self.loadNodeMap(self.activeNode)
+          .then(function (nodes_) {
+                    var promises = [],
+                        type,
+                        fileName;
+
+                    nodes = nodes_;
+                    componentTypes = self.getComponentTypeNodes(nodes);
+                    self.logger.debug(componentTypes.length);
+                    for (type of componentTypes) {
+                        fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
+                        self.logger.info('filename ' + fileName);
+                        promises.push(checkComponentModel(type, fileName));
+                    }
+                    return Q.all(promises);})
+                    .then(function () {
+                        violations.push.apply(violations, self.hasViolations(componentTypes, nodes));
+                        if (violations.length > 0) {
+                            violations.forEach(function (violation) {
+                                if (violation.hasOwnProperty('node')) {
+                                    self.createMessage(violation.node, violation.message, 'error');
+                                } else {
+                                    self.createMessage(violation.line, violation.msg, 'error');
+                                }
+                            });
+                            throw new Error ('Model has ' + violations.length + ' violation(s). See messages for details.');
+                        }
+                        artifact = self.blobClient.createArtifact('BehaviorSpecifications');
+                        return artifact.addFiles(filesToAdd);
+                    })
                 .then(function (fileHash) {
                     self.result.addArtifact(fileHash);
                     return artifact.save();
@@ -133,51 +147,25 @@ define([
                     self.logger.error(err.stack);
                     // Result success is false at invocation.
                     callback(err, self.result);
-                }) ;
-              }
-            };
-
-        self.extractDataModel(self.activeNode)
-          .then(function (nodes_) {
-                nodes = nodes_;
-                componentTypes = self.getComponentTypeNodes(nodes);
-
-                nextComponentType = 0;
-                var componentType = componentTypes[nextComponentType];
-                fileName = self.core.getAttribute(nodes[componentType], 'name') + '.java';
-                self.logger.info(fileName);
-                utils.getModelOfComponentType(self.core, nodes[componentType]).then(checkComponentModel);
                 });
+
     };
 
-    BehaviorSpecGenerator.prototype.extractDataModel = function (node) {
-        var self = this;
-        return self.core.loadSubTree(node)
-            .then(function (nodeArr) {
-                var nodes = {},
-                    i;
-                for (i = 0; i < nodeArr.length; i += 1) {
-                    nodes[self.core.getPath(nodeArr[i])] = nodeArr[i];
-                }
-                return nodes;
-            });
-    };
-
-    BehaviorSpecGenerator.prototype.getGuardExpression = function (componentModel){
-      var guardNames =[],
+    BehaviorSpecGenerator.prototype.getGuardExpression = function (componentModel) {
+        var guardNames = [],
           i,
           guardExpressionParser;
 
-      for (i = 0; i < componentModel.guards.length; i += 1) {
-          guardNames.push(componentModel.guards[i].name);
-      }
-      if (guardNames.length > 0) {
-          guardExpressionParser = peg.generate(
+        for (i = 0; i < componentModel.guards.length; i += 1) {
+            guardNames.push(componentModel.guards[i].name);
+        }
+        if (guardNames.length > 0) {
+            guardExpressionParser = peg.generate(
               ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
           );
-      }
-      return guardExpressionParser;
-    }
+        }
+        return guardExpressionParser;
+    };
 
     BehaviorSpecGenerator.prototype.getComponentTypeNodes = function (nodes) {
         var self = this,
@@ -194,84 +182,95 @@ define([
         return componentTypes;
     };
 
+    //ehaviorSpecGenerator.prototype.checkState = function()
 
-    BehaviorSpecGenerator.prototype.hasViolations = function (nodes) {
-        var violations = [],
+    BehaviorSpecGenerator.prototype.hasViolations = function (componentTypes, nodes) {
+            var violations = [],
+            guardNames = {},
+            stateWithValidTransitions = {},
+            totalStateNames = {},
+            transitionNames = {},
             componentTypeNames = {},
             name,
-            nodePath,
-            node;
+            type,
+            state, stateName,
+            child, childPath, childName,
+            node,
+            noInitialState;
 
-        for (nodePath in nodes) {
-            var guardNames = {};
-            var stateWithValidTransitions = {};
-            var totalStateNames = {};
-            var transitionNames = {};
-            node = nodes[nodePath];
-            name = this.core.getAttribute(node, 'name');
+            for (type of componentTypes) {
+                guardNames = {};
+                stateWithValidTransitions = {};
+                totalStateNames = {};
+                transitionNames = {};
+                noInitialState = true;
+                node = nodes[type];
+                name = this.core.getAttribute(node, 'name');
+                this.logger.info(name);
 
                 if (componentTypeNames.hasOwnProperty(name)) {
                     violations.push({
                         node: node,
-                        message: 'Duplicated component [' + name + '] shared with ' + componentTypeNames[name]
+                        message: 'Name [' + name + '] of component type [' + type + '] is not unique. Please rename. Component types must have unique names. '
                     });
                 }
                 componentTypeNames[name] = this.core.getPath(node);
 
-                // check for states,guards and transitions in each componentType
-                for (var childPath of this.core.getChildrenPaths(node)) {
-                    var child = nodes[childPath];
-                    var childName = this.core.getAttribute(child, 'name');
+                for (childPath of this.core.getChildrenPaths(node)) {
+                    child = nodes[childPath];
+                    childName = this.core.getAttribute(child, 'name');
                     if ((this.isMetaTypeOf(child, this.META.State)) || (this.isMetaTypeOf(child, this.META.InitialState))) {
+
                         if (totalStateNames.hasOwnProperty(childName)) {
                             violations.push({
-                                node: node,
-                                message: 'Duplicated State [' + childName + '] shared with ' + totalStateNames[childName]
+                                node: child,
+                                message: 'Name [' + childName + '] of state [' + child + '] is not unique. Please rename. States that belong to the same component type must have unique names.'
                             });
                         }
                         totalStateNames[childName] = this.core.getPath(child);
+                        if ((this.isMetaTypeOf(child, this.META.InitialState))) {
+                          noInitialState = false;
+                        }
                     }
 
-                    if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition) || this.isMetaTypeOf(child, this.META.InternalTransition) ) {
+                    if (this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition) || this.isMetaTypeOf(child, this.META.InternalTransition)) {
                         if (this.core.getPointerPath(child, 'dst') === null) {
                             violations.push({
-                                node: node,
-                                message:'Connection, ' +childName+'(' +childPath+ ') , with no destination encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
+                                node: child,
+                                message: 'Transition [' + childName + '] with no destination encountered. Please connect or remove it.'
                             });
                         }
                         if (this.core.getPointerPath(child, 'src') === null) {
                             violations.push({
-                                node: node,
-                                message:'Connection, ' +childName+'(' +childPath+ ') , with no source encountered in ComponentType ' +name+'(' +componentTypeNames[name] + '). Connect or remove it.'
+                                node: child,
+                                message: 'Transition [' + childName + '] with no source encountered. Please connect or remove it.'
                             });
                         }
-                        var transitionMethod = this.core.getAttribute(child, 'transitionMethod');
-                        if (transitionMethod === '') {
+                        if (this.core.getAttribute(child, 'transitionMethod') === '') {
                             violations.push({
-                                node: node,
-                                message: childName + '(' + childPath + ') in ComponentType ' +name+'(' +componentTypeNames[name] + ') does not have transitionMethod attribute defined.'
+                                node: child,
+                                message: 'Attribute transitionMethod of transition [' + childName + '] is not defined. Please define transitionMethod.'
                             });
                         }
                     }
                     if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition)) {
 
                         if (this.core.getPointerPath(child, 'dst') !== null) {
-                            var state = nodes[this.core.getPointerPath(child, 'dst')];
-                            var stateName = this.core.getAttribute(state, 'name');
-                            stateWithValidTransitions[stateName]= this.core.getPath(state);
+                            state = nodes[this.core.getPointerPath(child, 'dst')];
+                            stateName = this.core.getAttribute(state, 'name');
+                            stateWithValidTransitions[stateName] = this.core.getPath(state);
                         }
 
                         if (this.core.getPointerPath(child, 'src') !== null) {
-                            var state = nodes[this.core.getPointerPath(child, 'src')];
-                            var stateName = this.core.getAttribute(state, 'name');
-                            stateWithValidTransitions[stateName]= this.core.getPath(state);
+                            state = nodes[this.core.getPointerPath(child, 'src')];
+                            stateName = this.core.getAttribute(state, 'name');
+                            stateWithValidTransitions[stateName] = this.core.getPath(state);
                         }
 
                         if (transitionNames.hasOwnProperty(childName)) {
-
                             violations.push({
-                                node: node,
-                                message: 'Duplicated transition [' + childName + '] shared with ' + transitionNames[childName]
+                                node: child,
+                                message: 'Name [' + childName + '] of transition [' + child + '] is not unique. Please rename. Enforceable and spontaneous transitions of the same component type must have unique names.'
                             });
                         }
                         transitionNames[childName] = this.core.getPath(child);
@@ -279,24 +278,29 @@ define([
                     if (this.isMetaTypeOf(child, this.META.Guard)) {
                         if (guardNames.hasOwnProperty(childName)) {
                             violations.push({
-                                node: node,
-                                message: 'Duplicated guard [' + childName + '] shared with ' + guardNames[childName]
+                                node: child,
+                                message: 'Name [' + childName + '] of guard [' + child + '] is not unique. Please rename. Guards of the same component type must have unique names.'
                             });
                         }
                         guardNames[childName] = this.core.getPath(child);
 
-                        var guardMathod = this.core.getAttribute(child, 'guardMethod');
-                        if (guardMathod === '') {
+                        if (this.core.getAttribute(child, 'guardMethod') === '') {
                             violations.push({
-                                node: node,
-                                message: childName + '(' + childPath + ') does not have guardMethod attribute defined.'
+                                node: child,
+                                message: 'Attribute guardMethod of transition [' + childName + '] is not defined. Please define guardMethod.'
                             });
                         }
                     }
                 }
-                for(var stateName in totalStateNames) {
+                if (noInitialState) {
+                    violations.push({
+                        node: node,
+                        message: 'Component type [' + name + '] does not have an initial state. Please define an initial state.'
+                    });
+                }
+                for (stateName in totalStateNames) {
                     if (!stateWithValidTransitions.hasOwnProperty(stateName)) {
-                        this.logger.warn('State '+ stateName +'(' + totalStateNames[stateName] +') in ComponentType ' +name+'(' +componentTypeNames[name] + ') has no transitions associated with it.Check your model.');
+                        this.logger.warn('State [' + stateName + '] of component type ' + name +  ' has no transitions associated with it. Please remove or connect.');
                     }
                 }
 
