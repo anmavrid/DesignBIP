@@ -182,130 +182,110 @@ define([
         return componentTypes;
     };
 
-    //ehaviorSpecGenerator.prototype.checkState = function()
-
     BehaviorSpecGenerator.prototype.hasViolations = function (componentTypes, nodes) {
-            var violations = [],
-            guardNames = {},
-            stateWithValidTransitions = {},
-            totalStateNames = {},
-            transitionNames = {},
-            componentTypeNames = {},
-            name,
-            type,
-            state, stateName,
+            var componentTypeNames = {},
+            name, type, node,
             child, childPath, childName,
-            node,
-            noInitialState;
+            self = this,
+            noInitialState,
+            nameAndViolations = {
+                violations: [],
+                totalStateNames: {},
+                transitionNames: {},
+                guardNames: {}
+            };
 
             for (type of componentTypes) {
-                guardNames = {};
-                stateWithValidTransitions = {};
-                totalStateNames = {};
-                transitionNames = {};
+                nameAndViolations.guardNames = {};
+                nameAndViolations.totalStateNames = {};
+                nameAndViolations.transitionNames = {};
                 noInitialState = true;
                 node = nodes[type];
-                name = this.core.getAttribute(node, 'name');
-                this.logger.info(name);
-
+                name = self.core.getAttribute(node, 'name');
                 if (componentTypeNames.hasOwnProperty(name)) {
-                    violations.push({
+                    nameAndViolations.violations.push({
                         node: node,
                         message: 'Name [' + name + '] of component type [' + type + '] is not unique. Please rename. Component types must have unique names. '
                     });
                 }
-                componentTypeNames[name] = this.core.getPath(node);
-
-                for (childPath of this.core.getChildrenPaths(node)) {
+                componentTypeNames[name] = self.core.getPath(node);
+                for (childPath of self.core.getChildrenPaths(node)) {
                     child = nodes[childPath];
-                    childName = this.core.getAttribute(child, 'name');
-                    if ((this.isMetaTypeOf(child, this.META.State)) || (this.isMetaTypeOf(child, this.META.InitialState))) {
-
-                        if (totalStateNames.hasOwnProperty(childName)) {
-                            violations.push({
-                                node: child,
-                                message: 'Name [' + childName + '] of state [' + child + '] is not unique. Please rename. States that belong to the same component type must have unique names.'
-                            });
-                        }
-                        totalStateNames[childName] = this.core.getPath(child);
-                        if ((this.isMetaTypeOf(child, this.META.InitialState))) {
-                          noInitialState = false;
-                        }
+                    childName = self.core.getAttribute(child, 'name');
+                    if ((self.isMetaTypeOf(child, self.META.InitialState))) {
+                        noInitialState = false;
                     }
-
-                    if (this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition) || this.isMetaTypeOf(child, this.META.InternalTransition)) {
-                        if (this.core.getPointerPath(child, 'dst') === null) {
-                            violations.push({
-                                node: child,
-                                message: 'Transition [' + childName + '] with no destination encountered. Please connect or remove it.'
-                            });
-                        }
-                        if (this.core.getPointerPath(child, 'src') === null) {
-                            violations.push({
-                                node: child,
-                                message: 'Transition [' + childName + '] with no source encountered. Please connect or remove it.'
-                            });
-                        }
-                        if (this.core.getAttribute(child, 'transitionMethod') === '') {
-                            violations.push({
-                                node: child,
-                                message: 'Attribute transitionMethod of transition [' + childName + '] is not defined. Please define transitionMethod.'
-                            });
-                        }
-                    }
-                    if ( this.isMetaTypeOf(child, this.META.EnforceableTransition) || this.isMetaTypeOf(child, this.META.SpontaneousTransition)) {
-
-                        if (this.core.getPointerPath(child, 'dst') !== null) {
-                            state = nodes[this.core.getPointerPath(child, 'dst')];
-                            stateName = this.core.getAttribute(state, 'name');
-                            stateWithValidTransitions[stateName] = this.core.getPath(state);
-                        }
-
-                        if (this.core.getPointerPath(child, 'src') !== null) {
-                            state = nodes[this.core.getPointerPath(child, 'src')];
-                            stateName = this.core.getAttribute(state, 'name');
-                            stateWithValidTransitions[stateName] = this.core.getPath(state);
-                        }
-
-                        if (transitionNames.hasOwnProperty(childName)) {
-                            violations.push({
-                                node: child,
-                                message: 'Name [' + childName + '] of transition [' + child + '] is not unique. Please rename. Enforceable and spontaneous transitions of the same component type must have unique names.'
-                            });
-                        }
-                        transitionNames[childName] = this.core.getPath(child);
-                    }
-                    if (this.isMetaTypeOf(child, this.META.Guard)) {
-                        if (guardNames.hasOwnProperty(childName)) {
-                            violations.push({
-                                node: child,
-                                message: 'Name [' + childName + '] of guard [' + child + '] is not unique. Please rename. Guards of the same component type must have unique names.'
-                            });
-                        }
-                        guardNames[childName] = this.core.getPath(child);
-
-                        if (this.core.getAttribute(child, 'guardMethod') === '') {
-                            violations.push({
-                                node: child,
-                                message: 'Attribute guardMethod of transition [' + childName + '] is not defined. Please define guardMethod.'
-                            });
-                        }
-                    }
+                    nameAndViolations = self.hasChildViolations(child, childName, nameAndViolations);
                 }
                 if (noInitialState) {
-                    violations.push({
+                    nameAndViolations.violations.push({
                         node: node,
                         message: 'Component type [' + name + '] does not have an initial state. Please define an initial state.'
                     });
                 }
-                for (stateName in totalStateNames) {
-                    if (!stateWithValidTransitions.hasOwnProperty(stateName)) {
-                        this.logger.warn('State [' + stateName + '] of component type ' + name +  ' has no transitions associated with it. Please remove or connect.');
-                    }
-                }
-
             }
-            return violations;
+            return nameAndViolations.violations;
         };
+
+    BehaviorSpecGenerator.prototype.hasChildViolations = function (child, childName, nameAndViolations) {
+            var self = this;
+
+            if ((self.isMetaTypeOf(child, self.META.State)) || (self.isMetaTypeOf(child, self.META.InitialState))) {
+                if (nameAndViolations.totalStateNames.hasOwnProperty(childName)) {
+                    nameAndViolations.violations.push({
+                        node: child,
+                        message: 'Name [' + childName + '] of state [' + child + '] is not unique. Please rename. States that belong to the same component type must have unique names.'
+                    });
+                }
+                nameAndViolations.totalStateNames[childName] = self.core.getPath(child);
+            }
+            if (self.isMetaTypeOf(child, self.META.EnforceableTransition) || self.isMetaTypeOf(child, self.META.SpontaneousTransition) || self.isMetaTypeOf(child, self.META.InternalTransition)) {
+                if (this.core.getPointerPath(child, 'dst') === null) {
+                    nameAndViolations.violations.push({
+                        node: child,
+                        message: 'Transition [' + childName + '] with no destination encountered. Please connect or remove it.'
+                    });
+                }
+                if (this.core.getPointerPath(child, 'src') === null) {
+                    nameAndViolations.violations.push({
+                        node: child,
+                        message: 'Transition [' + childName + '] with no source encountered. Please connect or remove it.'
+                    });
+                }
+                if (this.core.getAttribute(child, 'transitionMethod') === '') {
+                    nameAndViolations.violations.push({
+                        node: child,
+                        message: 'Attribute transitionMethod of transition [' + childName + '] is not defined. Please define transitionMethod.'
+                    });
+                }
+            }
+            if ( self.isMetaTypeOf(child, self.META.EnforceableTransition) || self.isMetaTypeOf(child, self.META.SpontaneousTransition)) {
+                if (nameAndViolations.transitionNames.hasOwnProperty(childName)) {
+                    nameAndViolations.violations.push({
+                        node: child,
+                        message: 'Name [' + childName + '] of transition [' + child + '] is not unique. Please rename. Enforceable and spontaneous transitions of the same component type must have unique names.'
+                    });
+                }
+                nameAndViolations.transitionNames[childName] = self.core.getPath(child);
+            }
+            if (self.isMetaTypeOf(child, self.META.Guard)) {
+                if (nameAndViolations.guardNames.hasOwnProperty(childName)) {
+                    nameAndViolations.violations.push({
+                        node: child,
+                        message: 'Name [' + childName + '] of guard [' + child + '] is not unique. Please rename. Guards of the same component type must have unique names.'
+                    });
+                }
+                nameAndViolations.guardNames[childName] = self.core.getPath(child);
+
+                if (self.core.getAttribute(child, 'guardMethod') === '') {
+                    nameAndViolations.violations.push({
+                        node: child,
+                        message: 'Attribute guardMethod of transition [' + childName + '] is not defined. Please define guardMethod.'
+                    });
+                }
+            }
+            return nameAndViolations;
+    };
+
     return BehaviorSpecGenerator;
 });
