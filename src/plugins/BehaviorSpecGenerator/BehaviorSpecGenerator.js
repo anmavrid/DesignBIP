@@ -84,7 +84,8 @@ define([
                 var parseResult = javaParser.checkWholeFile(filesToAdd[fileName]);
                 if (parseResult) {
                     self.logger.debug(parseResult.line);
-                    self.logger.debug(parseResult.msg);
+                    self.logger.debug(parseResult.message);
+                    parseResult.node = nodes[componentType];
                     violations.push(parseResult);
                 }
                 guardExpressionParser = self.getGuardExpression(componentModel);
@@ -96,7 +97,7 @@ define([
                             violations.push({
                                 message: 'Guard expression should be a logical expression ' +
                                 'that has only defined guard names as symbols.',
-                                node: componentModel.transitions[i]
+                                node: nodes[componentModel.transitions[i]]
                             });
                         }
                     }
@@ -125,11 +126,7 @@ define([
                         violations.push.apply(violations, self.hasViolations(componentTypes, nodes));
                         if (violations.length > 0) {
                             violations.forEach(function (violation) {
-                                if (violation.hasOwnProperty('node')) {
-                                    self.createMessage(violation.node, violation.message, 'error');
-                                } else {
-                                    self.createMessage(violation.line, violation.msg, 'error');
-                                }
+                                self.createMessage(violation.node, violation.message, 'error');
                             });
                             throw new Error ('Model has ' + violations.length + ' violation(s). See messages for details.');
                         }
