@@ -5,7 +5,11 @@
   font-weight: normal;
   .svg-container {
     width: 48px;
+    height: 48px;
     display: inline-block;
+    .state-circle {
+      position: absolute;
+    }
   }
 
   // TODO: These need to be at the border around the circle.

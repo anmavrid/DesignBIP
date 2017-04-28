@@ -1,6 +1,6 @@
-<svg viewBox="-1 -1 102 102"  xmlns="http://www.w3.org/2000/svg">
+<svg class="state-circle" viewBox="0 0 100 100"  xmlns="http://www.w3.org/2000/svg" style="height: 48px">
 <g>
- <circle cx="50" cy="50" r="50" fill="white" stroke="#000" stroke-width="2"/>
+ <circle cx="50" cy="50" r="48" fill="white" stroke="#000" stroke-width="4"/>
 </g>
  <text class="name" x="50" y="50" font-family="monospace" font-size="20" text-anchor="middle" fill="#000">
  </text>
