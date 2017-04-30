@@ -7,7 +7,7 @@
   },
   {
     "id": "BIPExecutionViz",
-    "title": "BIPExecutionViz",
+    "title": "BIP Engine Execution",
     "panel": "panels/BIPExecutionViz/BIPExecutionVizPanel",
     "DEBUG_ONLY": false
   },
