@@ -16,7 +16,7 @@
   },
   "version": "1.0.0",
   "peerDependencies": {
-    "webgme": "^2.0.0"
+
   },
   "devDependencies": {
     "mocha": "^2.2.5",
@@ -26,6 +26,7 @@
     "jshint": "2.9.3"
   },
   "dependencies": {
-    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors"
+    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors",
+    "webgme": "github:webgme/webgme#line-lable-offsets"
   }
 }
