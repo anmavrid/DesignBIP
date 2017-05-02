@@ -12,10 +12,10 @@ define([
     'js/Constants',
     'q',
     'common/util/ejs',
-    './../../../templates/ejsCache',
-    './../../../parsers/javaExtra',
-    './../../../util/utils',
-    './../../../bower_components/pegjs/peg-0.10.0'
+    'bipsrc/templates/ejsCache',
+    'bipsrc/parsers/javaExtra',
+    'bipsrc/util/utils',
+    'bipsrc/bower_components/pegjs/peg-0.10.0'
 ], function (CONSTANTS,
              Q,
              ejs,
