@@ -210,7 +210,7 @@
                 "name": "one"
               },
               "transition": {
-                "id": "/f/t/1/c",
+                "id": "/f/t/y/c",
                 "name": "rm"
               }
             }
@@ -302,7 +302,7 @@
                 "name": "one"
               },
               "transition": {
-                "id": "/f/t/1/c",
+                "id": "/f/t/y/c",
                 "name": "rm"
               }
             }
@@ -462,7 +462,7 @@
                 "name": "one"
               },
               "transition": {
-                "id": "/f/t/1/c",
+                "id": "/f/t/y/c",
                 "name": "rm"
               }
             }
@@ -592,7 +592,7 @@
                 "name": "one"
               },
               "transition": {
-                "id": "/f/t/1/c",
+                "id": "/f/t/y/c",
                 "name": "rm"
               }
             }
@@ -722,7 +722,7 @@
                 "name": "one"
               },
               "transition": {
-                "id": "/f/t/1/c",
+                "id": "/f/t/y/c",
                 "name": "rm"
               }
             }
@@ -768,7 +768,7 @@
                 "name": "one"
               },
               "transition": {
-                "id": "/f/t/1/c",
+                "id": "/f/t/y/c",
                 "name": "rm"
               }
             }
