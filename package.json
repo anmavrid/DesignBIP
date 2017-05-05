@@ -1,5 +1,14 @@
 {
   "name": "webgme-bip",
+  "description": "Design studio for component-based modeling with BIP.",
+   "author": {
+     "name": "Anastasia Mavridou",
+     "url": "https://github.com/anmavrid"
+   },
+   "repository": {
+     "type": "git",
+     "url": "https://github.com/anmavrid/webgme-bip"
+   },
   "scripts": {
     "start": "node app.js",
     "test": "node ./node_modules/mocha/bin/mocha --recursive test",
@@ -12,21 +21,28 @@
     "pluginHook": "node ./node_modules/webgme/src/bin/plugin_hook.js",
     "users": "node ./node_modules/webgme/src/bin/usermanager.js",
     "clean_up": "node ./node_modules/webgme/src/bin/clean_up.js",
-    "postinstall": "bower install"
+    "prepublish": "bower install"
   },
-  "version": "1.0.0",
+  "version": "0.0.1",
+   "keywords": [
+     "webgme",
+     "webgme-bip",
+     "webgme-diagram-designers",
+     "webgme-domain"
+   ],
   "peerDependencies": {
-
+    "webgme": "^2.0.0"
   },
   "devDependencies": {
     "mocha": "^2.2.5",
     "rimraf": "^2.4.0",
     "chai": "^3.0.0",
     "jscs": "3.0.7",
-    "jshint": "2.9.3"
+    "jshint": "2.9.3",
+    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors",
   },
   "dependencies": {
-    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors",
     "webgme": "github:webgme/webgme#line-lable-offsets"
-  }
+  },
+  "license": "MIT"
 }
