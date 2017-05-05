@@ -39,7 +39,7 @@
     "chai": "^3.0.0",
     "jscs": "3.0.7",
     "jshint": "2.9.3",
-    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors",
+    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors"
   },
   "dependencies": {
     "webgme": "github:webgme/webgme#line-lable-offsets"
