@@ -26,8 +26,8 @@
   "version": "0.0.1",
    "keywords": [
      "webgme",
-     "webgme-bip",
-     "webgme-diagram-designers",
+     "BIP",
+     "behavior-interaction-priority"
      "webgme-domain"
    ],
   "peerDependencies": {
