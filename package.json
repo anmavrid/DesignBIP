@@ -27,7 +27,7 @@
    "keywords": [
      "webgme",
      "bip",
-     "behavior-interaction-priority"
+     "behavior-interaction-priority",
      "webgme-domain"
    ],
   "peerDependencies": {
