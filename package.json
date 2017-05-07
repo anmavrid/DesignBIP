@@ -42,7 +42,6 @@
     "webgme-bip-editors": "github:pmeijer/webgme-bip-editors"
   },
   "dependencies": {
-    "webgme": "github:webgme/webgme#line-lable-offsets"
   },
   "license": "MIT"
 }
