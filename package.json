@@ -21,7 +21,7 @@
     "pluginHook": "node ./node_modules/webgme/src/bin/plugin_hook.js",
     "users": "node ./node_modules/webgme/src/bin/usermanager.js",
     "clean_up": "node ./node_modules/webgme/src/bin/clean_up.js",
-    "prepublish": "bower install"
+    "postinstall": "bower install"
   },
   "version": "0.0.1",
    "keywords": [
