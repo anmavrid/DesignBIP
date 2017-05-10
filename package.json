@@ -1,14 +1,14 @@
 {
   "name": "webgme-bip",
   "description": "Design studio for component-based modeling with BIP.",
-   "author": {
-     "name": "Anastasia Mavridou",
-     "url": "https://github.com/anmavrid"
-   },
-   "repository": {
-     "type": "git",
-     "url": "https://github.com/anmavrid/webgme-bip"
-   },
+  "author": {
+    "name": "Anastasia Mavridou",
+    "url": "https://github.com/anmavrid"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anmavrid/webgme-bip"
+  },
   "scripts": {
     "start": "node app.js",
     "test": "node ./node_modules/mocha/bin/mocha --recursive test",
@@ -23,13 +23,13 @@
     "clean_up": "node ./node_modules/webgme/src/bin/clean_up.js",
     "prepublish": "bower install"
   },
-  "version": "0.0.1",
-   "keywords": [
-     "webgme",
-     "bip",
-     "behavior-interaction-priority",
-     "webgme-domain"
-   ],
+  "version": "0.1.0",
+  "keywords": [
+    "webgme",
+    "bip",
+    "behavior-interaction-priority",
+    "webgme-domain"
+  ],
   "peerDependencies": {
     "webgme": "^2.0.0"
   },
