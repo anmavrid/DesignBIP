@@ -10,22 +10,22 @@ Then, run `webgme start` from the project root to start . Finally, navigate to `
 
 ## Alternative - No installation needed
 The design studio can be accessed (read-only) directly here: https://editor.webgme.org/?project=anastasia%2BBIP&node=%2Ff%2Ft
-, where you can directly see the Switchable Routes BIP project.
+, where you can see the Switchable Routes BIP project.
 
 A non-read-only version of the design-studio can be accessed here: 
 https://editor.webgme.org/?project=demo%2BBIP_test&branch=master&node=%2Ff%2Ft&visualizer=BIPEditor&tab=0&layout=DefaultLayout
+
+If you would like to create your own, private BIP projects:
+1. create an account on http://webgme.org/
+2. create a new project ( 3-minute tutorial for how to create a project: http://www.youtube.com/watch?v=xR0rmcVFcgY&feature=youtu.be)
+3. use the BIP seed.
 
 ## Background material
 A general paper on BIP: https://infoscience.epfl.ch/record/170496/files/ieee-software.pdf
 
 A paper on Architecture Diagrams: https://arxiv.org/pdf/1608.03324.pdf 
 
-Here (http://www.youtube.com/watch?v=YKi_256Vy_0&list=PLhvSjgKmeyjhp4_hnf-xPdCgES56dnMJb&index=3) is a generic tutorial on WebGME.
-
-If you would like to create your own, private BIP projects:
-1. create an account on http://webgme.org/
-2. create a new project ( 3-minute tutorial for how to create a project: http://www.youtube.com/watch?v=xR0rmcVFcgY&feature=youtu.be)
-3. use the BIP seed.
+A general tutorial on modeling with WebGME: http://www.youtube.com/watch?v=YKi_256Vy_0&list=PLhvSjgKmeyjhp4_hnf-xPdCgES56dnMJb&index=3
 
 ## Slower Start
 WebGME is a a node.js application that uses mongodb. Ubuntu users can install nodejs and mongodb as follows:
