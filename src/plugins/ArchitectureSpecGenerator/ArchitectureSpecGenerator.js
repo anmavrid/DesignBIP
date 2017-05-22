@@ -62,19 +62,18 @@ define([
             path,
             fs;
 
-            path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path');
+        path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path');
 
-            if(path){
-              path += '/'+self.core.getAttribute(self.activeNode, 'name');
-              path = path.replace(/\s+/g, '');
-              try {
+        if (path) {
+            path += '/' + self.core.getAttribute(self.activeNode, 'name');
+            path = path.replace(/\s+/g, '');
+            try {
                 fs = require('fs');
-              } catch (e){
+            } catch (e) {
                 self.logger.error('To save directly to file system, plugin needs to run on server!');
-              }
-              console.log(path);
             }
-
+            //console.log(path);
+        }
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
@@ -132,19 +131,19 @@ define([
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
 
                     if (path) {
-                      if(pathArrayForFile.length >= 1){
-                        for(j=0;j<=pathArrayForFile.length-1;j+=1){
-                          tempPath += '/'+pathArrayForFile[j];
-                          try {
-                              fs.statSync(path);
-                          } catch (err) {
-                              if (err.code === 'ENOENT') {
-                                  fs.mkdirSync(path);
-                              }
+                        if (pathArrayForFile.length >= 1) {
+                            for (j = 0; j<=pathArrayForFile.length - 1; j+=1) {
+                                tempPath += '/' + pathArrayForFile[j];
+                                try {
+                                    fs.statSync(path);
+                                } catch (err) {
+                                    if (err.code === 'ENOENT') {
+                                        fs.mkdirSync(path);
+                                    }
                                 }
-                      }
-                      fs.writeFileSync(path+'/'+'Glue.xml',filesToAdd['Glue.xml'],'utf8');
-                    }
+                            }
+                            fs.writeFileSync(path + '/' + 'Glue.xml', filesToAdd['Glue.xml'], 'utf8');
+                        }
                     }
                     artifact = self.blobClient.createArtifact('GlueSpecification');
                     return artifact.addFiles(filesToAdd);

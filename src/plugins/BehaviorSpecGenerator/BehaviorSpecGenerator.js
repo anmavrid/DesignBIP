@@ -74,7 +74,21 @@ define([
             artifact,
             componentTypes = [],
             guardExpressionParser,
-            i;
+            i,
+            path, fs;
+
+        path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path');
+
+        // if (path) {
+        //     path += '/' + self.core.getAttribute(self.activeNode, 'name');
+        //     path = path.replace(/\s+/g, '');
+        //     try {
+        //         fs = require('fs');
+        //     } catch (e) {
+        //         self.logger.error('To save directly to file system, plugin needs to run on server!');
+        //     }
+        //     //console.log(path);
+        // }
 
         function checkComponentModel (componentType, fileName) {
             var deferred = Q.defer();
@@ -123,6 +137,8 @@ define([
                     }
                     return Q.all(promises);})
                     .then(function () {
+                        var type, tempPath,
+                          fileName, pathArrayForFile, j;
                         violations.push.apply(violations, self.hasViolations(componentTypes, nodes));
                         if (violations.length > 0) {
                             violations.forEach(function (violation) {
@@ -130,6 +146,25 @@ define([
                             });
                             throw new Error ('Model has ' + violations.length + ' violation(s). See messages for details.');
                         }
+                        // for (type of componentTypes) {
+                        //     fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
+                        //     pathArrayForFile = fileName.split('/');
+                        //     if (path) {
+                        //         if (pathArrayForFile.length >= 1) {
+                        //             for (j = 0; j<=pathArrayForFile.length - 1; j+=1) {
+                        //                 tempPath += '/' + pathArrayForFile[j];
+                        //                 try {
+                        //                     fs.statSync(path);
+                        //                 } catch (err) {
+                        //                     if (err.code === 'ENOENT') {
+                        //                         fs.mkdirSync(path);
+                        //                     }
+                        //                 }
+                        //             }
+                        //             fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
+                        //         }
+                        //     }
+                        // }
                         artifact = self.blobClient.createArtifact('BehaviorSpecifications');
                         return artifact.addFiles(filesToAdd);
                     })
