@@ -58,8 +58,22 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-            artifact;
+            artifact,
+            path,
+            fs;
 
+        path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path');
+
+        if (path) {
+            path += '/' + self.core.getAttribute(self.activeNode, 'name');
+            path = path.replace(/\s+/g, '');
+            try {
+                fs = require('fs');
+            } catch (e) {
+                self.logger.error('To save directly to file system, plugin needs to run on server!');
+            }
+            //console.log(path);
+        }
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
@@ -111,7 +125,26 @@ define([
                     }
                     var xml = {glue: {accepts: {accept: accept}, requires: {require: require}}};
                     var filesToAdd = {};
+                    var pathArrayForFile = 'Glue.xml'.split('/'),
+                    tempPath = path,
+                    j;
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
+
+                    if (path) {
+                        if (pathArrayForFile.length >= 1) {
+                            for (j = 0; j<=pathArrayForFile.length - 1; j+=1) {
+                                tempPath += '/' + pathArrayForFile[j];
+                                try {
+                                    fs.statSync(path);
+                                } catch (err) {
+                                    if (err.code === 'ENOENT') {
+                                        fs.mkdirSync(path);
+                                    }
+                                }
+                            }
+                            fs.writeFileSync(path + '/' + 'Glue.xml', filesToAdd['Glue.xml'], 'utf8');
+                        }
+                    }
                     artifact = self.blobClient.createArtifact('GlueSpecification');
                     return artifact.addFiles(filesToAdd);
                 })
@@ -345,26 +378,26 @@ define([
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
                         node: node,
-                        message: 'Dst of connector [' + nodePath + '] is null'
+                        message: 'Dst of connector [' + nodePath + '] is null.'
                     });
                 }
                 if (self.core.getPointerPath(node, 'src') === null) {
                     violations.push({
                         node: node,
-                        message: 'Src of connector [' + nodePath + '] is null'
+                        message: 'Src of connector [' + nodePath + '] is null.'
                     });
                 }
             } else if (this.isMetaTypeOf(node, this.META.Connection)) {
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
                         node: node,
-                        message: 'Dst of connection [' + nodePath + '] is null'
+                        message: 'Dst of connection [' + nodePath + '] is null.'
                     });
                 }
                 if (self.core.getPointerPath(node, 'src') === null) {
                     violations.push({
                         node: node,
-                        message: 'Src of connection [' + nodePath + '] is null'
+                        message: 'Src of connection [' + nodePath + '] is null.'
                     });
                 }
             } else if (this.isMetaTypeOf(node, this.META.Trigger) || this.isMetaTypeOf(node, this.META.Synchron)) {
@@ -379,7 +412,7 @@ define([
                 if (!isConnected) {
                     violations.push({
                         node: node,
-                        message: 'ConnectorEnd [' + nodePath + '] is not connected to any port'
+                        message: 'ConnectorEnd [' + nodePath + '] is not connected to any port.'
                     });
                 }
             } else {
@@ -389,7 +422,7 @@ define([
         }
         if (zeroEnforceableTransitions) {
             violations.push({
-                message: 'No Enforceable Transitions in the entire project, cannot generate Architecture specification'
+                message: 'No Enforceable Transitions in the entire project, cannot generate Architecture specification.'
             });
         }
         return violations;

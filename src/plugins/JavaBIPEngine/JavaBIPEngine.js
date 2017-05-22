@@ -11,12 +11,16 @@ define([
     'plugin/PluginConfig',
     'text!./metadata.json',
     'plugin/PluginBase',
-     'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser'
+     'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser',
+     'common/util/ejs',
+     'text!./Templates/caseStudy.ejs'
 ], function (
     PluginConfig,
     pluginMetadata,
     PluginBase,
-    ArithmeticExpressionParser) {
+    ArithmeticExpressionParser,
+    ejs,
+    caseStudyTemplate) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -57,83 +61,97 @@ define([
     JavaBIPEngine.prototype.main = function (callback) {
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
-        var self = this;
+        var self = this,
+        architectureModel = {},
+        testInfo = {},
+        filesToAdd = {},
+        artifact,
+        violations,
+        inconsistencies,
+        fileName;
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
                     self.logger.debug(Object.keys(nodes));
-
-                    var violations = self.hasViolations(nodes);
+                    violations = self.hasViolations(nodes);
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
                             self.createMessage(violation.node, violation.message, 'error');
                         });
-                        throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
+                        throw new Error('Model has ' + violations.length + ' violation(s), see messages for details.');
                     }
-                    var inconsistencies = self.checkConsistency(nodes);
+                    architectureModel = self.getArchitectureModel(nodes);
+                    inconsistencies = self.checkConsistency(architectureModel, nodes);
                     if (inconsistencies.length === 0) {
-                        self.startJavaBIPEngine();
+                        testInfo = self.generateTestInfo(architectureModel);
+                        fileName = testInfo.className + '.java';
+                        filesToAdd[fileName] = ejs.render(caseStudyTemplate, testInfo);
+                        artifact = self.blobClient.createArtifact('test');
+
+                        return artifact.addFiles(filesToAdd);
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
                         });
-                        throw new Error('Model has ' + inconsistencies.length + '  inconsistencies, see messages for details');
+                        throw new Error('Model has ' + inconsistencies.length + ' inconsistencies, see messages for details.');
                     }
                 })
-        .then(function () {
-                        self.result.setSuccess(true);
-                        callback(null, self.result);
-                    })
-                    .catch(function (err) {
-                        self.logger.error(err.stack);
-                        // Result success is false at invocation.
-                        callback(err, self.result);
-                    });
+                .then(function (fileHash) {
+                    self.result.addArtifact(fileHash);
+                    return artifact.save();
+                })
+                .then(function () {
+                    //self.result.addArtifact(artifactHash);
+                    self.result.setSuccess(true);
+                    callback(null, self.result);
+                })
+                .catch(function (err) {
+                    self.logger.error(err.stack);
+                    // Result success is false at invocation.
+                    callback(err, self.result);
+                }) ;
     };
 
-    JavaBIPEngine.prototype.checkConsistency = function (nodes) {
+    JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
         var self = this,
-         inconsistencies = [],
-         componentTypes = [],
-         ports = [],
-         subConnectors = [],
-         connectorEnds = [],
-         connections = [],
-         connectors = [];
-
-        /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
-        2. Checks equality of matching factors of the same connector */
+        currentConfig = this.getCurrentConfig(),
+        architectureModel = {
+            componentTypes: [],
+            ports: [],
+            subConnectors: [],
+            connectorEnds: [],
+            connections: [],
+            connectors: []
+        };
 
         for (var path in nodes) {
             var node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                 var cardinality = self.core.getAttribute(node, 'cardinality');
                 var component = node;
-                componentTypes.push(component);
+                architectureModel.componentTypes.push(component);
+                component.name  = self.core.getAttribute(node, 'name');
                 for (var child of self.core.getChildrenPaths(node)) {
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                         var port = nodes[child];
-                        ports.push(port);
+                        architectureModel.ports.push(port);
                         if (/^[a-z]$/.test(cardinality)) {
                             component.cardinalityParameter = cardinality;
                             self.logger.debug('cardinalityParameter ' + component.cardinalityParameter);
-                        }
-                        while (/^[a-z]$/.test(cardinality) ) {
-                            cardinality = 3;
-                            //cardinality = prompt('Please enter number of component instances for ' + //self.core.getAttribute(node, 'name') + 'component type');
+                            cardinality = currentConfig[cardinality];
                         }
                         self.logger.debug('cardinality: ' + cardinality);
                         nodes[child].cardinality = cardinality;
                     }
                 }
                 component.cardinalityValue = cardinality;
-                self.logger.debug('cardinalityValue ' + component.cardinalityValue);
+                console.log('cardinalityValue ' + component.cardinalityValue);
 
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 /* If the connector is binary */
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
                     var connector = node;
-                    connectors.push(connector);
+                    architectureModel.connectors.push(connector);
                     var srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
                     var dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
                     srcConnectorEnd.connector = connector;
@@ -141,35 +159,44 @@ define([
                     connector.ends = [srcConnectorEnd, dstConnectorEnd];
                 /* If it is part of an n-ary connector */
                 } else {
-                    subConnectors.push(node);
+                    architectureModel.subConnectors.push(node);
                 }
             } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
-                connections.push(node);
+                architectureModel.connections.push(node);
                 var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
                 if (self.getMetaType(gmeEnd) !== self.META.Connector) {
                     var connectorEnd = gmeEnd;
-                    connectorEnds.push(connectorEnd);
+                    architectureModel.connectorEnds.push(connectorEnd);
                     connectorEnd.degree = self.core.getAttribute(gmeEnd, 'degree');
                     connectorEnd.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
                 }
                 //TODO: add export ports for hierarchical connector motifs
             }
         }
-        for (var connection of connections) {
+        return architectureModel;
+    };
+
+    JavaBIPEngine.prototype.checkConsistency = function (architectureModel, nodes) {
+        var self = this,
+         inconsistencies = [];
+
+        /*1. Checks whether multiplicities are less or equal to corresponding cardinalities
+        2. Checks equality of matching factors of the same connector */
+        for (var connection of architectureModel.connections) {
             var end = nodes[self.core.getPointerPath(connection, 'src')];
             if (self.getMetaType(end) !== self.META.Connector) {
                 end.cardinality = nodes[self.core.getPointerPath(connection, 'dst')].cardinality;
             }
         }
-        for (var subpart of subConnectors) {
+        for (var subpart of architectureModel.subConnectors) {
             var auxNode = nodes[self.core.getPointerPath(subpart, 'dst')];
             var srcAuxNode = nodes[self.core.getPointerPath(auxNode, 'src')];
             var srcEnd = nodes[self.core.getPointerPath(subpart, 'src')];
-            if (connectors.includes(auxNode)) {
+            if (architectureModel.connectors.includes(auxNode)) {
                 auxNode.ends.push(srcEnd);
                 srcEnd.connector = auxNode;
-            } else if (connectorEnds.includes(srcAuxNode)) {
-                for (var existingConnector in connectors) {
+            } else if (architectureModel.connectorEnds.includes(srcAuxNode)) {
+                for (var existingConnector in architectureModel.connectors) {
                     if (existingConnector.ends.includes(srcAuxNode)) {
                         existingConnector.ends.push(srcEnd);
                         srcEnd.connector = existingConnector;
@@ -177,34 +204,36 @@ define([
                 }
             }
         }
-        for (var motif of connectors) {
+        for (var motif of architectureModel.connectors) {
             var matchingFactor = -1;
             for (var end of motif.ends) {
                 var degreeExpression = end.degree;
                 self.logger.debug('degreeExpression: ' + degreeExpression);
                 if (!/^[0-9]+$/.test(end.degree)) {
-                    for (var type of componentTypes) {
+                    for (var type of architectureModel.componentTypes) {
                         if (type.cardinalityParameter !== undefined && degreeExpression.includes(type.cardinalityParameter)) {
                             degreeExpression = degreeExpression.replace(type.cardinalityParameter, type.cardinalityValue);
                             self.logger.debug('degreeValue ' + degreeExpression);
                         }
                     }
+                    //TODO: Change the eval
                     end.degree = eval(degreeExpression);
                 }
                 var multiplicityExpression = end.multiplicity;
                 self.logger.debug('multiplicityExpression: ' + multiplicityExpression);
                 if (!/^[0-9]+$/.test(end.multiplicity)) {
-                    for (var type of componentTypes) {
+                    for (var type of architectureModel.componentTypes) {
                         if (type.cardinalityParameter !== undefined && multiplicityExpression.includes(type.cardinalityParameter)) {
                             multiplicityExpression = multiplicityExpression.replace(type.cardinalityParameter, type.cardinalityValue);
                             self.logger.debug('multiplicityValue ' + multiplicityExpression);
                         }
                     }
+                    //TODO: Change the eval
                     end.multiplicity = eval(multiplicityExpression);
                     if (end.multiplicity > end.cardinality) {
                         inconsistencies.push({
                             node: end,
-                            message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type'
+                            message: 'Multiplicity of connector end [' + this.core.getPath(end) + '] is greater than the cardinality of the corresponding component type.'
                         });
                     }
                 }
@@ -212,20 +241,20 @@ define([
                 self.logger.debug('matchingFactor new ' + (end.degree * end.cardinality) / end.multiplicity);
                 self.logger.debug('matchingFactor old ' + matchingFactor);
                 var newMatchingFactor = (end.degree * end.cardinality) / end.multiplicity;
-                if (/^[0-9]*$/.test(newMatchingFactor)) {
+                if (/^[0-9]+$/.test(newMatchingFactor)) {
                     if (matchingFactor === -1) {
                         matchingFactor = newMatchingFactor;
                     } else if (matchingFactor !== newMatchingFactor) {
                         inconsistencies.push({
                             node: motif,
-                            message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal'
+                            message: 'Matching factors (cardinality * degree / multiplicity) of ends in connector motif [' + this.core.getPath(motif) + '] are not equal.'
                         });
                         break;
                     }
                 } else {
                     inconsistencies.push({
                         node: end,
-                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer/'
+                        message: 'Matching factor (cardinality * degree / multiplicity) [' + newMatchingFactor +'] of connector end [' + this.core.getPath(end) + '] is not a non-negative integer.'
                     });
                 }
             }
@@ -233,8 +262,17 @@ define([
         return inconsistencies;
     };
 
-    JavaBIPEngine.prototype.startJavaBIPEngine = function () {
-
+    JavaBIPEngine.prototype.generateTestInfo = function (architectureModel) {
+        var self = this,
+        info = {
+            className: self.core.getAttribute(self.activeNode, 'name'),
+            gluePath: 'src/',
+            componentType: architectureModel.componentTypes,
+            noOfRequiredTransitions: 50
+        };
+        self.logger.info('length of component types' + info.componentType.length);
+        info.className = info.className.replace(/\s+/g, '');
+        return info;
     };
 
     JavaBIPEngine.prototype.hasViolations = function (nodes) {
@@ -243,45 +281,41 @@ define([
         connectorEnds = [],
         self = this,
         nodePath,
-        node;
+        node,
+        regExpArray,
+        cardinalityRegEx;
 
         /* Check that multiplicities, degrees are valid arithmetic expressions of cardinalities */
         for (nodePath in nodes) {
             node = nodes[nodePath];
             if (self.isMetaTypeOf(node, this.META.ComponentType)) {
-                // Checks cardinality whether it is non zero natural number or a character
+                // Checks cardinality whether it is non zero positive integer or a lower-case character
                 if (/^[a-z]|[1-9][0-9]*$/.test(self.core.getAttribute(node, 'cardinality'))) {
                     cardinalities.push(self.core.getAttribute(node, 'cardinality'));
                 } else {
                     violations.push({
                         node: node,
-                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character'
+                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character.'
                     });
                 }
             } else if (self.isMetaTypeOf(node, this.META.Synchron) || self.isMetaTypeOf(node, this.META.Trigger)) {
                 connectorEnds.push(node);
             }
         }
-        var regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
-
+        regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
         for (var c of cardinalities) {
             if (/^[a-z]$/.test(c)) {
                 regExpArray.push(c);
             }
         }
         regExpArray.push.apply(regExpArray, [']', '+$']);
-        var cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
+        cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
         self.logger.debug(cardinalityRegEx);
 
         for (var end of connectorEnds) {
-            self.logger.debug('end: ' + end);
             // Checks multiplicities and degrees
-
             var multiplicity = self.core.getAttribute(end, 'multiplicity');
             var degree = self.core.getAttribute(end, 'degree');
-            self.logger.debug(multiplicity);
-            self.logger.debug(degree);
-
             try {
                 ArithmeticExpressionParser.parse(multiplicity);
             } catch (e) {
@@ -302,14 +336,14 @@ define([
             if (!(cardinalityRegEx.test(multiplicity))) {
                 violations.push({
                     node: end,
-                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters.'
                 });
             }
             cardinalityRegEx.lastIndex = 0;
             if (!cardinalityRegEx.test(degree)) {
                 violations.push({
                         node: end,
-                        message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters'
+                        message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters.'
                     });
             }
         }

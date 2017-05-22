@@ -13,6 +13,6 @@ config.requirejsPaths['widgets/DiagramDesigner'] =
 config.requirejsPaths['bipsrc'] = './src';
 config.visualization.svgDirs = ['./src/svgs'];
 config.seedProjects.defaultProject = 'BIP';
-
+config.plugin.allowServerExecution = true;
 validateConfig(config);
 module.exports = config;

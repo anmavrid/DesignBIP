@@ -10,5 +10,18 @@
   "disableServerSideExecution": false,
   "disableBrowserSideExecution": false,
   "writeAccessRequired": false,
-  "configStructure": []
+  "configWidget":"plugin/JavaBIPEngine/JavaBIPEngine/Widgets/ConfigWidget",
+  "configStructure": [
+   {
+     "name": "cardinality",
+     "displayName": "Cardinality",
+     "description": "Please give value for cardinality",
+     "value": 3,
+     "valueType": "number",
+     "minValue": 1,
+     "maxValue": 10000,
+     "readOnly": false,
+     "writeAccessRequired": true
+   }
+ ]
 }
