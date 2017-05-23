@@ -75,14 +75,17 @@ define([
                     filesToAdd = {},
                     macros = {};
 
+                    model = self.generateMacros(self.generateArchitectureModel(nodes));
+                    if (model.violations.length > 0 ) {
+                        violations = violations.concat(model.violations);
+                    }
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
                             self.createMessage(violation.node, violation.message, 'error');
                         });
                         throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
                     }
-                    model = self.generateMacros(self.generateArchitectureModel(nodes));
-                    macros = self.generateRequireAccept(model.ports);
+                    macros = self.generateRequireAccept(model.architectureModel.ports);
                     xml = {glue: {accepts: {accept: macros.accept}, requires: {require: macros.require}}};
                     pathArrayForFile = 'Glue.xml'.split('/');
                     tempPath = path;
@@ -168,10 +171,27 @@ define([
     ArchitectureSpecGenerator.prototype.generateMacros = function (architectureModel) {
         var self = this,
         port,
-        macros = {};
+        macros, violation, outputViolation, aux,
+        output = {
+            architectureModel: {},
+            violations: []
+        };
 
         for (port of architectureModel.ports) {
             macros = self.generateMacrosAlgorithm(port);
+            if (macros.violations.length > 0) {
+                for (violation of macros.violations) {
+                    aux = true;
+                    for (outputViolation of output.violations) {
+                        if (violation.end === outputViolation.end) {
+                            aux = false;
+                        }
+                    }
+                    if (aux) {
+                        output.violations.push(violation);
+                    }
+                }
+            }
             //set to list
             port.require = [...macros.require];
             port.accept = [...macros.accept];
@@ -179,7 +199,8 @@ define([
         for (port of architectureModel.ports) {
             port = self.getMacroLists(port);
         }
-        return architectureModel;
+        output.architectureModel = architectureModel;
+        return output;
     };
 
     ArchitectureSpecGenerator.prototype.getMacroLists = function (port) {
@@ -225,7 +246,8 @@ define([
           option = [],
           macros = {
             require: new Set(),
-            accept: new Set()
+            accept: new Set(),
+            violations: []
         },
          reqCause = [];
 
@@ -267,20 +289,31 @@ define([
                 }
                 for (end of connector.ends) {
                     if (triggerExists === false) {
-                        if (end.port.name !== port.name || parseInt(end.multiplicity) > 1 ) {
+                        if ((end.port.name !== port.name || end.multiplicity !== 1) && /^[0-9]$/.test(end.multiplicity)) {
                             reqCause = [];
                             for (i = 0; i < parseInt(end.multiplicity); i++) {
                                 reqCause.push(end.port);
                             }
                             option.push(reqCause);
                         }
+                        else if (!/^[0-9]$/.test(end.multiplicity)) {
+                            macros.violations.push({
+                                node: end,
+                                message: 'Multiplicity [' + end.multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a integer, thus architecture cannot be generated with this plugin. Please run the TotalSpecAndEngineExecution plugin instead.'
+                            });
+                        }
                     } else {
-                        if (end.type === 'Trigger' && (end.port.name !== port.name || end.multiplicity !== 1 )) {
+                        if (end.type === 'Trigger' && /^[0-9]$/.test(end.multiplicity) && (end.port.name !== port.name || end.multiplicity !== 1 )) {
                             reqCause = [];
                             for (i = 0; i < parseInt(end.multiplicity); i++) {
                                 reqCause.push(end.port);
                             }
                             option.push(reqCause);
+                        } else if (end.type === 'Trigger' && !/^[0-9]$/.test(end.multiplicity)) {
+                            macros.violations.push({
+                                node: end,
+                                message: 'Multiplicity [' + end.multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a integer, thus architecture cannot be generated with this plugin. Please run the TotalSpecAndEngineExecution plugin instead.'
+                            });
                         }
                     }
                 }
@@ -328,9 +361,8 @@ define([
                     subConnectors.push(node);
                 }
             } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
-                var gmeEnd = nodes[self.core.getPointerPath(node, 'src')];
-                if (self.getMetaType(gmeEnd) !== self.META.Connector) {
-                    end = gmeEnd;
+                end = nodes[self.core.getPointerPath(node, 'src')];
+                if (self.getMetaType(end) !== self.META.Connector) {
                     architectureModel.connectorEnds.push(end);
                     port = nodes[self.core.getPointerPath(node, 'dst')];
                     end.port = port;
@@ -338,9 +370,9 @@ define([
                         port.connectorEnds = [];
                     }
                     port.connectorEnds.push(end);
-                    end.type = self.core.getAttribute(gmeEnd, 'name');
-                    end.degree = self.core.getAttribute(gmeEnd, 'degree');
-                    end.multiplicity = self.core.getAttribute(gmeEnd, 'multiplicity');
+                    end.type = self.core.getAttribute(end, 'name');
+                    end.degree = self.core.getAttribute(end, 'degree');
+                    end.multiplicity = self.core.getAttribute(end, 'multiplicity');
                 }
                 //TODO: add also export ports for hierarchical connector motifs
             }
@@ -366,7 +398,6 @@ define([
                         connector.ends.push(end);
                         end.connector = connector;
                     }
-
                 }
             }
         }
@@ -395,8 +426,8 @@ define([
     ArchitectureSpecGenerator.prototype.hasViolations = function (nodes) {
         var violations = [],
         self = this,
-        nodePath,
-        node,
+        nodePath, path,
+        node, isConnected,
         zeroEnforceableTransitions = true;
 
         for (nodePath in nodes) {
@@ -407,31 +438,31 @@ define([
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
                         node: node,
-                        message: 'Dst of connector [' + nodePath + '] is null.'
+                        message: 'Connector [' + nodePath + '] with no destination encountered. Please connect or remove it.'
                     });
                 }
                 if (self.core.getPointerPath(node, 'src') === null) {
                     violations.push({
                         node: node,
-                        message: 'Src of connector [' + nodePath + '] is null.'
+                        message: 'Connector [' + nodePath + '] with no source encountered. Please connect or remove it.'
                     });
                 }
             } else if (this.isMetaTypeOf(node, this.META.Connection)) {
                 if (self.core.getPointerPath(node, 'dst') === null) {
                     violations.push({
                         node: node,
-                        message: 'Dst of connection [' + nodePath + '] is null.'
+                        message: 'Connection [' + nodePath + '] with no destination encountered. Please connect or remove it'
                     });
                 }
                 if (self.core.getPointerPath(node, 'src') === null) {
                     violations.push({
                         node: node,
-                        message: 'Src of connection [' + nodePath + '] is null.'
+                        message: 'Connection [' + nodePath + '] with no source encountered. Please connect or remove it.'
                     });
                 }
             } else if (this.isMetaTypeOf(node, this.META.Trigger) || this.isMetaTypeOf(node, this.META.Synchron)) {
-                var isConnected = false;
-                for (var path in nodes) {
+                isConnected = false;
+                for (path in nodes) {
                     if (this.isMetaTypeOf(nodes[path], this.META.Connection) ) {
                         if (self.core.getPointerPath(nodes[path], 'src') === nodePath) {
                             isConnected = true;
@@ -441,12 +472,9 @@ define([
                 if (!isConnected) {
                     violations.push({
                         node: node,
-                        message: 'ConnectorEnd [' + nodePath + '] is not connected to any port.'
+                        message: 'ConnectorEnd [' + nodePath + '] is not connected to any port. Please connect or remove it.'
                     });
                 }
-            } else {
-                //TODO: Check multiplicity, degree of connector ends
-                //this.logger.info('Found unexpected type, no checking performed ...');
             }
         }
         if (zeroEnforceableTransitions) {

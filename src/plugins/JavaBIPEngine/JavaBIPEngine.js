@@ -322,7 +322,7 @@ define([
             } catch (e) {
                 violations.push({
                     node: end,
-                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case variables: ' + e
+                    message: 'Multiplicity [' + multiplicity + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case parameters defined by the cardinalities of the model. Please change it.'
                 });
             }
             try {
@@ -330,7 +330,7 @@ define([
             } catch (e) {
                 violations.push({
                     node: end,
-                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case variables: ' + e
+                    message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a valid arithmetic expression with integers and lower-case variables: '
                 });
             }
             cardinalityRegEx.lastIndex = 0;
