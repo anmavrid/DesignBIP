@@ -268,6 +268,7 @@ define([
             className: self.core.getAttribute(self.activeNode, 'name'),
             gluePath: 'src/',
             componentType: architectureModel.componentTypes,
+            //TODO: update this
             noOfRequiredTransitions: 50
         };
         self.logger.info('length of component types' + info.componentType.length);

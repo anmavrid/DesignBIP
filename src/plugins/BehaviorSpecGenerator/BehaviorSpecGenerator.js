@@ -82,12 +82,10 @@ define([
         if (path) {
             path += '/' + self.core.getAttribute(self.activeNode, 'name');
             path = path.replace(/\s+/g, '');
-            try {
+            if (typeof window === 'undefined') {
+                //Running on server
                 fs = require('fs');
-            } catch (e) {
-                self.logger.error('To save directly to file system, plugin needs to run on server!');
             }
-            //console.log(path);
         }
 
         function checkComponentModel (componentType, fileName) {
@@ -149,7 +147,7 @@ define([
                         for (type of componentTypes) {
                             fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
                             pathArrayForFile = fileName.split('/');
-                            if (path) {
+                            if (path && fs) {
                                 if (pathArrayForFile.length >= 1) {
                                     for (j = 0; j<=pathArrayForFile.length - 1; j+=1) {
                                         tempPath += '/' + pathArrayForFile[j];

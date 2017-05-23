@@ -62,12 +62,12 @@ define([
         if (path) {
             path += '/' + self.core.getAttribute(self.activeNode, 'name');
             path = path.replace(/\s+/g, '');
-            try {
+            if (typeof window === 'undefined') {
+                // Running on server
                 fs = require('fs');
-            } catch (e) {
-                self.logger.error('To save directly to file system, plugin needs to run on server!');
             }
         }
+
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
                     var violations = self.hasViolations(nodes),
@@ -88,7 +88,7 @@ define([
                     tempPath = path;
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
 
-                    if (path) {
+                    if (path && fs) {
                         if (pathArrayForFile.length >= 1) {
                             for (j = 0; j<=pathArrayForFile.length - 1; j+=1) {
                                 tempPath += '/' + pathArrayForFile[j];
