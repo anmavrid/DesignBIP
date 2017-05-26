@@ -101,7 +101,6 @@ define([
                     return artifact.save();
                 })
                 .then(function () {
-                    //self.result.addArtifact(artifactHash);
                     self.result.setSuccess(true);
                     callback(null, self.result);
                 })
@@ -114,6 +113,7 @@ define([
 
     JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
         var self = this,
+        path, node, component, cardinality, child,
         currentConfig = this.getCurrentConfig(),
         architectureModel = {
             componentTypes: [],
@@ -124,14 +124,14 @@ define([
             connectors: []
         };
 
-        for (var path in nodes) {
-            var node = nodes[path];
+        for (path in nodes) {
+            node = nodes[path];
             if (self.isMetaTypeOf(node, self.META.ComponentType)) {
-                var cardinality = self.core.getAttribute(node, 'cardinality');
-                var component = node;
+                cardinality = self.core.getAttribute(node, 'cardinality');
+                component = node;
                 architectureModel.componentTypes.push(component);
                 component.name  = self.core.getAttribute(node, 'name');
-                for (var child of self.core.getChildrenPaths(node)) {
+                for (child of self.core.getChildrenPaths(node)) {
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                         var port = nodes[child];
                         architectureModel.ports.push(port);
@@ -276,47 +276,14 @@ define([
         return info;
     };
 
-    JavaBIPEngine.prototype.hasViolations = function (nodes) {
-        var violations = [],
-        cardinalities = [],
-        connectorEnds = [],
-        self = this,
-        nodePath,
-        node,
-        regExpArray,
-        cardinalityRegEx;
+    JavaBIPEngine.prototype.checkMultiplicityAndDegree = function (connectorEnds, violations, cardinalityRegEx) {
+        var end, multiplicity, degree,
+        self = this;
 
-        /* Check that multiplicities, degrees are valid arithmetic expressions of cardinalities */
-        for (nodePath in nodes) {
-            node = nodes[nodePath];
-            if (self.isMetaTypeOf(node, this.META.ComponentType)) {
-                // Checks cardinality whether it is non zero positive integer or a lower-case character
-                if (/^[a-z]|[1-9][0-9]*$/.test(self.core.getAttribute(node, 'cardinality'))) {
-                    cardinalities.push(self.core.getAttribute(node, 'cardinality'));
-                } else {
-                    violations.push({
-                        node: node,
-                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character.'
-                    });
-                }
-            } else if (self.isMetaTypeOf(node, this.META.Synchron) || self.isMetaTypeOf(node, this.META.Trigger)) {
-                connectorEnds.push(node);
-            }
-        }
-        regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
-        for (var c of cardinalities) {
-            if (/^[a-z]$/.test(c)) {
-                regExpArray.push(c);
-            }
-        }
-        regExpArray.push.apply(regExpArray, [']', '+$']);
-        cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
-        self.logger.debug(cardinalityRegEx);
-
-        for (var end of connectorEnds) {
+        for (end of connectorEnds) {
             // Checks multiplicities and degrees
-            var multiplicity = self.core.getAttribute(end, 'multiplicity');
-            var degree = self.core.getAttribute(end, 'degree');
+            multiplicity = self.core.getAttribute(end, 'multiplicity');
+            degree = self.core.getAttribute(end, 'degree');
             try {
                 ArithmeticExpressionParser.parse(multiplicity);
             } catch (e) {
@@ -347,6 +314,50 @@ define([
                         message: 'Degree [' + degree + '] of component end [' + this.core.getPath(end) + '] is not a natural number or an arithmetic expression of cardinality parameters.'
                     });
             }
+        }
+        return violations;
+    };
+
+    JavaBIPEngine.prototype.hasViolations = function (nodes) {
+        var violations = [],
+        cardinalities = [],
+        connectorEnds = [],
+        self = this,
+        nodePath,
+        node, cardinality, violations_,
+        regExpArray,
+        cardinalityRegEx;
+
+        /* Check that multiplicities, degrees are valid arithmetic expressions of cardinalities */
+        for (nodePath in nodes) {
+            node = nodes[nodePath];
+            if (self.isMetaTypeOf(node, this.META.ComponentType)) {
+                // Checks cardinality whether it is non zero positive integer or a lower-case character
+                if (/^[a-z]|[1-9][0-9]*$/.test(self.core.getAttribute(node, 'cardinality'))) {
+                    cardinalities.push(self.core.getAttribute(node, 'cardinality'));
+                } else {
+                    violations.push({
+                        node: node,
+                        message: 'Cardinality [' + this.core.getAttribute(node, 'cardinality') + '] of component type [' + this.core.getAttribute(node, 'name') + '] is not a natural non-zero number or a character.'
+                    });
+                }
+            } else if (self.isMetaTypeOf(node, this.META.Synchron) || self.isMetaTypeOf(node, this.META.Trigger)) {
+                connectorEnds.push(node);
+            }
+        }
+        regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
+
+        for (cardinality of cardinalities) {
+            if (/^[a-z]$/.test(cardinality)) {
+                regExpArray.push(cardinality);
+            }
+        }
+        regExpArray.push.apply(regExpArray, [']', '+$']);
+        cardinalityRegEx = new RegExp(regExpArray.join(''), 'g');
+        self.logger.debug(cardinalityRegEx);
+        violations_ = self.checkMultiplicityAndDegree(connectorEnds, violations, cardinalityRegEx);
+        if (violations_ > 0 ) {
+            violations = violations.concat(violations_);
         }
         return violations;
     };
