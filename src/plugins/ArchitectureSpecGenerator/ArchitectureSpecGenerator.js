@@ -71,9 +71,9 @@ define([
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
                     var violations = self.hasViolations(nodes),
-                    model, xml, pathArrayForFile, tempPath, j,
-                    filesToAdd = {},
-                    macros = {};
+                        model, xml, pathArrayForFile,
+                        filesToAdd = {},
+                        macros = {};
 
                     model = self.generateMacros(self.generateArchitectureModel(nodes));
                     if (model.violations.length > 0 ) {
@@ -88,19 +88,14 @@ define([
                     macros = self.generateRequireAccept(model.architectureModel.ports);
                     xml = {glue: {accepts: {accept: macros.accept}, requires: {require: macros.require}}};
                     pathArrayForFile = 'Glue.xml'.split('/');
-                    tempPath = path;
                     filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
-
                     if (path && fs) {
                         if (pathArrayForFile.length >= 1) {
-                            for (j = 0; j<=pathArrayForFile.length - 1; j+=1) {
-                                tempPath += '/' + pathArrayForFile[j];
-                                try {
-                                    fs.statSync(path);
-                                } catch (err) {
-                                    if (err.code === 'ENOENT') {
-                                        fs.mkdirSync(path);
-                                    }
+                            try {
+                                fs.statSync(path);
+                            } catch (err) {
+                                if (err.code === 'ENOENT') {
+                                    fs.mkdirSync(path);
                                 }
                             }
                             fs.writeFileSync(path + '/' + 'Glue.xml', filesToAdd['Glue.xml'], 'utf8');

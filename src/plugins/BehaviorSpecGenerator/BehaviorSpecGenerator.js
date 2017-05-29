@@ -135,8 +135,8 @@ define([
                     }
                     return Q.all(promises);})
                     .then(function () {
-                        var type, tempPath,
-                          fileName, pathArrayForFile, j;
+                        var type,
+                          fileName, pathArrayForFile;
                         violations.push.apply(violations, self.hasViolations(componentTypes, nodes));
                         if (violations.length > 0) {
                             violations.forEach(function (violation) {
@@ -149,14 +149,11 @@ define([
                             pathArrayForFile = fileName.split('/');
                             if (path && fs) {
                                 if (pathArrayForFile.length >= 1) {
-                                    for (j = 0; j<=pathArrayForFile.length - 1; j+=1) {
-                                        tempPath += '/' + pathArrayForFile[j];
-                                        try {
-                                            fs.statSync(path);
-                                        } catch (err) {
-                                            if (err.code === 'ENOENT') {
-                                                fs.mkdirSync(path);
-                                            }
+                                    try {
+                                        fs.statSync(path);
+                                    } catch (err) {
+                                        if (err.code === 'ENOENT') {
+                                            fs.mkdirSync(path);
                                         }
                                     }
                                     fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
