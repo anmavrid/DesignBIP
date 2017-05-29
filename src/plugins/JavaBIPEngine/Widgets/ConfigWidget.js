@@ -29,41 +29,40 @@ function ConfigWidget(params) {
 ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, prevPluginConfig, callback) {
     var self = this,
     activeNodeId = WebGMEGlobal.State.getActiveObject(),
-    activeNode,
-    cardinalities = [],
-    core;
+    activeNode, core,
+    cardinalities = [];
 
     self._client.getCoreInstance(null, function (err, result) {
         var childrenPaths, nextChildID;
 
-        var getCardinalities = function (err, child) {
-            var name = core.getAttribute(child, 'name');
+        var getParameters = function (err, child) {
+            var name = core.getAttribute(child, 'name'),
+                cardinality;
             //TODO: update this with a better way (ComponentType)
             if (name !== 'Connection'&& name !== 'Connector' && name !== 'Synchron' && name !== 'Trigger') {
-                var cardinality = core.getAttribute(child, 'cardinality');
+                cardinality = core.getAttribute(child, 'cardinality');
                 if (/^[a-z]$/.test(cardinality) && !cardinalities.includes(cardinality)) {
                     cardinalities.push(cardinality);
-                    //console.log(cardinalities.length);
                     if (cardinalities.length>1) {
                         //create shallow copy of pluginMetadata.configStructure[0]
-                        pluginMetadata.configStructure.push(Object.assign({}, pluginMetadata.configStructure[0]));
-                        pluginMetadata.configStructure[cardinalities.length - 1].displayName = cardinality;
-                        pluginMetadata.configStructure[cardinalities.length - 1].name = cardinality;
+                        pluginMetadata.configStructure.push(Object.assign({}, pluginMetadata.configStructure[1]));
+                        pluginMetadata.configStructure[cardinalities.length].displayName = cardinality;
+                        pluginMetadata.configStructure[cardinalities.length].name = cardinality;
                     } else {
-                        pluginMetadata.configStructure[0].displayName = cardinality;
-                        pluginMetadata.configStructure[0].name = cardinality;
+                        pluginMetadata.configStructure[1].displayName = cardinality;
+                        pluginMetadata.configStructure[1].name = cardinality;
                     }
                 }
             }
             nextChildID++;
             if (nextChildID < childrenPaths.length) {
-                core.loadByPath(result.rootNode, childrenPaths[nextChildID], getCardinalities);
+                core.loadByPath(result.rootNode, childrenPaths[nextChildID], getParameters);
             } else {
                 self.pluginConfigDialog.show(globalConfigStructure, pluginMetadata, prevPluginConfig, function (newGlobal, newPluginConfig, store) {
                     //newPluginConfig = pluginMetadata.configStructure;
                     callback(newGlobal, newPluginConfig, store);
                 });
-                //pluginMetadata.configStructure.splice(1, pluginMetadata.configStructure.length-1);
+                pluginMetadata.configStructure.splice(2, pluginMetadata.configStructure.length-1);
             }
         };
         core = result.core;
@@ -71,7 +70,7 @@ ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, p
             activeNode = node;
             childrenPaths = core.getChildrenPaths(activeNode);
             nextChildID = 0;
-            core.loadByPath(result.rootNode, childrenPaths[nextChildID], getCardinalities);
+            core.loadByPath(result.rootNode, childrenPaths[nextChildID], getParameters);
         });
     });
 };

@@ -163,6 +163,7 @@ define([
                         }
                         self.logger.debug('cardinality: ' + cardinality);
                         nodes[child].cardinality = cardinality;
+
                     }
                 }
                 node.cardinalityValue = cardinality;
@@ -284,14 +285,13 @@ define([
 
     JavaBIPEngine.prototype.generateTestInfo = function (architectureModel) {
         var self = this,
+        currentConfig = this.getCurrentConfig(),
             info = {
             className: self.core.getAttribute(self.activeNode, 'name'),
             gluePath: 'src/',
             componentType: architectureModel.componentTypes,
-            //TODO: update this
-            noOfRequiredTransitions: 50
+            noOfRequiredTransitions: currentConfig['transitions']
         };
-        self.logger.debug('length of component types' + info.componentType.length);
         info.className = info.className.replace(/\s+/g, '');
         return info;
     };

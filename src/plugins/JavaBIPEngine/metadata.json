@@ -12,10 +12,20 @@
   "writeAccessRequired": false,
   "configWidget":"plugin/JavaBIPEngine/JavaBIPEngine/Widgets/ConfigWidget",
   "configStructure": [
+    {
+      "name": "transitions",
+      "displayName": "Transitions",
+      "description": "Please give value for number of total transitions that must be executed by the JavaBIPEngine.",
+      "value": 50,
+      "valueType": "number",
+      "minValue": 1,
+      "readOnly": false,
+      "writeAccessRequired": true
+    },
    {
      "name": "cardinality",
      "displayName": "Cardinality",
-     "description": "Please give value for cardinality",
+     "description": "Please give value for cardinality.",
      "value": 3,
      "valueType": "number",
      "minValue": 1,
