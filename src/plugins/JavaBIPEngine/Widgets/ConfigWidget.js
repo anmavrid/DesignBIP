@@ -74,7 +74,6 @@ ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, p
         };
         core = result.core;
         core.loadByPath(result.rootNode, activeNodeId, function (err, node) {
-            var rootHash = core.getHash(node);
             childrenPaths = core.getChildrenPaths(node);
             nextChildID = 0;
             core.loadByPath(result.rootNode, childrenPaths[nextChildID], getParameters);
