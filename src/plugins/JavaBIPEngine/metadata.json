@@ -17,7 +17,7 @@
       "displayName": "Transitions",
       "description": "Please give value for number of total transitions that must be executed by the JavaBIPEngine.",
       "value": 50,
-      "valueType": "number",
+      "valueType": "integer",
       "minValue": 1,
       "readOnly": false,
       "writeAccessRequired": true
@@ -27,7 +27,7 @@
      "displayName": "Cardinality",
      "description": "Please give value for cardinality.",
      "value": 3,
-     "valueType": "number",
+     "valueType": "integer",
      "minValue": 1,
      "maxValue": 10000,
      "readOnly": false,
