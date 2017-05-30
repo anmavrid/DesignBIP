@@ -67,7 +67,7 @@ ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, p
                     //newPluginConfig = pluginMetadata.configStructure;
                     callback(newGlobal, newPluginConfig, store);
                 });
-                pluginMetadata.configStructure.splice(1, pluginMetadata.configStructure.length - 1);
+                pluginMetadata.configStructure.splice(2, pluginMetadata.configStructure.length - 1);
 
             }
         };
