@@ -28,7 +28,7 @@ If you would like to create your own, private BIP projects:
 2. create a new project ( 3-minute tutorial for how to [create a project](http://www.youtube.com/watch?v=xR0rmcVFcgY&feature=youtu.be)),
 3. use the BIP seed.
 
-## BIP Background material
+## Background material
 * A general paper on [BIP](https://infoscience.epfl.ch/record/170496/files/ieee-software.pdf).
 
 * A paper on [Architecture Diagrams](https://arxiv.org/pdf/1608.03324.pdf).
