@@ -28,7 +28,7 @@ describe('BehaviorSpecGenerator', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(__dirname, 'BIP_violations.webgmex'),
+                    projectSeed: testFixture.path.join(__dirname, 'Behavior_violations.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
@@ -77,6 +77,181 @@ describe('BehaviorSpecGenerator', function () {
         });
     });
 
+    it('should fail on no initial state', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/p',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(6);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on duplicated transition name', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/o',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(8);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on duplicated guard name', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/i',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(9);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on duplicated state name', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/R',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(10);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on non-defined transition methods', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/K',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(7);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on non-defined guard reference', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/Y',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(8);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on non-defined src and dst of transitions', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/J',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(9);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
     it('should fail on space in component names', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {
@@ -93,8 +268,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(1);
-
+                expect(pluginResult.messages.length).to.equal(7);
                 done();
             }
             catch(e) {

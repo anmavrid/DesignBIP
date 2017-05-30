@@ -258,11 +258,11 @@ define([
         for (connector of port.connectors) {
             option = [];
             for (end of connector.ends) {
-                if (end.port === port) {
+                if (end !== undefined && end.port === port) {
                     connectorEnd = end;
                 }
             }
-            if (connectorEnd.multiplicity !== '1') {
+            if (connectorEnd !== undefined && connectorEnd.multiplicity !== '1') {
                 for (end of connector.ends) {
                     macros.accept.add(end.port);
                 }
@@ -273,7 +273,7 @@ define([
                     }
                 }
             }
-            if (connectorEnd.type === 'Trigger') {
+            if (connectorEnd !== undefined && connectorEnd.type === 'Trigger') {
                 option.push('');
             } else {
                 var triggerExists = false;
@@ -357,7 +357,7 @@ define([
                 }
             } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
                 end = nodes[self.core.getPointerPath(node, 'src')];
-                if (self.getMetaType(end) !== self.META.Connector) {
+                if (end !== undefined && self.getMetaType(end) !== self.META.Connector) {
                     architectureModel.connectorEnds.push(end);
                     port = nodes[self.core.getPointerPath(node, 'dst')];
                     end.port = port;
@@ -384,10 +384,10 @@ define([
             node = nodes[self.core.getPointerPath(subPart, 'dst')];
             auxNode = nodes[self.core.getPointerPath(node, 'src')];
             end = nodes[self.core.getPointerPath(subPart, 'src')];
-            if (architectureModel.connectors.includes(node)) {
+            if (end !== undefined && architectureModel.connectors.includes(node)) {
                 node.ends.push(end);
                 end.connector = node;
-            } else if (architectureModel.connectorEnds.includes(auxNode)) {
+            } else if (end !== undefined && architectureModel.connectorEnds.includes(auxNode)) {
                 for (connector in architectureModel.connectors) {
                     if (connector.ends.includes(auxNode)) {
                         connector.ends.push(end);
