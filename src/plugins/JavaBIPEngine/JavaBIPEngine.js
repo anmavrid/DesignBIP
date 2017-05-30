@@ -63,8 +63,9 @@ define([
         // These are all instantiated at this point.
         var self = this,
             path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path'),
-            fs,
-            artifact;
+            fs, artifact;
+            //exec,
+            //child;
 
         if (path) {
             path += '/' + self.core.getAttribute(self.activeNode, 'name');
@@ -72,13 +73,15 @@ define([
             if (typeof window === 'undefined') {
                 // Running on server
                 fs = require('fs');
+                //exec = require('child_process').exec;
             }
         }
+
 
         self.loadNodeMap(self.activeNode)
                 .then(function (nodes) {
                     var violations = self.hasViolations(nodes),
-                        inconsistencies, fileName, testInfo, pathArrayForFile,
+                        inconsistencies, fileName, testInfo, pathArrayForFile, engineOutputFileName,
                         filesToAdd = {},
                         architectureModel = {};
                     if (violations.length > 0) {
@@ -92,7 +95,10 @@ define([
                     if (inconsistencies.length === 0) {
                         testInfo = self.generateTestInfo(architectureModel);
                         fileName = testInfo.className + '.java';
+                        engineOutputFileName = testInfo.className + 'EngineOutput' + Date.now() + '.txt';
                         pathArrayForFile = fileName.split('/');
+                        filesToAdd[fileName] = ejs.render(caseStudyTemplate, testInfo);
+
                         if (path && fs) {
                             if (pathArrayForFile.length >= 1) {
                                 try {
@@ -103,11 +109,20 @@ define([
                                     }
                                 }
                                 fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
+                                // child = exec('', function (error, stdout, stderr) {
+                                //         console.log('stdout: ' + stdout);
+                                //         console.log('stderr: ' + stderr);
+                                //         filesToAdd[engineOutputFileName] = stdout;
+                                //         if (error !== null) {
+                                //             throw new Error('Execution error: ' + error + '.');
+                                //         }
+                                //     });
+                                // fs.writeFileSync(path + '/' + engineOutputFileName, filesToAdd[engineOutputFileName], 'utf8');
                             }
-                        }
-                        filesToAdd[fileName] = ejs.render(caseStudyTemplate, testInfo);
-                        artifact = self.blobClient.createArtifact('test');
 
+
+                        }
+                        artifact = self.blobClient.createArtifact('EngineInputAndOutput');
                         return artifact.addFiles(filesToAdd);
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
@@ -121,6 +136,7 @@ define([
                     return artifact.save();
                 })
                 .then(function () {
+                    self.result.addArtifact(artifactHash);
                     self.result.setSuccess(true);
                     callback(null, self.result);
                 })
@@ -355,7 +371,6 @@ define([
                 // Checks cardinality whether it is non zero positive integer or a lower-case character
                 if (/^([a-z]|[1-9][0-9]*){1}$/.test(self.core.getAttribute(node, 'cardinality'))) {
                     cardinalities.push(self.core.getAttribute(node, 'cardinality'));
-                    console.log(self.core.getAttribute(node, 'cardinality'));
                 } else {
                     violations.push({
                         node: node,
