@@ -28,7 +28,7 @@ describe('ArchitectureSpecGenerator', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(testFixture.SEED_DIR, 'EmptyProject.webgmex'),
+                    projectSeed: testFixture.path.join(testFixture.SEED_DIR, 'Architecture_violations.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
@@ -53,7 +53,7 @@ describe('ArchitectureSpecGenerator', function () {
             .nodeify(done);
     });
 
-    it('should run plugin and update the branch', function (done) {
+    it('should fail on non-existance of enforceable transitions', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {
             },
@@ -61,19 +61,70 @@ describe('ArchitectureSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/1',
+                activeNode: '/f/R',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            expect(err).to.equal(null);
-            expect(typeof pluginResult).to.equal('object');
-            expect(pluginResult.success).to.equal(true);
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
 
-            project.getBranchHash('test')
-                .then(function (branchHash) {
-                    expect(branchHash).to.not.equal(commitHash);
-                })
-                .nodeify(done);
+    it('should fail on non-defined src and dst of connections and connectors', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(2);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on unconnected connector ends', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/Y',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(2);
+                done();
+            }
+            catch(e) {
+                done(e);
+            }
         });
     });
 });

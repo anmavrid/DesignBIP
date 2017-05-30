@@ -4,7 +4,8 @@
 * @author pmeijer / https://github.com/pmeijer
 */
 
-define(['js/Dialogs/PluginConfig/PluginConfigDialog'], function (PluginConfigDialog) {
+define(['js/Dialogs/PluginConfig/PluginConfigDialog'],
+function (PluginConfigDialog) {
 'use strict';
 
 function ConfigWidget(params) {
@@ -13,7 +14,7 @@ function ConfigWidget(params) {
     this.pluginConfigDialog = new PluginConfigDialog(params);
 }
 
-  /**
+/**
   * Called by the InterpreterManager if pointed to by metadata.configWidget.
   * You can reuse the default config by including it from 'js/Dialogs/PluginConfig/PluginConfigDialog'.
   *
@@ -29,7 +30,7 @@ function ConfigWidget(params) {
 ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, prevPluginConfig, callback) {
     var self = this,
     activeNodeId = WebGMEGlobal.State.getActiveObject(),
-    activeNode, core,
+    core,
     cardinalities = [];
 
     self._client.getCoreInstance(null, function (err, result) {
@@ -73,8 +74,7 @@ ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, p
         };
         core = result.core;
         core.loadByPath(result.rootNode, activeNodeId, function (err, node) {
-            activeNode = node;
-            childrenPaths = core.getChildrenPaths(activeNode);
+            childrenPaths = core.getChildrenPaths(node);
             nextChildID = 0;
             core.loadByPath(result.rootNode, childrenPaths[nextChildID], getParameters);
         });
