@@ -109,7 +109,7 @@ define([
                                     }
                                 }
                                 fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
-                                // child = exec('', function (error, stdout, stderr) {
+                                // child = exec('mvn test -Dtest=' + testInfo.className, function (error, stdout, stderr) {
                                 //         console.log('stdout: ' + stdout);
                                 //         console.log('stderr: ' + stderr);
                                 //         filesToAdd[engineOutputFileName] = stdout;
