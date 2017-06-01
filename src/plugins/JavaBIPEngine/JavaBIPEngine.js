@@ -135,7 +135,7 @@ define([
                     self.result.addArtifact(fileHash);
                     return artifact.save();
                 })
-                .then(function () {
+                .then(function (artifactHash) {
                     self.result.addArtifact(artifactHash);
                     self.result.setSuccess(true);
                     callback(null, self.result);
@@ -151,7 +151,7 @@ define([
         var self = this,
         path, node, cardinality, child,
         srcConnectorEnd, dstConnectorEnd, end,
-        currentConfig = this.getCurrentConfig(),
+        currentConfig = self.getCurrentConfig(),
         architectureModel = {
             componentTypes: [],
             ports: [],
@@ -168,6 +168,7 @@ define([
                 //component = node;
                 architectureModel.componentTypes.push(node);
                 node.name  = self.core.getAttribute(node, 'name');
+                node.path = path;
                 for (child of self.core.getChildrenPaths(node)) {
                     if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                         //var port = nodes[child];
@@ -179,7 +180,6 @@ define([
                         }
                         self.logger.debug('cardinality: ' + cardinality);
                         nodes[child].cardinality = cardinality;
-
                     }
                 }
                 node.cardinalityValue = cardinality;

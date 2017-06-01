@@ -3,6 +3,7 @@ package org.javabip.executor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.*;
 
 import org.javabip.spec.*;
 
@@ -14,6 +15,7 @@ import org.javabip.exceptions.BIPException;
 import org.javabip.glue.GlueBuilder;
 import org.javabip.glue.TwoSynchronGlueBuilder;
 import org.junit.*;
+import org.javabip.executor.JSONLogger;
 
 import akka.actor.ActorSystem;
 
@@ -25,6 +27,7 @@ public class test<%-className%> {
 
 	  ActorSystem system;
 		EngineFactory engineFactory;
+		JSONLogger loggerJSON = JSONLogger.getLogger();
 
 		@Before
 		public void initialize() {
@@ -40,14 +43,22 @@ public class test<%-className%> {
 		@Test
 	  public void bipTest() throws BIPException {
 				int noOfTransitions = 0;
+				Map<String, String> componentIDsToNames = new HashMap<String, String>();
+				Map<String, String> componentIDsToCardinalities = new HashMap<String, String>();
+
+				<%for (var i=componentType.length; i>0;i--) {%>
+					componentIDsToCardinalities.put("<%-componentType[i-1].path%>","<%-componentType[i-1].cardinalityValue%>");
+					componentIDsToNames.put("<%-componentType[i-1].path%>","<%-componentType[i-1].name%>");
+				<%}%>
+
 				BIPGlue bipGlue = createGlue("<%-gluePath%>");
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
 
 				<%for (var i=componentType.length; i>0;i--) {%>
 					<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) {%>
-						<%-componentType[i-1].name%> component<%-componentType[i-1].name%><%-j%> = new <%-componentType[i-1].name%>();
-	          BIPActor actor<%-componentType[i-1].name%><%-j%> = engine.register(component<%-componentType[i-1].name%><%-j%>, "component<%-componentType[i-1].name%><%-j%>", true);
+						<%-componentType[i-1].name%> component<%-componentType[i-1].name%><%-j%> = new <%-componentType[i-1].name%>("<%-j%>");
+	          BIPActor actor<%-componentType[i-1].name%><%-j%> = engine.register(component<%-componentType[i-1].name%><%-j%>, "<%-j%>", true);
 					<%}%>
 				<%}%>
 
