@@ -8,10 +8,10 @@ import org.slf4j.LoggerFactory;
 
 @Ports({<%for(var i=transitions.length-1; i>=0;i--){
 if(transitions[i].type === "SpontaneousTransition"){ %>
-@Port(name ="<%=transitions[i].name %>", type = PortType.spontaneous),
+@Port(name ="<%-transitions[i].name %>", type = PortType.spontaneous),
 <%}
 if(transitions[i].type === "EnforceableTransition"){ %>
-@Port(name ="<%=transitions[i].name %>", type = PortType.enforceable),
+@Port(name ="<%-transitions[i].name %>", type = PortType.enforceable),
 <%}
 }%>
 })
@@ -19,43 +19,43 @@ if(transitions[i].type === "EnforceableTransition"){ %>
 @ComponentType(
 <%for(var i=states.length-1; i>=0;i--){
 if(states[i].type == "InitialState"){%>
-initial = "<%=states[i].name %>",<%
+initial = "<%-states[i].name %>",<%
 }
 }%>
 
-name = "org.bip.spec.<%=name%>")
+name = "org.bip.spec.<%-name%>")
 
-public class <%=name%> implements BIPSpec {
-	private Logger logger = LoggerFactory.getLogger(<%=name%>.class);
+public class <%-name%> implements BIPSpec {
+	private Logger logger = LoggerFactory.getLogger(<%-name%>.class);
 }
 
 <%
 if(definitions){%>
-<%=definitions %>
+<%-definitions %>
 <%}%>
-private String componentPath = "<%=path%>";
-private String componentType = "<%=name%>";
+private String componentPath = "<%-path%>";
+private String componentType = "<%-name%>";
 private Map<String, String> stateToPath = new HashMap<String, String>();
 private Map<String, String> transitionToPath = new HashMap<String, String>();
 
 <%for(var j=states.length-1; j>=0;j--){ %>
-this.stateToPath.put("<%= states[j].name %>","<%=states[j].path%>");
+this.stateToPath.put("<%- states[j].name %>","<%-states[j].path%>");
 <%}
 
 for(var j=transitions.length-1; j>=0;j--){ %>
-this.transitionToPath.put("<%= transitions[j].name %>","<%=transitions[j].path%>");
+this.transitionToPath.put("<%- transitions[j].name %>","<%-transitions[j].path%>");
 <%}
 
 if(constructors){%>
-<%= constructors %>
+<%- constructors %>
 <%}
 
 for(var i=transitions.length-1; i>=0;i--){%>
-@Transition(name = "<%=transitions[i].name %>",source = "<%=transitions[i].src %>",target = "<%=transitions[i].dst %>",guard = "<%=transitions[i].guard %>")
-<%=transitions[i].transitionMethod%>
+@Transition(name = "<%-transitions[i].name %>",source = "<%-transitions[i].src %>",target = "<%-transitions[i].dst %>",guard = "<%-transitions[i].guard %>")
+<%-transitions[i].transitionMethod%>
 <%}
 
 for(var i=guards.length-1; i>=0;i--){%>
-@Guard(name = "<%=guards[i].name %>")
-<%=guards[i].guardMethod%> <%
+@Guard(name = "<%-guards[i].name %>")
+<%-guards[i].guardMethod%> <%
 }%>

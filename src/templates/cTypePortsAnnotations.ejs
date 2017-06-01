@@ -7,7 +7,7 @@ for(i = 0; i < transitions.length; i += 1){
         }
         notFirst = true;
 %>
-  @Port(name ="<%= transitions[i].name %>", type = PortType.spontaneous)<%
+  @Port(name ="<%- transitions[i].name %>", type = PortType.spontaneous)<%
     }
     if(transitions[i].type === "EnforceableTransition") {
         if(notFirst) {
@@ -16,7 +16,7 @@ for(i = 0; i < transitions.length; i += 1){
         notFirst = true;
 
 %>
-  @Port(name ="<%= transitions[i].name %>", type = PortType.enforceable)<%
+  @Port(name ="<%- transitions[i].name %>", type = PortType.enforceable)<%
     }
 } %>
 })

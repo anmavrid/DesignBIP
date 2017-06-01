@@ -1,19 +1,19 @@
 <%
-for(var i in langModel){%> 
-	function <%=i%>() {
+for(var i in langModel){%>
+	function <%-i%>() {
 	<% if(langModel[i].canHavechildren){ %>
 		this.children=[];
 		<%}%>
 	<% for(var j=0;j<langModel[i].attributes.length;j++){%>
-		this.<%= langModel[i].attributes[j] %> = null; 
-	<% } 
-	
-	for(var j=0;j<langModel[i].pointers.length;j++){%>
-		this.<%= langModel[i].pointers[j] %> = null; 
+		this.<%- langModel[i].attributes[j] %> = null;
 	<% }
-	
+
+	for(var j=0;j<langModel[i].pointers.length;j++){%>
+		this.<%- langModel[i].pointers[j] %> = null;
+	<% }
+
 	for(var j=0;j<langModel[i].sets.length;j++){%>
-		this.<%= langModel[i].sets[j] %> = []; 
+		this.<%- langModel[i].sets[j] %> = [];
 	<% }%>
 	}
 <%}%>

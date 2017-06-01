@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class test<%=className%> {
+public class test<%-className%> {
 
 	  ActorSystem system;
 		EngineFactory engineFactory;
@@ -40,14 +40,14 @@ public class test<%=className%> {
 		@Test
 	  public void bipTest() throws BIPException {
 				int noOfTransitions = 0;
-				BIPGlue bipGlue = createGlue("<%=gluePath%>");
+				BIPGlue bipGlue = createGlue("<%-gluePath%>");
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
 
 				<%for (var i=componentType.length; i>0;i--) {%>
 					<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) {%>
-						<%=componentType[i-1].name%> component<%=componentType[i-1].name%><%=j%> = new <%=componentType[i-1].name%>();
-	          BIPActor actor<%=componentType[i-1].name%><%=j%> = engine.register(component<%=componentType[i-1].name%><%=j%>, "component<%=componentType[i-1].name%><%=j%>", true);
+						<%-componentType[i-1].name%> component<%-componentType[i-1].name%><%-j%> = new <%-componentType[i-1].name%>();
+	          BIPActor actor<%-componentType[i-1].name%><%-j%> = engine.register(component<%-componentType[i-1].name%><%-j%>, "component<%-componentType[i-1].name%><%-j%>", true);
 					<%}%>
 				<%}%>
 
@@ -55,7 +55,7 @@ public class test<%=className%> {
 				engine.start();
         engine.execute();
 
-				while(noOfTransitions < <%=noOfRequiredTransitions%>) {
+				while(noOfTransitions < <%-noOfRequiredTransitions%>) {
 					try {
 						Thread.sleep(2000);
 					} catch (InterruptedException e) {
@@ -64,7 +64,7 @@ public class test<%=className%> {
 					noOfTransitions = 0;
 					<%for (var i=componentType.length; i>0;i--) {%>
 						<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) { %>
-							noOfTransitions += component<%=componentType[i-1].name%><%=j%>.transitions
+							noOfTransitions += component<%-componentType[i-1].name%><%-j%>.transitions
 						<%}%>
 					<%}%>
 				}
