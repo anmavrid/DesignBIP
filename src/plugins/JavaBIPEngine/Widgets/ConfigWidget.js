@@ -72,6 +72,7 @@ ConfigWidget.prototype.show = function (globalConfigStructure, pluginMetadata, p
 
             }
         };
+        //TODO: Use the traverse function from core api instead
         core = result.core;
         core.loadByPath(result.rootNode, activeNodeId, function (err, node) {
             childrenPaths = core.getChildrenPaths(node);
