@@ -17,16 +17,15 @@ define([
     'bipsrc/templates/ejsCache',
     'bipsrc/parsers/javaExtra',
     'bipsrc/bower_components/pegjs/peg-0.10.0'
-], function (
-    PluginConfig,
-    pluginMetadata,
-    PluginBase,
-    Q,
-    ejs,
-    utils,
-    ejsCache,
-    javaParser,
-    peg) {
+], function (PluginConfig,
+             pluginMetadata,
+             PluginBase,
+             Q,
+             ejs,
+             utils,
+             ejsCache,
+             javaParser,
+             peg) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -88,7 +87,7 @@ define([
             }
         }
 
-        function checkComponentModel (componentType, fileName) {
+        function checkComponentModel(componentType, fileName) {
             var deferred = Q.defer();
 
             utils.getModelOfComponentType(self.core, nodes[componentType]).then(function (componentModel) {
@@ -120,80 +119,81 @@ define([
         }
 
         self.loadNodeMap(self.activeNode)
-          .then(function (nodes_) {
-                    var promises = [],
-                        type,
-                        fileName;
+            .then(function (nodes_) {
+                var promises = [],
+                    type,
+                    fileName;
 
-                    nodes = nodes_;
-                    componentTypes = self.getComponentTypeNodes(nodes);
-                    self.logger.debug(componentTypes.length);
-                    for (type of componentTypes) {
-                        fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
-                        self.logger.debug('filename ' + fileName);
-                        promises.push(checkComponentModel(type, fileName));
-                    }
-                    return Q.all(promises);})
-                    .then(function () {
-                        var type,
-                          fileName, pathArrayForFile;
-                        violations.push.apply(violations, self.hasViolations(componentTypes, nodes));
-                        if (violations.length > 0) {
-                            violations.forEach(function (violation) {
-                                self.createMessage(violation.node, violation.message, 'error');
-                            });
-                            throw new Error ('Model has ' + violations.length + ' violation(s). See messages for details.');
-                        }
-                        for (type of componentTypes) {
-                            fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
-                            pathArrayForFile = fileName.split('/');
-                            if (path && fs) {
-                                if (pathArrayForFile.length >= 1) {
-                                    try {
-                                        fs.statSync(path);
-                                    } catch (err) {
-                                        if (err.code === 'ENOENT') {
-                                            fs.mkdirSync(path);
-                                        }
-                                    }
-                                    fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
+                nodes = nodes_;
+                componentTypes = self.getComponentTypeNodes(nodes);
+                self.logger.debug(componentTypes.length);
+                for (type of componentTypes) {
+                    fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
+                    self.logger.debug('filename ' + fileName);
+                    promises.push(checkComponentModel(type, fileName));
+                }
+                return Q.all(promises);
+            })
+            .then(function () {
+                var type,
+                    fileName, pathArrayForFile;
+                violations.push.apply(violations, self.hasViolations(componentTypes, nodes));
+                if (violations.length > 0) {
+                    violations.forEach(function (violation) {
+                        self.createMessage(violation.node, violation.message, 'error');
+                    });
+                    throw new Error('Model has ' + violations.length + ' violation(s). See messages for details.');
+                }
+                for (type of componentTypes) {
+                    fileName = self.core.getAttribute(nodes[type], 'name') + '.java';
+                    pathArrayForFile = fileName.split('/');
+                    if (path && fs) {
+                        if (pathArrayForFile.length >= 1) {
+                            try {
+                                fs.statSync(path);
+                            } catch (err) {
+                                if (err.code === 'ENOENT') {
+                                    fs.mkdirSync(path);
                                 }
                             }
+                            fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
                         }
-                        artifact = self.blobClient.createArtifact('BehaviorSpecifications');
-                        return artifact.addFiles(filesToAdd);
-                    })
-                .then(function (fileHashes) {
-                    fileHashes.forEach(function (fileHash) {
-                      self.result.addArtifact(fileHash);
-                    });
-                    return artifact.save();
-                })
-                .then(function (artifactHash) {
-                    self.result.addArtifact(artifactHash);
-                    self.result.setSuccess(true);
-                    callback(null, self.result);
-                })
-                .catch(function (err) {
-                    self.logger.error(err.stack);
-                    // Result success is false at invocation.
-                    callback(err, self.result);
+                    }
+                }
+                artifact = self.blobClient.createArtifact('BehaviorSpecifications');
+                return artifact.addFiles(filesToAdd);
+            })
+            .then(function (fileHashes) {
+                fileHashes.forEach(function (fileHash) {
+                    self.result.addArtifact(fileHash);
                 });
+                return artifact.save();
+            })
+            .then(function (artifactHash) {
+                self.result.addArtifact(artifactHash);
+                self.result.setSuccess(true);
+                callback(null, self.result);
+            })
+            .catch(function (err) {
+                self.logger.error(err.stack);
+                // Result success is false at invocation.
+                callback(err, self.result);
+            });
 
     };
 
     BehaviorSpecGenerator.prototype.getGuardExpression = function (componentModel) {
         var guardNames = [],
-          i,
-          guardExpressionParser;
+            i,
+            guardExpressionParser;
 
         for (i = 0; i < componentModel.guards.length; i += 1) {
             guardNames.push(componentModel.guards[i].name);
         }
         if (guardNames.length > 0) {
             guardExpressionParser = peg.generate(
-              ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
-          );
+                ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
+            );
         }
         return guardExpressionParser;
     };
@@ -214,7 +214,7 @@ define([
     };
 
     BehaviorSpecGenerator.prototype.hasViolations = function (componentTypes, nodes) {
-            var componentTypeNames = {},
+        var componentTypeNames = {},
             name, type, node,
             child, childPath, childName,
             self = this,
@@ -226,96 +226,108 @@ define([
                 guardNames: {}
             };
 
-            for (type of componentTypes) {
-                nameAndViolations.guardNames = {};
-                nameAndViolations.totalStateNames = {};
-                nameAndViolations.transitionNames = {};
-                noInitialState = true;
-                node = nodes[type];
-                name = self.core.getAttribute(node, 'name');
-                if (componentTypeNames.hasOwnProperty(name)) {
-                    nameAndViolations.violations.push({
-                        node: node,
-                        message: 'Name [' + name + '] of component type [' + type + '] is not unique. Please rename. Component types must have unique names. '
-                    });
-                }
-                componentTypeNames[name] = self.core.getPath(node);
-                for (childPath of self.core.getChildrenPaths(node)) {
-                    child = nodes[childPath];
-                    childName = self.core.getAttribute(child, 'name');
-                    if ((self.isMetaTypeOf(child, self.META.InitialState))) {
-                        noInitialState = false;
-                    }
-                    nameAndViolations = self.hasChildViolations(child, childName, nameAndViolations);
-                }
-                if (noInitialState) {
-                    nameAndViolations.violations.push({
-                        node: node,
-                        message: 'Component type [' + name + '] does not have an initial state. Please define an initial state.'
-                    });
-                }
+        for (type of componentTypes) {
+            nameAndViolations.guardNames = {};
+            nameAndViolations.totalStateNames = {};
+            nameAndViolations.transitionNames = {};
+            noInitialState = true;
+            node = nodes[type];
+            name = self.core.getAttribute(node, 'name');
+            if (componentTypeNames.hasOwnProperty(name)) {
+                nameAndViolations.violations.push({
+                    node: node,
+                    message: 'Name [' + name + '] of component type [' + type + '] is not unique. Please rename. Component types must have unique names. '
+                });
             }
-            return nameAndViolations.violations;
-        };
+            componentTypeNames[name] = self.core.getPath(node);
+            for (childPath of self.core.getChildrenPaths(node)) {
+                child = nodes[childPath];
+                childName = self.core.getAttribute(child, 'name');
+                if ((self.isMetaTypeOf(child, self.META.InitialState))) {
+                    noInitialState = false;
+                }
+                nameAndViolations = self.hasChildViolations(child, childName, nameAndViolations);
+            }
+            if (noInitialState) {
+                nameAndViolations.violations.push({
+                    node: node,
+                    message: 'Component type [' + name + '] does not have an initial state. Please define an initial state.'
+                });
+            }
+        }
+        return nameAndViolations.violations;
+    };
 
     BehaviorSpecGenerator.prototype.hasChildViolations = function (child, childName, nameAndViolations) {
-            var self = this;
+        var self = this;
 
-            if ((self.isMetaTypeOf(child, self.META.State)) || (self.isMetaTypeOf(child, self.META.InitialState))) {
-                if (nameAndViolations.totalStateNames.hasOwnProperty(childName)) {
-                    nameAndViolations.violations.push({
-                        node: child,
-                        message: 'Name [' + childName + '] of state [' + child + '] is not unique. Please rename. States that belong to the same component type must have unique names.'
-                    });
-                }
-                nameAndViolations.totalStateNames[childName] = self.core.getPath(child);
+        if ((self.isMetaTypeOf(child, self.META.State)) || (self.isMetaTypeOf(child, self.META.InitialState))) {
+            if (nameAndViolations.totalStateNames.hasOwnProperty(childName)) {
+                nameAndViolations.violations.push({
+                    node: child,
+                    message: 'Name [' + childName + '] of state [' + child + '] is not unique. ' +
+                    'Please rename. States that belong to the same component type must have unique names.'
+                });
             }
-            if (self.isMetaTypeOf(child, self.META.EnforceableTransition) || self.isMetaTypeOf(child, self.META.SpontaneousTransition) || self.isMetaTypeOf(child, self.META.InternalTransition)) {
-                if (this.core.getPointerPath(child, 'dst') === null) {
-                    nameAndViolations.violations.push({
-                        node: child,
-                        message: 'Transition [' + childName + '] with no destination encountered. Please connect or remove it.'
-                    });
-                }
-                if (this.core.getPointerPath(child, 'src') === null) {
-                    nameAndViolations.violations.push({
-                        node: child,
-                        message: 'Transition [' + childName + '] with no source encountered. Please connect or remove it.'
-                    });
-                }
-                if (this.core.getAttribute(child, 'transitionMethod') === '') {
-                    nameAndViolations.violations.push({
-                        node: child,
-                        message: 'Attribute transitionMethod of transition [' + childName + '] is not defined. Please define transitionMethod.'
-                    });
-                }
-            }
-            if ( self.isMetaTypeOf(child, self.META.EnforceableTransition) || self.isMetaTypeOf(child, self.META.SpontaneousTransition)) {
-                if (nameAndViolations.transitionNames.hasOwnProperty(childName)) {
-                    nameAndViolations.violations.push({
-                        node: child,
-                        message: 'Name [' + childName + '] of transition [' + child + '] is not unique. Please rename. Enforceable and spontaneous transitions of the same component type must have unique names.'
-                    });
-                }
-                nameAndViolations.transitionNames[childName] = self.core.getPath(child);
-            }
-            if (self.isMetaTypeOf(child, self.META.Guard)) {
-                if (nameAndViolations.guardNames.hasOwnProperty(childName)) {
-                    nameAndViolations.violations.push({
-                        node: child,
-                        message: 'Name [' + childName + '] of guard [' + child + '] is not unique. Please rename. Guards of the same component type must have unique names.'
-                    });
-                }
-                nameAndViolations.guardNames[childName] = self.core.getPath(child);
+            nameAndViolations.totalStateNames[childName] = self.core.getPath(child);
+        }
+        if (self.isMetaTypeOf(child, self.META.EnforceableTransition) ||
+            self.isMetaTypeOf(child, self.META.SpontaneousTransition) ||
+            self.isMetaTypeOf(child, self.META.InternalTransition)) {
 
-                if (self.core.getAttribute(child, 'guardMethod') === '') {
-                    nameAndViolations.violations.push({
-                        node: child,
-                        message: 'Attribute guardMethod of transition [' + childName + '] is not defined. Please define guardMethod.'
-                    });
-                }
+            if (this.core.getPointerPath(child, 'dst') === null) {
+                nameAndViolations.violations.push({
+                    node: child,
+                    message: 'Transition [' + childName + '] with no destination encountered. ' +
+                    'Please connect or remove it.'
+                });
             }
-            return nameAndViolations;
+            if (this.core.getPointerPath(child, 'src') === null) {
+                nameAndViolations.violations.push({
+                    node: child,
+                    message: 'Transition [' + childName + '] with no source encountered. Please connect or remove it.'
+                });
+            }
+            if (this.core.getAttribute(child, 'transitionMethod') === '') {
+                nameAndViolations.violations.push({
+                    node: child,
+                    message: 'Attribute transitionMethod of transition [' + childName + '] is not defined. ' +
+                    'Please define transitionMethod.'
+                });
+            }
+        }
+        if (self.isMetaTypeOf(child, self.META.EnforceableTransition) ||
+            self.isMetaTypeOf(child, self.META.SpontaneousTransition)) {
+
+            if (nameAndViolations.transitionNames.hasOwnProperty(childName)) {
+                nameAndViolations.violations.push({
+                    node: child,
+                    message: 'Name [' + childName + '] of transition [' + child + '] is not unique. ' +
+                    'Please rename. Enforceable and spontaneous transitions of the same component ' +
+                    'type must have unique names.'
+                });
+            }
+            nameAndViolations.transitionNames[childName] = self.core.getPath(child);
+        }
+        if (self.isMetaTypeOf(child, self.META.Guard)) {
+            if (nameAndViolations.guardNames.hasOwnProperty(childName)) {
+                nameAndViolations.violations.push({
+                    node: child,
+                    message: 'Name [' + childName + '] of guard [' + child + '] is not unique. Please rename. ' +
+                    'Guards of the same component type must have unique names.'
+                });
+            }
+            nameAndViolations.guardNames[childName] = self.core.getPath(child);
+
+            if (self.core.getAttribute(child, 'guardMethod') === '') {
+                nameAndViolations.violations.push({
+                    node: child,
+                    message: 'Attribute guardMethod of transition [' + childName + '] is not defined. ' +
+                    'Please define guardMethod.'
+                });
+            }
+        }
+        return nameAndViolations;
     };
 
     return BehaviorSpecGenerator;
