@@ -31,7 +31,7 @@
     "webgme-domain"
   ],
   "peerDependencies": {
-    "webgme": "^2.0.0"
+    "webgme": "^2.14.0"
   },
   "devDependencies": {
     "mocha": "^2.2.5",
@@ -42,7 +42,8 @@
     "webgme-bip-editors": "github:pmeijer/webgme-bip-editors"
   },
   "dependencies": {
-    "bower": "^1.8.0"
+    "bower": "^1.8.0",
+    "webgme-docker-worker-manager": "^0.1.0"
   },
   "license": "MIT"
 }
