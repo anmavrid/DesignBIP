@@ -4,11 +4,6 @@
 # 2. Build the image (tag should match the one in config.deployment.js image).
 #     $ docker build -t webgme-docker-worker:0.1.1 .
 
-## TODO: Add dependencies for BIP-engine
-# JAVA JRE/(SDK?)
-# Maven client
-# BIP Engine
-
 # https://github.com/nodejs/docker-node/blob/3b038b8a1ac8f65e3d368bedb9f979884342fdcb/6.9/Dockerfile
 FROM node:boron
 
@@ -27,12 +22,9 @@ RUN npm install webgme
 
 RUN cp /usr/app/node_modules/webgme-docker-worker-manager/dockerworker.js /usr/app/dockerworker.js
 
-## COPIED FROM https://github.com/docker-library/openjdk/blob/master/8-jdk/Dockerfile
-
-# A few problems with compiling Java from source:
-#  1. Oracle.  Licensing prevents us from redistributing the official JDK.
-#  2. Compiling OpenJDK also requires the JDK to be installed, and it gets
-#       really hairy.
+###
+## All below is copied from https://github.com/docker-library/openjdk/blob/master/8-jdk/Dockerfile
+###
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		bzip2 \

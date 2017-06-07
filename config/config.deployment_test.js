@@ -1,3 +1,7 @@
+/**
+ * This is just deployment with extra logging.
+ */
+
 'use strict';
 
 var config = require('./config.deployment'),
