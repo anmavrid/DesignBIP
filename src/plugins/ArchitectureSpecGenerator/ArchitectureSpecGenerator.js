@@ -284,7 +284,8 @@ define([
                 }
                 for (end of connector.ends) {
                     if (triggerExists === false) {
-                        if ((end.port.name !== port.name || end.multiplicity !== 1) && /^[0-9]$/.test(end.multiplicity)) {
+                      //TODO: update ports of different components may have the same names
+                        if ((end.port.name !== port.name || end.multiplicity !== '1') && /^[0-9]$/.test(end.multiplicity)) {
                             reqCause = [];
                             for (i = 0; i < parseInt(end.multiplicity); i++) {
                                 reqCause.push(end.port);
@@ -298,7 +299,8 @@ define([
                             });
                         }
                     } else {
-                        if (end.type === 'Trigger' && /^[0-9]$/.test(end.multiplicity) && (end.port.name !== port.name || end.multiplicity !== 1 )) {
+                      //TODO: update ports of different components may have the same names
+                        if (end.type === 'Trigger' && /^[0-9]$/.test(end.multiplicity) && (end.port.name !== port.name || end.multiplicity !== '1' )) {
                             reqCause = [];
                             for (i = 0; i < parseInt(end.multiplicity); i++) {
                                 reqCause.push(end.port);

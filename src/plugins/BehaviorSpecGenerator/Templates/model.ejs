@@ -7,7 +7,7 @@ for(var i=keys.length-1; i>=0;i--){
 	if(keys[i]=== '') continue;
 if(new_dataModel[keys[i]]._type == "ComponentType"){
 if(new_dataModel[keys[i]].forwards!=""){%>
-<%= new_dataModel[keys[i]].forwards %>
+<%- new_dataModel[keys[i]].forwards %>
 <%}
 }
 }%>
@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 @Ports({<%for(var i=keys.length-1; i>=0;i--){
 	if(keys[i]=== '') continue;
 if(new_dataModel[keys[i]]._type == "SpontaneousTransition"){ %>
-@Port(name ="<%=new_dataModel[keys[i]].name %>", type = PortType.spontaneous),
+@Port(name ="<%-new_dataModel[keys[i]].name %>", type = PortType.spontaneous),
 <%}
 if(new_dataModel[keys[i]]._type == "EnforceableTransition"){ %>
-@Port(name ="<%=new_dataModel[keys[i]].name %>", type = PortType.enforceable),
+@Port(name ="<%-new_dataModel[keys[i]].name %>", type = PortType.enforceable),
 <%}
 }%>
 })
@@ -32,17 +32,17 @@ if(new_dataModel[keys[i]]._type == "EnforceableTransition"){ %>
 <%for(var i=keys.length-1; i>=0;i--){
 	if(keys[i]=== '') continue;
 if(new_dataModel[keys[i]]._type == "InitialState"){%>
-initial = "<%=new_dataModel[keys[i]].name %>",<%
+initial = "<%-new_dataModel[keys[i]].name %>",<%
 }
 }%>
 
 <%for(var i=keys.length-1; i>=0;i--){
 	if(keys[i]=== '') continue;
 if(new_dataModel[keys[i]]._type == "ComponentType"){%>
-name = "org.bip.spec.<%=new_dataModel[keys[i]].name %>")
+name = "org.bip.spec.<%-new_dataModel[keys[i]].name %>")
 
-public class <%=new_dataModel[keys[i]].name %> implements BIPSpec {
-private Logger logger = LoggerFactory.getLogger(<%=new_dataModel[keys[i]].name %>.class); <%
+public class <%-new_dataModel[keys[i]].name %> implements BIPSpec {
+private Logger logger = LoggerFactory.getLogger(<%-new_dataModel[keys[i]].name %>.class); <%
 }
 }%>
 
@@ -50,25 +50,25 @@ private Logger logger = LoggerFactory.getLogger(<%=new_dataModel[keys[i]].name %
 	if(keys[i]=== '') continue;
 if(new_dataModel[keys[i]]._type == "ComponentType"){
 if(new_dataModel[keys[i]].definitions!=""){%>
-<%= new_dataModel[keys[i]].definitions %>
+<%- new_dataModel[keys[i]].definitions %>
 
 <%}%>
-private String componentPath = "<%=keys[i]%>";
-private String componentType = "<%=new_dataModel[keys[i]].name %>";
+private String componentPath = "<%-keys[i]%>";
+private String componentType = "<%-new_dataModel[keys[i]].name %>";
 private Map<String, String> stateToPath = new HashMap<String, String>();
 private Map<String, String> transitionToPath = new HashMap<String, String>();
 
 <%for(var j=keys.length-1; j>=0;j--){
 if(new_dataModel[keys[j]]._type== "State" || new_dataModel[keys[j]]._type== "InitialState"){%>
-this.stateToPath.put("<%= new_dataModel[keys[j]].name %>","<%= keys[j]%>");
+this.stateToPath.put("<%- new_dataModel[keys[j]].name %>","<%- keys[j]%>");
 <%}
 if(new_dataModel[keys[j]]._type == "EnforceableTransition" || new_dataModel[keys[j]]._type == "SpontaneousTransition" || new_dataModel[keys[j]]._type == "internal"){%>
-this.transitionToPath.put("<%= new_dataModel[keys[j]].name %>","<%= keys[j]%>");
+this.transitionToPath.put("<%- new_dataModel[keys[j]].name %>","<%- keys[j]%>");
 <%}
 }%>
 
 <%if(new_dataModel[keys[i]].constructors!=""){%>
-<%= new_dataModel[keys[i]].constructors %>
+<%- new_dataModel[keys[i]].constructors %>
 <%}
 }
 }%>
@@ -79,8 +79,8 @@ if(new_dataModel[keys[i]]._type == "EnforceableTransition" || new_dataModel[keys
 	var key_src = new_dataModel[keys[i]].src
 	var key_dst = new_dataModel[keys[i]].dst %>
 
-@Transition(name = "<%=new_dataModel[keys[i]].name %>",source = "<%=new_dataModel[key_src].name %>",target = "<%=new_dataModel[key_dst].name %>",guard = "<%=new_dataModel[keys[i]].guardName %>")
-<%=new_dataModel[keys[i]].transitionMethod%>
+@Transition(name = "<%-new_dataModel[keys[i]].name %>",source = "<%-new_dataModel[key_src].name %>",target = "<%-new_dataModel[key_dst].name %>",guard = "<%-new_dataModel[keys[i]].guardName %>")
+<%-new_dataModel[keys[i]].transitionMethod%>
 
 <%}
 }%>
@@ -88,8 +88,8 @@ if(new_dataModel[keys[i]]._type == "EnforceableTransition" || new_dataModel[keys
 <%for(var i=keys.length-1; i>=0;i--){
 	if(keys[i]=== '') continue;
 if(new_dataModel[keys[i]]._type == "Guard"){%>
-@Guard(name = "<%=new_dataModel[keys[i]].name %>")
-<%=new_dataModel[keys[i]].guardMethod%> <%
+@Guard(name = "<%-new_dataModel[keys[i]].name %>")
+<%-new_dataModel[keys[i]].guardMethod%> <%
 }
 }%>
 }

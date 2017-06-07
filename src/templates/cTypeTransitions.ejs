@@ -1,5 +1,5 @@
 <%
 for(var i = 0;i < transitions.length; i += 1){
-%>@Transition(name = "<%= transitions[i].name %>",source = "<%= transitions[i].src %>",target = "<%= transitions[i].dst %>",guard = "<%- transitions[i].guard %>")
+%>@Transition(name = "<%- transitions[i].name %>",source = "<%- transitions[i].src %>",target = "<%- transitions[i].dst %>",guard = "<%- transitions[i].guard %>")
 <%- transitions[i].transitionMethod %>
 <% } %>
