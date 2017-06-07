@@ -163,8 +163,10 @@ define([
                         artifact = self.blobClient.createArtifact('BehaviorSpecifications');
                         return artifact.addFiles(filesToAdd);
                     })
-                .then(function (fileHash) {
-                    self.result.addArtifact(fileHash);
+                .then(function (fileHashes) {
+                    fileHashes.forEach(function (fileHash) {
+                      self.result.addArtifact(fileHash);
+                    });
                     return artifact.save();
                 })
                 .then(function (artifactHash) {

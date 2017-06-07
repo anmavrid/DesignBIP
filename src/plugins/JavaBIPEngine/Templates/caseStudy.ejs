@@ -19,11 +19,7 @@ import org.javabip.executor.JSONLogger;
 
 import akka.actor.ActorSystem;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
-public class test<%-className%> {
+public class <%-className%> {
 
 	  ActorSystem system;
 		EngineFactory engineFactory;
@@ -40,6 +36,22 @@ public class test<%-className%> {
 			system.shutdown();
 		}
 
+		private BIPGlue createGlue(String bipGlueFilename) {
+					BIPGlue bipGlue = null;
+
+					InputStream inputStream;
+					try {
+						inputStream = new FileInputStream(bipGlueFilename);
+
+						bipGlue = GlueBuilder.fromXML(inputStream);
+
+					} catch (FileNotFoundException e) {
+
+						e.printStackTrace();
+			}
+			return bipGlue;
+}
+
 		@Test
 	  public void bipTest() throws BIPException {
 				int noOfTransitions = 0;
@@ -51,7 +63,7 @@ public class test<%-className%> {
 					componentIDsToNames.put("<%-componentType[i-1].path%>","<%-componentType[i-1].name%>");
 				<%}%>
 
-				BIPGlue bipGlue = createGlue("<%-gluePath%>");
+				BIPGlue bipGlue = createGlue("Glue.xml");
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
 
@@ -75,7 +87,7 @@ public class test<%-className%> {
 					noOfTransitions = 0;
 					<%for (var i=componentType.length; i>0;i--) {%>
 						<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) { %>
-							noOfTransitions += component<%-componentType[i-1].name%><%-j%>.transitions
+							noOfTransitions += component<%-componentType[i-1].name%><%-j%>.transitions;
 						<%}%>
 					<%}%>
 				}
