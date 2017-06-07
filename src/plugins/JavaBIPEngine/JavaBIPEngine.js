@@ -12,6 +12,8 @@ define([
     'text!./metadata.json',
     'plugin/PluginBase',
      'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser',
+     'plugin/ArchitectureSpecGenerator/ArchitectureSpecGenerator/ArchitectureSpecGenerator',
+     'plugin/BehaviorSpecGenerator/BehaviorSpecGenerator/BehaviorSpecGenerator',
      'common/util/ejs',
      'text!./Templates/caseStudy.ejs'
 ], function (
@@ -19,6 +21,8 @@ define([
     pluginMetadata,
     PluginBase,
     ArithmeticExpressionParser,
+    ArchitectureSpecGenerator,
+    BehaviorSpecGenerator,
     ejs,
     caseStudyTemplate) {
     'use strict';
@@ -63,7 +67,9 @@ define([
         // These are all instantiated at this point.
         var self = this,
             path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path'),
-            fs, artifact;
+            fs,
+            artifact,
+            nodes;
             //exec,
             //child;
 
@@ -79,7 +85,16 @@ define([
 
 
         self.loadNodeMap(self.activeNode)
-                .then(function (nodes) {
+            .then(function (nodes_) {
+                nodes = nodes_;
+                // TODO: Use this properly
+                console.log(ArchitectureSpecGenerator.getGeneratedFile(self, nodes, self.activeNode));
+                return BehaviorSpecGenerator.getGeneratedFiles(self, nodes, self.activeNode);
+            })
+                .then(function (result) {
+                    // TODO: Use this properly
+                    console.log(result);
+
                     var violations = self.hasViolations(nodes),
                         inconsistencies, fileName, testInfo, pathArrayForFile, engineOutputFileName,
                         filesToAdd = {},

@@ -28,7 +28,7 @@ describe('JavaBIPEngine', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(testFixture.SEED_DIR, 'JavaBIPEngine_violations.webgmex'),
+                    projectSeed: testFixture.path.join(__dirname, 'JavaBIPEngine_violations.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
@@ -55,8 +55,7 @@ describe('JavaBIPEngine', function () {
 
     it('should fail on invalid cardinality', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -72,7 +71,7 @@ describe('JavaBIPEngine', function () {
                 expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -80,8 +79,7 @@ describe('JavaBIPEngine', function () {
 
     it('should fail on invalid cardinality', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -97,7 +95,7 @@ describe('JavaBIPEngine', function () {
                 expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -105,8 +103,7 @@ describe('JavaBIPEngine', function () {
 
     it('should fail on invalid cardinality', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -122,7 +119,7 @@ describe('JavaBIPEngine', function () {
                 expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -130,8 +127,7 @@ describe('JavaBIPEngine', function () {
 
     it('should fail on invalid cardinality', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -147,7 +143,7 @@ describe('JavaBIPEngine', function () {
                 expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -155,8 +151,7 @@ describe('JavaBIPEngine', function () {
 
     it('should fail on invalid cardinality', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -172,35 +167,33 @@ describe('JavaBIPEngine', function () {
                 expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
-
-        it('should fail on invalid cardinality', function (done) {
-            var manager = new PluginCliManager(null, logger, gmeConfig),
-                pluginConfig = {
-                },
-                context = {
-                    project: project,
-                    commitHash: commitHash,
-                    branchName: 'test',
-                    activeNode: '/f/t/p',
-                };
-
-            manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-                try {
-                    expect(pluginResult.success).to.equal(false);
-                    //expect(pluginResult).to.deep.equal({});
-                    expect(pluginResult.error).to.include('violation(s)');
-                    expect(pluginResult.messages.length).to.equal(1);
-                    done();
-                }
-                catch(e) {
-                    done(e);
-                }
-            });
     });
 
+    it('should fail on invalid cardinality', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/p',
+            };
 
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
 });

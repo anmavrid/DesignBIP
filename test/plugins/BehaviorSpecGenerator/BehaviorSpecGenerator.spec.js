@@ -28,7 +28,7 @@ describe('BehaviorSpecGenerator', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(__dirname, 'Behavior_violations.webgmex'),
+                    projectSeed: testFixture.path.join(__dirname, 'BIP_violations.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
@@ -53,10 +53,10 @@ describe('BehaviorSpecGenerator', function () {
             .nodeify(done);
     });
 
+    // FIXME: This test-fails - the test model should be updated with the new requirements
     it('should succeed on valid model', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -71,7 +71,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(true);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -79,8 +79,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on no initial state', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -96,7 +95,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(6);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -104,8 +103,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on duplicated transition name', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -121,7 +119,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(8);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -129,8 +127,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on duplicated guard name', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -146,7 +143,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(9);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -154,8 +151,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on duplicated state name', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -171,7 +167,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(10);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -179,8 +175,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on non-defined transition methods', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -196,7 +191,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(7);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -204,8 +199,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on non-defined guard reference', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -221,7 +215,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(8);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -229,8 +223,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on non-defined src and dst of transitions', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -246,7 +239,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(9);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
@@ -254,8 +247,7 @@ describe('BehaviorSpecGenerator', function () {
 
     it('should fail on space in component names', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {
-            },
+            pluginConfig = {},
             context = {
                 project: project,
                 commitHash: commitHash,
@@ -271,7 +263,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.messages.length).to.equal(7);
                 done();
             }
-            catch(e) {
+            catch (e) {
                 done(e);
             }
         });
