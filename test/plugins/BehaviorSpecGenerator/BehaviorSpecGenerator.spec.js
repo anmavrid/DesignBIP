@@ -53,7 +53,7 @@ describe('BehaviorSpecGenerator', function () {
             .nodeify(done);
     });
 
-    // This test-fails - the test model should be updated.
+    // FIXME: This test-fails - the test model should be updated with the new requirements
     it('should succeed on valid model', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
@@ -66,7 +66,6 @@ describe('BehaviorSpecGenerator', function () {
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
-                expect(pluginResult).to.deep.equal({});
                 expect(err).to.equal(null);
                 expect(typeof pluginResult).to.equal('object');
                 expect(pluginResult.success).to.equal(true);
