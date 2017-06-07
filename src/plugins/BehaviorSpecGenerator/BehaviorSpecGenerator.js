@@ -114,8 +114,10 @@ define([
      * @param {PluginBase} self - An initialized and configured plugin.
      * @param {Object<string, Object>} nodes - all nodes loaded from the projectNode.
      * @param {object} activeNode - the projectNode.
+     *
+     * @returns {Promise} resolves with {files: Object<string, string>, violations: Objects[]}
      */
-    BehaviorSpecGenerator.getGeneratedFiles = function (self, nodes/*, activeNode*/) {
+    BehaviorSpecGenerator.getGeneratedFiles = function (self, nodes, activeNode, callback) {
         var componentTypePaths = BehaviorSpecGenerator.prototype.getComponentTypePaths.call(self, nodes),
             violations = BehaviorSpecGenerator.prototype.getViolations.call(self, componentTypePaths, nodes),
             fileNames = [],
@@ -145,7 +147,24 @@ define([
                     files: files,
                     violations: violations
                 };
-            });
+            })
+            .nodeify(callback);
+    };
+
+    BehaviorSpecGenerator.prototype.getGuardExpression = function (componentModel) {
+        var guardNames = [],
+            i,
+            guardExpressionParser;
+
+        for (i = 0; i < componentModel.guards.length; i += 1) {
+            guardNames.push(componentModel.guards[i].name);
+        }
+        if (guardNames.length > 0) {
+            guardExpressionParser = peg.generate(
+                ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
+            );
+        }
+        return guardExpressionParser;
     };
 
     BehaviorSpecGenerator.prototype.getComponentTypePaths = function (nodes) {
@@ -170,23 +189,6 @@ define([
             guardExpressionParser,
             i;
 
-        function getGuardExpression(componentModel) {
-            var guardNames = [],
-                j,
-                guardExpressionParser;
-
-            for (j = 0; j < componentModel.guards.length; j += 1) {
-                guardNames.push(componentModel.guards[j].name);
-            }
-
-            if (guardNames.length > 0) {
-                guardExpressionParser = peg.generate(
-                    ejs.render(ejsCache.guardExpression, {guardNames: guardNames})
-                );
-            }
-            return guardExpressionParser;
-        }
-
         return utils.getModelOfComponentType(self.core, componentTypeNode)
             .then(function (componentModel) {
                 fileContent = ejs.render(ejsCache.componentType.complete, componentModel);
@@ -198,7 +200,7 @@ define([
                     violations.push(parseResult);
                 }
 
-                guardExpressionParser = getGuardExpression(componentModel);
+                guardExpressionParser = BehaviorSpecGenerator.prototype.getGuardExpression.call(self, componentModel);
                 for (i = 0; i < componentModel.transitions.length; i += 1) {
                     if (componentModel.transitions[i].guard.length > 0) {
                         try {

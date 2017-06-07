@@ -58,25 +58,19 @@ define([
 
         self.loadNodeMap(self.activeNode)
             .then(function (nodes) {
-                var violations = self.hasViolations(nodes),
-                    model, xml, pathArrayForFile,
-                    filesToAdd = {},
-                    macros = {};
+                var filesToAdd = {},
+                    result = ArchitectureSpecGenerator.getGeneratedFile(self, nodes, self.activeNode);
 
-                model = self.generateMacros(self.generateArchitectureModel(nodes));
-                if (model.violations.length > 0) {
-                    violations = violations.concat(model.violations);
-                }
-                if (violations.length > 0) {
-                    violations.forEach(function (violation) {
+                if (result.violations.length > 0) {
+                    result.violations.forEach(function (violation) {
                         self.createMessage(violation.node, violation.message, 'error');
                     });
-                    throw new Error('Model has ' + violations.length + '  violation(s), see messages for details');
+
+                    throw new Error('Model has ' + result.violations.length +
+                        '  violation(s), see messages for details');
                 }
-                macros = self.generateRequireAccept(model.architectureModel.ports);
-                xml = {glue: {accepts: {accept: macros.accept}, requires: {require: macros.require}}};
-                pathArrayForFile = 'Glue.xml'.split('/');
-                filesToAdd['Glue.xml'] = (new Converter.JsonToXml()).convertToString(xml);
+
+                filesToAdd['Glue.xml'] = result.fileContent;
 
                 artifact = self.blobClient.createArtifact('GlueSpecification');
                 return artifact.addFiles(filesToAdd);
@@ -96,6 +90,40 @@ define([
             });
     };
 
+    /**
+     *
+     * @param {PluginBase} self - An initialized and configured plugin.
+     * @param {Object<string, Object>} nodes - all nodes loaded from the projectNode.
+     * @param {object} activeNode - the projectNode.
+     *
+     * @returns {fileContent: string, violations: Objects[]}
+     */
+    ArchitectureSpecGenerator.getGeneratedFile = function (self, nodes, activeNode) {
+        var result = {
+                violations: ArchitectureSpecGenerator.prototype.getViolations.call(self, nodes),
+                fileContent: null
+            },
+            rawModel = ArchitectureSpecGenerator.prototype.generateArchitectureModel.call(self, nodes),
+            model = ArchitectureSpecGenerator.prototype.generateMacros.call(self, rawModel),
+            macros,
+            xml;
+
+        if (model.violations.length > 0) {
+            result.violations = result.violations.concat(model.violations);
+        }
+
+        if (result.violations.length > 0) {
+            return result;
+        }
+
+        macros = ArchitectureSpecGenerator.prototype.generateRequireAccept.call(self, model.architectureModel.ports);
+        xml = {glue: {accepts: {accept: macros.accept}, requires: {require: macros.require}}};
+
+        return {
+            fileContent: (new Converter.JsonToXml()).convertToString(xml),
+            violations: result.violations // Will be empty array..
+        };
+    };
 
     ArchitectureSpecGenerator.prototype.generateRequireAccept = function (inputPorts) {
         var acceptPorts = [],
@@ -150,7 +178,7 @@ define([
             };
 
         for (port of architectureModel.ports) {
-            macros = self.generateMacrosAlgorithm(port);
+            macros = ArchitectureSpecGenerator.prototype.generateMacrosAlgorithm.call(self, port);
             if (macros.violations.length > 0) {
                 for (violation of macros.violations) {
                     aux = true;
@@ -170,7 +198,7 @@ define([
 
         }
         for (port of architectureModel.ports) {
-            port = self.getMacroLists(port);
+            port = ArchitectureSpecGenerator.prototype.getMacroLists.call(self, port);
         }
         output.architectureModel = architectureModel;
         return output;
@@ -359,8 +387,10 @@ define([
                 //TODO: add also export ports for hierarchical connector motifs
             }
         }
-        architectureModel = self.connectorToEnds(subConnectors, architectureModel, nodes);
-        return self.portToEnds(architectureModel);
+        architectureModel = ArchitectureSpecGenerator.prototype.connectorToEnds.call(self,
+            subConnectors, architectureModel, nodes);
+
+        return ArchitectureSpecGenerator.prototype.portToEnds.call(self, architectureModel);
     };
 
     ArchitectureSpecGenerator.prototype.connectorToEnds = function (subConnectors, architectureModel, nodes) {
@@ -405,7 +435,7 @@ define([
         return architectureModel;
     };
 
-    ArchitectureSpecGenerator.prototype.hasViolations = function (nodes) {
+    ArchitectureSpecGenerator.prototype.getViolations = function (nodes) {
         var violations = [],
             self = this,
             nodePath, path,
