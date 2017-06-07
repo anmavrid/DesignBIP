@@ -1,6 +1,5 @@
 # Coverage directory used by tools like istanbul
 coverage
-
 .git
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
