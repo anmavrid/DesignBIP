@@ -28,7 +28,7 @@ describe('ArchitectureSpecGenerator', function () {
             })
             .then(function () {
                 var importParam = {
-                    projectSeed: testFixture.path.join(testFixture.SEED_DIR, 'Architecture_violations.webgmex'),
+                    projectSeed: testFixture.path.join(__dirname, 'Architecture_violations.webgmex'),
                     projectName: projectName,
                     branchName: 'master',
                     logger: logger,
