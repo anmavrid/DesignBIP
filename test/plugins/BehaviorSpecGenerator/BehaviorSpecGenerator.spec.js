@@ -61,7 +61,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/1',
+                activeNode: '/f/t/f',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -84,7 +84,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/p',
+                activeNode: '/f/t/1',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -92,7 +92,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(6);
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {
@@ -108,7 +108,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/o',
+                activeNode: '/f/t/U',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -116,7 +116,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(8);
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {
@@ -132,7 +132,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/i',
+                activeNode: '/f/t/k',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -140,7 +140,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(9);
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {
@@ -156,7 +156,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/R',
+                activeNode: '/f/t/s',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -164,7 +164,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(10);
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {
@@ -180,7 +180,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/K',
+                activeNode: '/f/t/B',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -188,7 +188,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(7);
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {
@@ -204,7 +204,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/Y',
+                activeNode: '/f/t/e',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -212,7 +212,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(8);
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {
@@ -228,7 +228,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/J',
+                activeNode: '/f/t/v',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -236,7 +236,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(9);
+                expect(pluginResult.messages.length).to.equal(3);
                 done();
             }
             catch (e) {
@@ -252,7 +252,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/m',
+                activeNode: '/f/t/z',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -261,6 +261,30 @@ describe('BehaviorSpecGenerator', function () {
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
                 expect(pluginResult.messages.length).to.equal(7);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on invalid guard expression', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/q',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {

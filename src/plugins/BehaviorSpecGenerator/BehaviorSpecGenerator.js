@@ -207,8 +207,7 @@ define([
                             parseResult = guardExpressionParser.parse(componentModel.transitions[i].guard);
                         } catch (e) {
                             violations.push({
-                                message: 'Guard expression should be a logical expression ' +
-                                'that has only defined guard names as symbols.',
+                                message: 'Guard expression ['+ componentModel.transitions[i].guard +'] is not a logical expression that has only defined guard names as symbols. Please update. The allowed symbols of logical operators are: & for conjunnction, | for disjunction and ! for negation.',
                                 node: componentTypeNode
                             });
                         }
@@ -313,7 +312,7 @@ define([
             if (nameAndViolations.transitionNames.hasOwnProperty(childName)) {
                 nameAndViolations.violations.push({
                     node: child,
-                    message: 'Name [' + childName + '] of transition [' + child + '] is not unique. ' +
+                    message: 'Name [' + childName + '] of transition    is not unique. ' +
                     'Please rename. Enforceable and spontaneous transitions of the same component ' +
                     'type must have unique names.'
                 });
@@ -324,7 +323,7 @@ define([
             if (nameAndViolations.guardNames.hasOwnProperty(childName)) {
                 nameAndViolations.violations.push({
                     node: child,
-                    message: 'Name [' + childName + '] of guard [' + child + '] is not unique. Please rename. ' +
+                    message: 'Name [' + childName + '] of guard is not unique. Please rename. ' +
                     'Guards of the same component type must have unique names.'
                 });
             }
