@@ -396,7 +396,7 @@ define([
                 connectorEnds.push(node);
             }
         }
-        regExpArray = ['^[', '+*\\-\\\\', '\(\)', '0-9'];
+        regExpArray = ['^[', '+*\\-\\\/', '\(\)', '0-9'];
         for (cardinality of cardinalities) {
             if (/^[a-z]$/.test(cardinality)) {
                 regExpArray.push(cardinality);

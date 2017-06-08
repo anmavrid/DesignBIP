@@ -53,7 +53,6 @@ describe('BehaviorSpecGenerator', function () {
             .nodeify(done);
     });
 
-    // FIXME: This test-fails - the test model should be updated with the new requirements
     it('should succeed on valid model', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
@@ -62,6 +61,98 @@ describe('BehaviorSpecGenerator', function () {
                 commitHash: commitHash,
                 branchName: 'test',
                 activeNode: '/f/t/f',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should succeed on valid model', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/e',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should succeed on valid model', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/c',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should succeed on valid model', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/s',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should succeed on valid model', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/M',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -293,7 +384,7 @@ describe('BehaviorSpecGenerator', function () {
         });
     });
 
-    it('should fail on invalid guard expression', function (done) {
+    it('should fail on invalid guard expression with spaces', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
             context = {
