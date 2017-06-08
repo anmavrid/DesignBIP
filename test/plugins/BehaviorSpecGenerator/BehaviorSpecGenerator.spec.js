@@ -260,7 +260,7 @@ describe('BehaviorSpecGenerator', function () {
                 expect(pluginResult.success).to.equal(false);
                 //expect(pluginResult).to.deep.equal({});
                 expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(7);
+                expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
             catch (e) {
@@ -277,6 +277,30 @@ describe('BehaviorSpecGenerator', function () {
                 commitHash: commitHash,
                 branchName: 'test',
                 activeNode: '/f/t/q',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on invalid guard expression', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/o',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
