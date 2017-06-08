@@ -16,7 +16,6 @@ var testFixture = require('webgme/test/_globals'),
 var WebGME = testFixture.WebGME,
     gmeConfig = require(WEBGME_CONFIG_PATH),
     getGmeConfig = function getGmeConfig() {
-    'use strict';
     // makes sure that for each request it returns with a unique object and tests will not interfere
     if (!gmeConfig) {
         // if some tests are deleting or unloading the config
