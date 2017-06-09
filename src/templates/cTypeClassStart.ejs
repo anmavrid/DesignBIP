@@ -1,4 +1,5 @@
 
 @ComponentType(initial = "<%- initial %>", name = "org.bip.spec.<%- name %>")
-public class <%- name %> implements BIPSpec {
+public class <%- name %> {
 private Logger logger = LoggerFactory.getLogger(<%- name %>.class);
+private   JSONLogger loggerJSON = JSONLogger.getLogger();
