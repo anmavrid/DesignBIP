@@ -152,7 +152,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/2',
+                activeNode: '/f/t/d',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -176,7 +176,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/1',
+                activeNode: '/f/t/o',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -200,7 +200,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/g',
+                activeNode: '/f/t/T',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -224,7 +224,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/4',
+                activeNode: '/f/t/C',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -248,7 +248,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/2',
+                activeNode: '/f/t/n',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -265,6 +265,29 @@ describe('JavaBIPEngine', function () {
         });
     });
 
+    it('should succeed on valid cardinality', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t/N',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
     it('should fail on invalid cardinality', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
@@ -272,7 +295,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/p',
+                activeNode: '/f/t/O',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
