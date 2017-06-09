@@ -207,7 +207,7 @@ define([
                             parseResult = guardExpressionParser.parse(componentModel.transitions[i].guard);
                         } catch (e) {
                             violations.push({
-                                message: 'Guard expression ['+ componentModel.transitions[i].guard +'] is not a logical expression that has only defined guard names as symbols. Please update. The allowed symbols of logical operators are: & for conjunnction, | for disjunction and ! for negation.',
+                                message: 'Guard expression [' + componentModel.transitions[i].guard + '] is not a logical expression that has only defined guard names as symbols. Please update. The allowed symbols of logical operators are: & for conjunnction, | for disjunction and ! for negation.',
                                 node: componentTypeNode
                             });
                         }

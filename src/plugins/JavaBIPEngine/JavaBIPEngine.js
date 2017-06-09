@@ -112,6 +112,8 @@ define([
             })
                 .then(function (behaviorObject) {
                     var behaviorFiles, file,
+                       compileCode = '',
+                       simulateCode = '',
                         violations, inconsistencies,
                         fileName, testInfo, pathArrayForFile, engineOutputFileName,
                         filesToAdd = {},
@@ -157,17 +159,16 @@ define([
                                 }
                                 fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
                                 for (file in behaviorFiles) {
-                                  //  console.log('javac -cp ' + process.cwd()+ '/engineLibraries/org.javabip.api-0.1.0-SNAPSHOT.jar:org.javabip.executor-0.1.0-SNAPSHOT.jar ' + path + '/' + file);
-                              //      child = exec('javac -cp ' + process.cwd()+ '/engineLibraries/:org.javabip.api-0.1.0-SNAPSHOT.jar:org.javabip.executor-0.1.0-SNAPSHOT.jar ' + path + '/' + fileName, function (error, stdout, stderr) {
-                              // //             //console.log('stdout: ' + stdout);
-                              // //             //console.log('stderr: ' + stderr);
-                              // //     //         filesToAdd[engineOutputFileName] = stdout;
-                              //              if (error !== null) {
-                              //                  throw new Error(error);
-                              //              }
-                              // //         });
-                              // //     // fs.writeFileSync(path + '/' + engineOutputFileName, filesToAdd[engineOutputFileName], 'utf8');
+                                    compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file +'\n\n';
                                }
+                               compileCode += 'javac -cp ".:' + process.cwd() + '/engineLibraries/*" ' + 'org.junit.runner.JUnitCore ' + path + '/' + fileName;
+
+                               fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
+                              //  child = exec('javac -cp ' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file +'\n', function (error, stdout, stderr) {
+                              //          if (error !== null) {
+                              //              throw new Error(error);
+                              //          }
+                              //      });
                           }
 
 
