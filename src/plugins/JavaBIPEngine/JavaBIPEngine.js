@@ -114,7 +114,7 @@ define([
                     var behaviorFiles, file,
                        compileCode = '',
                        simulateCode = '',
-                        violations, inconsistencies,
+                        violations, inconsistencies, 
                         fileName, testInfo, pathArrayForFile, engineOutputFileName,
                         filesToAdd = {},
                         architectureModel = {};
@@ -159,16 +159,29 @@ define([
                                 }
                                 fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
                                 for (file in behaviorFiles) {
-                                    compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file +'\n\n';
-                               }
-                               compileCode += 'javac -cp ".:' + process.cwd() + '/engineLibraries/*" ' + 'org.junit.runner.JUnitCore ' + path + '/' + fileName;
+                                    compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file + '\n\n';
+                                }
+                                compileCode += 'javac -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" ' + path + '/' + fileName;
+                                //simFileName = fileName.slice(0, -5);
+                                console.log(fileName.slice(0, -5));
+                                simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + path + '/' + fileName.slice(0, -5);
 
-                               fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
-                              //  child = exec('javac -cp ' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file +'\n', function (error, stdout, stderr) {
-                              //          if (error !== null) {
-                              //              throw new Error(error);
-                              //          }
-                              //      });
+                                fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
+                                self.sendNotification('Compilation script has been successfully created.');
+
+                                fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
+                                self.sendNotification('Simulation script has been successfully created.');
+
+                                child = exec('chmod 775 ' + path + '/compile.sh', function (error, stdout, stderr) {
+                                        if (error !== null) {
+                                            throw new Error(error);
+                                        }
+                                });
+                                child = exec(path + '/compile.sh', function (error, stdout, stderr) {
+                                        if (error !== null) {
+                                            throw new Error(error);
+                                        }
+                              });
                           }
 
 

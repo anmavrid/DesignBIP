@@ -1,5 +1,3 @@
-package org.javabip.executor;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -87,7 +85,7 @@ public class <%-className%> {
 					noOfTransitions = 0;
 					<%for (var i=componentType.length; i>0;i--) {%>
 						<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) { %>
-							noOfTransitions += component<%-componentType[i-1].name%><%-j%>.transitions;
+							noOfTransitions += component<%-componentType[i-1].name%><%-j%>.noOfTransitions;
 						<%}%>
 					<%}%>
 				}
