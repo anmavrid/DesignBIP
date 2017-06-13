@@ -142,7 +142,7 @@ define([
                     architectureModel = self.getArchitectureModel(nodes);
                     inconsistencies = self.checkConsistency(architectureModel, nodes);
                     if (inconsistencies.length === 0) {
-                        testInfo = self.generateTestInfo(architectureModel);
+                        testInfo = self.generateTestInfo(architectureModel, path);
                         fileName = testInfo.className + '.java';
                         engineOutputFileName = testInfo.className + 'EngineOutput' + Date.now() + '.txt';
                         pathArrayForFile = fileName.split('/');
@@ -176,7 +176,8 @@ define([
                                             throw new Error(error);
                                         }
                               });
-                                simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore '+ path + '/' + fileName.slice(0, -5);
+                                simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + fileName.slice(0, -5);
+
                                 fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
                                 self.sendNotification('Simulation script has been successfully created.');
 
@@ -187,14 +188,12 @@ define([
                                         }
                                 });
                                 child = execSync(path + '/simulate.sh', function (error, stdout, stderr) {
+                                  console.log(stderr);
+                                  console.log(stdout);
                                         if (error !== null) {
-                                          console.log(stderr);
-                                          console.log(stdout);
-                                          console.log(error);
                                             throw new Error(error);
                                         }
                               });
-
                           }
 
 
@@ -372,12 +371,12 @@ define([
         return self.checkConnectorConsistency(architectureModel);
     };
 
-    JavaBIPEngine.prototype.generateTestInfo = function (architectureModel) {
+    JavaBIPEngine.prototype.generateTestInfo = function (architectureModel, path) {
         var self = this,
         currentConfig = this.getCurrentConfig(),
             info = {
             className: self.core.getAttribute(self.activeNode, 'name'),
-            gluePath: 'src/',
+            path: path,
             componentType: architectureModel.componentTypes,
             noOfRequiredTransitions: currentConfig['transitions']
         };

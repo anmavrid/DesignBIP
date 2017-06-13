@@ -61,13 +61,13 @@ public class <%-className%> {
 					componentIDsToNames.put("<%-componentType[i-1].path%>","<%-componentType[i-1].name%>");
 				<%}%>
 
-				BIPGlue bipGlue = createGlue("Glue.xml");
+				BIPGlue bipGlue = createGlue("<%-path%>/Glue.xml");
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
 				<%var total = 0;%>
 				<%for (var i = 0; i < componentType.length; i++) {
-					for (var j = 0; j < componentType[i].cardinalityValue; j++) {
-						componentType[i].name%> component<%-componentType[i].name%><%-(total+j)%> = new <%-componentType[i].name%>("<%-(total+j)%>");
+					for (var j = 0; j < componentType[i].cardinalityValue; j++) {%>
+						<%-componentType[i].name%> component<%-componentType[i].name%><%-(total+j)%> = new <%-componentType[i].name%>("<%-(total+j)%>");
 	          BIPActor actor<%-componentType[i].name%><%-(total+j)%> = engine.register(component<%-componentType[i].name%><%-(total+j)%>, "<%-(total+j)%>", true);
 					<%}%>
 					<%total=total+componentType[i].cardinalityValue;%>
@@ -84,10 +84,12 @@ public class <%-className%> {
 						e.printStackTrace();
 					}
 					noOfTransitions = 0;
-					<%for (var i=componentType.length; i>0;i--) {%>
-						<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) { %>
-							noOfTransitions += component<%-componentType[i-1].name%><%-j%>.noOfTransitions;
+					<%total = 0;%>
+					<%for (var i = 0; i < componentType.length; i++) {
+						for (var j = 0; j < componentType[i].cardinalityValue; j++) {%>
+							noOfTransitions += component<%-componentType[i].name%><%-total+j%>.noOfTransitions;
 						<%}%>
+						<%total=total+componentType[i].cardinalityValue;%>
 					<%}%>
 				}
 
