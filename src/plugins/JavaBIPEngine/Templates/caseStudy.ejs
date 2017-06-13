@@ -64,12 +64,13 @@ public class <%-className%> {
 				BIPGlue bipGlue = createGlue("Glue.xml");
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
-
-				<%for (var i=componentType.length; i>0;i--) {%>
-					<%for (var j=componentType[i-1].cardinalityValue; j>0;j--) {%>
-						<%-componentType[i-1].name%> component<%-componentType[i-1].name%><%-j%> = new <%-componentType[i-1].name%>("<%-j%>");
-	          BIPActor actor<%-componentType[i-1].name%><%-j%> = engine.register(component<%-componentType[i-1].name%><%-j%>, "<%-j%>", true);
+				<%var total = 0;%>
+				<%for (var i = 0; i < componentType.length; i++) {
+					for (var j = 0; j < componentType[i].cardinalityValue; j++) {
+						componentType[i].name%> component<%-componentType[i].name%><%-(total+j)%> = new <%-componentType[i].name%>("<%-(total+j)%>");
+	          BIPActor actor<%-componentType[i].name%><%-(total+j)%> = engine.register(component<%-componentType[i].name%><%-(total+j)%>, "<%-(total+j)%>", true);
 					<%}%>
+					<%total=total+componentType[i].cardinalityValue;%>
 				<%}%>
 
 				engine.specifyGlue(bipGlue);
