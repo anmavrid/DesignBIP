@@ -161,6 +161,8 @@ define([
                     }
                     option.push({causes: causes});
                 }
+            } else {
+                option.push({causes: [{port: []}]});
             }
             macros.accept.push({effect: effect, causes: acceptCauses});
             macros.require.push({effect: effect, causes: {option: option}});

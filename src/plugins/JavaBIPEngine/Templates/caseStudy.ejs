@@ -2,6 +2,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
+import java.io.*;
 
 import org.javabip.spec.*;
 
@@ -9,7 +10,7 @@ import org.javabip.api.BIPActor;
 import org.javabip.api.BIPEngine;
 import org.javabip.api.BIPGlue;
 import org.javabip.engine.factory.EngineFactory;
-import org.javabip.exceptions.BIPException;
+import org.javabip.exceptions.*;
 import org.javabip.glue.GlueBuilder;
 import org.javabip.glue.TwoSynchronGlueBuilder;
 import org.junit.*;
@@ -51,7 +52,7 @@ public class <%-className%> {
 }
 
 		@Test
-	  public void bipTest() throws BIPException {
+	  public void bipTest() throws BIPException, BIPEngineException {
 				int noOfTransitions = 0;
 				Map<String, String> componentIDsToNames = new HashMap<String, String>();
 				Map<String, String> componentIDsToCardinalities = new HashMap<String, String>();
@@ -64,6 +65,7 @@ public class <%-className%> {
 				BIPGlue bipGlue = createGlue("<%-path%>/Glue.xml");
 
 				BIPEngine engine = engineFactory.create("myEngine", bipGlue);
+
 				<%var total = 0;%>
 				<%for (var i = 0; i < componentType.length; i++) {
 					for (var j = 0; j < componentType[i].cardinalityValue; j++) {%>
@@ -73,16 +75,17 @@ public class <%-className%> {
 					<%total=total+componentType[i].cardinalityValue;%>
 				<%}%>
 
-				engine.specifyGlue(bipGlue);
-				engine.start();
-        engine.execute();
+					loggerJSON.beginFirstCycle(componentIDsToNames,componentIDsToCardinalities);
+					engine.start();
+          engine.execute();
 
-				while(noOfTransitions < <%-noOfRequiredTransitions%>) {
-					try {
+				  while(noOfTransitions < <%-noOfRequiredTransitions%> && engine.isEngineExecuting()) {
+					try{
 						Thread.sleep(2000);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+					 e.printStackTrace();
 					}
+
 					noOfTransitions = 0;
 					<%total = 0;%>
 					<%for (var i = 0; i < componentType.length; i++) {
@@ -94,6 +97,12 @@ public class <%-className%> {
 				}
 
 				engine.stop();
+				try {
+				loggerJSON.printCycles("<%-path%>");
+			} catch (FileNotFoundException e){
+				e.printStackTrace();
+			}
 				engineFactory.destroy(engine);
+
 		}
 }

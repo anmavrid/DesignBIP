@@ -68,7 +68,6 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-            //path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path'),
             path,
             fs,
             artifact,
@@ -162,41 +161,31 @@ define([
                                     compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file + '\n\n';
                                 }
                                 compileCode += 'javac -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" ' + path + '/' + fileName;
+
                                 fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
                                 self.sendNotification('Compilation script has been successfully created.');
 
-
-                                child = execSync('chmod 775 ' + path + '/compile.sh', function (error, stdout, stderr) {
-                                        if (error !== null) {
-                                            throw new Error(error);
-                                        }
-                                });
-                                child = execSync(path + '/compile.sh', function (error, stdout, stderr) {
-                                        if (error !== null) {
-                                            throw new Error(error);
-                                        }
-                              });
+                                child = execSync('chmod 775 ' + path + '/compile.sh');
+                                try {
+                                    child = execSync(path + '/compile.sh');
+                                } catch (e) {
+                                    console.log(e.stderr);
+                                }
                                 simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + fileName.slice(0, -5);
 
                                 fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
                                 self.sendNotification('Simulation script has been successfully created.');
 
-                                child = execSync('chmod 775 ' + path + '/simulate.sh', function (error, stdout, stderr) {
-                                        if (error !== null) {
-                                          console.log(stderr);
-                                            throw new Error(error);
-                                        }
-                                });
-                                child = execSync(path + '/simulate.sh', function (error, stdout, stderr) {
-                                  console.log(stderr);
-                                  console.log(stdout);
-                                        if (error !== null) {
-                                            throw new Error(error);
-                                        }
-                              });
-                          }
-
-
+                                child = execSync('chmod 775 ' + path + '/simulate.sh');
+                                try {
+                                    child = execSync(path + '/simulate.sh');
+                                } catch (e) {
+                                    console.log('stderr ' + e.stderr);
+                                }
+                                self.sendNotification('Engine execution has finished.');
+                                filesToAdd['engineOutput.json'] = fs.readFileSync(path + '/engineOutput.json');
+                                //filesToAdd['engineOutput.json'] = JSON.stringify(require(path + '/engineOutput'));
+                            }
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
                         return artifact.addFiles(filesToAdd);
@@ -207,8 +196,13 @@ define([
                         throw new Error('Model has ' + inconsistencies.length + ' inconsistencies, see messages for details.');
                     }
                 })
-                .then(function (fileHash) {
-                    self.result.addArtifact(fileHash);
+                .then(function (fileHashes) {
+                    fileHashes.forEach(function (fileHash) {
+                        self.result.addArtifact(fileHash);
+                        //self.core.setAttribute(self.activeNode, 'engineOutput', fileHash);
+		                    //self.save('Engine output added to results');
+                    });
+
                     return artifact.save();
                 })
                 .then(function (artifactHash) {
@@ -220,7 +214,7 @@ define([
                     self.logger.error(err.stack);
                     // Result success is false at invocation.
                     callback(err, self.result);
-                }) ;
+                });
     };
 
     JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
