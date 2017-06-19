@@ -276,7 +276,7 @@ define([
                 }
             } else {
                 for (end of connector.ends) {
-                    if (end.port.name !== port.name) {
+                    if (end.port.id !== port.id) {
                         macros.accept.add(end.port);
                     }
                 }
@@ -292,8 +292,7 @@ define([
                 }
                 for (end of connector.ends) {
                     if (triggerExists === false) {
-                        //TODO: update ports of different components may have the same names
-                        if ((end.port.name !== port.name || end.multiplicity !== '1') &&
+                        if ((end.port.id !== port.id || end.multiplicity !== '1') &&
                             /^[0-9]$/.test(end.multiplicity)) {
 
                             reqCause = [];
@@ -310,10 +309,9 @@ define([
                             });
                         }
                     } else {
-                        //TODO: update ports of different components may have the same names
                         if (end.type === 'Trigger' &&
                             /^[0-9]$/.test(end.multiplicity) &&
-                            (end.port.name !== port.name || end.multiplicity !== '1' )) {
+                            (end.port.id !== port.id || end.multiplicity !== '1' )) {
                             reqCause = [];
                             for (i = 0; i < parseInt(end.multiplicity); i++) {
                                 reqCause.push(end.port);
@@ -358,6 +356,8 @@ define([
                 port = node;
                 architectureModel.ports.push(port);
                 port.name = self.core.getAttribute(node, 'name');
+                port.id = self.core.getPath(node, 'ID');
+                console.log(port.id);
             } else if (self.isMetaTypeOf(node, self.META.Connector)) {
                 /* If the connector is binary */
                 if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
