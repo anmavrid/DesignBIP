@@ -233,49 +233,52 @@ define([
 
         for (path in nodes) {
             node = nodes[path];
-            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
-                cardinality = self.core.getAttribute(node, 'cardinality');
-                architectureModel.componentTypes.push(node);
-                node.name  = self.core.getAttribute(node, 'name');
-                node.path = path;
-                for (child of self.core.getChildrenPaths(node)) {
-                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
-                        architectureModel.ports.push(nodes[child]);
-                        if (/^[a-z]$/.test(cardinality)) {
-                            node.cardinalityParameter = cardinality;
-                            self.logger.debug('cardinalityParameter ' + node.cardinalityParameter);
-                            cardinality = currentConfig[cardinality];
+            //TODO: Update for hierarchical models
+            if (!self.isMetaTypeOf(self.core.getParent(node), self.META.ArchitectureStylesLibrary) && !self.isMetaTypeOf(self.core.getParent(node), self.META.ComponentTypesLibrary)) {
+                if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+                    cardinality = self.core.getAttribute(node, 'cardinality');
+                    architectureModel.componentTypes.push(node);
+                    node.name  = self.core.getAttribute(node, 'name');
+                    node.path = path;
+                    for (child of self.core.getChildrenPaths(node)) {
+                        if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
+                            architectureModel.ports.push(nodes[child]);
+                            if (/^[a-z]$/.test(cardinality)) {
+                                node.cardinalityParameter = cardinality;
+                                self.logger.debug('cardinalityParameter ' + node.cardinalityParameter);
+                                cardinality = currentConfig[cardinality];
+                            }
+                            self.logger.debug('cardinality: ' + cardinality);
+                            nodes[child].cardinality = cardinality;
                         }
-                        self.logger.debug('cardinality: ' + cardinality);
-                        nodes[child].cardinality = cardinality;
                     }
-                }
-                node.cardinalityValue = cardinality;
-                self.logger.debug('cardinalityValue ' + node.cardinalityValue);
+                    node.cardinalityValue = cardinality;
+                    self.logger.debug('cardinalityValue ' + node.cardinalityValue);
 
-            } else if (self.isMetaTypeOf(node, self.META.Connector)) {
-                /* If the connector is binary */
-                if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
-                    architectureModel.connectors.push(node);
-                    srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
-                    dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
-                    srcConnectorEnd.connector = node;
-                    dstConnectorEnd.connector = node;
-                    node.ends = [srcConnectorEnd, dstConnectorEnd];
-                /* If it is part of an n-ary connector */
-                } else {
-                    architectureModel.subConnectors.push(node);
+                } else if (self.isMetaTypeOf(node, self.META.Connector)) {
+                    /* If the connector is binary */
+                    if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
+                        architectureModel.connectors.push(node);
+                        srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
+                        dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
+                        srcConnectorEnd.connector = node;
+                        dstConnectorEnd.connector = node;
+                        node.ends = [srcConnectorEnd, dstConnectorEnd];
+                    /* If it is part of an n-ary connector */
+                    } else {
+                        architectureModel.subConnectors.push(node);
+                    }
+                } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
+                    architectureModel.connections.push(node);
+                    end = nodes[self.core.getPointerPath(node, 'src')];
+                    if (self.getMetaType(end) !== self.META.Connector) {
+                        architectureModel.connectorEnds.push(end);
+                        end.degree = self.core.getAttribute(end, 'degree');
+                        end.multiplicity = self.core.getAttribute(end, 'multiplicity');
+                    }
+                    //TODO: add export ports for hierarchical connector motifs
                 }
-            } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
-                architectureModel.connections.push(node);
-                end = nodes[self.core.getPointerPath(node, 'src')];
-                if (self.getMetaType(end) !== self.META.Connector) {
-                    architectureModel.connectorEnds.push(end);
-                    end.degree = self.core.getAttribute(end, 'degree');
-                    end.multiplicity = self.core.getAttribute(end, 'multiplicity');
-                }
-                //TODO: add export ports for hierarchical connector motifs
-            }
+          }
         }
         return architectureModel;
     };

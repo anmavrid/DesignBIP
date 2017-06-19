@@ -175,7 +175,8 @@ define([
 
         for (path in nodes) {
             node = nodes[path];
-            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+            //TODO: Update for hierarchical components
+            if (self.isMetaTypeOf(node, self.META.ComponentType) && (!self.isMetaTypeOf(self.core.getParent(node), self.META.ArchitectureStylesLibrary)) && (!self.isMetaTypeOf(self.core.getParent(node), self.META.ComponentTypesLibrary))) {
                 componentTypes.push(path);
             }
         }
