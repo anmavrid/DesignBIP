@@ -116,12 +116,13 @@ define([
                        compileCode = '',
                        simulateCode = '',
                         violations, inconsistencies,
-                        fileName, testInfo, pathArrayForFile, engineOutputFileName,
+                        fileName, testInfo, pathArrayForFile,
                         filesToAdd = {},
                         architectureModel = {};
 
                     if (fs && path && behaviorObject.violations.length === 0) {
                         behaviorFiles = behaviorObject.files;
+                        self.logger.debug(behaviorFiles.length);
                         for (file in behaviorFiles) {
                             fs.writeFileSync(path + '/' + file, behaviorFiles[file], 'utf8');
                         }
@@ -132,7 +133,6 @@ define([
                         throw new Error('Behavior model has ' + behaviorObject.violations.length +
                               '  violation(s), see messages for details.');
                     }
-
                     violations = self.hasViolations(nodes);
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
@@ -142,10 +142,10 @@ define([
                     }
                     architectureModel = self.getArchitectureModel(nodes);
                     inconsistencies = self.checkConsistency(architectureModel, nodes);
+                    self.logger.debug(inconsistencies.length);
                     if (inconsistencies.length === 0) {
                         testInfo = self.generateTestInfo(architectureModel, path);
                         fileName = testInfo.className + '.java';
-                        engineOutputFileName = testInfo.className + 'EngineOutput' + Date.now() + '.txt';
                         pathArrayForFile = fileName.split('/');
                         filesToAdd[fileName] = ejs.render(caseStudyTemplate, testInfo);
 
@@ -193,10 +193,14 @@ define([
                             }
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
-                        return Q.all([
-                          artifact.addFile(fileName, filesToAdd[fileName]),
-                          artifact.addFile('engineOutput.json', filesToAdd['engineOutput.json'])
-                        ]);
+                        if (path && fs) {
+                          return Q.all([
+                            artifact.addFile(fileName, filesToAdd[fileName]),
+                            artifact.addFile('engineOutput.json', filesToAdd['engineOutput.json'])
+                          ]);
+                        } else {
+                          return artifact.addFiles(filesToAdd);
+                        }
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
@@ -207,15 +211,16 @@ define([
                 .then(function (fileHashes) {
                   console.log(fileHashes);
                      fileHashes.forEach(function (fileHash) {
-                       //Q.all returns an array of arrays with one element
                          self.result.addArtifact(fileHash);
                      });
-                    self.core.setAttribute(self.activeNode, 'engineOutput', fileHashes[1]);
-                    console.log('before save', self.currentHash);
-                    return self.save('Engine output added to results');
+                    if (path && fs) {
+                      self.core.setAttribute(self.activeNode, 'engineOutput', fileHashes[1]);
+                      self.logger.debug('before save', self.currentHash);
+                      return self.save('Engine output added to results');
+                    }
                 })
                 .then(function () {
-                  console.log('after save', self.currentHash);
+                  self.logger.debug('after save', self.currentHash);
                   //TODO: Better name of tag..
                   return self.project.createTag('Engine' + Date.now(), self.currentHash);
                 })
