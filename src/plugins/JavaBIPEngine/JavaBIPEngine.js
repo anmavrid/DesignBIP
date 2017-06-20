@@ -11,6 +11,7 @@ define([
     'plugin/PluginConfig',
     'text!./metadata.json',
     'plugin/PluginBase',
+    'q',
      'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser',
      'plugin/ArchitectureSpecGenerator/ArchitectureSpecGenerator/ArchitectureSpecGenerator',
      'plugin/BehaviorSpecGenerator/BehaviorSpecGenerator/BehaviorSpecGenerator',
@@ -21,6 +22,7 @@ define([
     PluginConfig,
     pluginMetadata,
     PluginBase,
+    Q,
     ArithmeticExpressionParser,
     ArchitectureSpecGenerator,
     BehaviorSpecGenerator,
@@ -188,7 +190,7 @@ define([
                             }
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
-                        return artifact.addFiles(filesToAdd);
+                        return Q.all([artifact.addFiles({fileName:filesToAdd[fileName]}), artifact.addFiles({'engineOutput.json':filesToAdd['engineOutput.json']})]);
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
@@ -197,12 +199,13 @@ define([
                     }
                 })
                 .then(function (fileHashes) {
-                    fileHashes.forEach(function (fileHash) {
-                        self.result.addArtifact(fileHash);
-                        //self.core.setAttribute(self.activeNode, 'engineOutput', fileHash);
-		                    //self.save('Engine output added to results');
-                    });
-
+                  console.log(fileHashes);
+                     fileHashes.forEach(function (fileHash) {
+                       //Q.all returns an array of arrays with one element
+                         self.result.addArtifact(fileHash[0]);
+                     });
+                    self.core.setAttribute(self.activeNode, 'engineOutput', fileHashes[1][0]);
+                    self.save('Engine output added to results');
                     return artifact.save();
                 })
                 .then(function (artifactHash) {
