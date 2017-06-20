@@ -167,13 +167,13 @@ define([
 
                                 fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
                                 self.sendNotification('Compilation script has been successfully created.');
-
                                 child = execSync('chmod 775 ' + path + '/compile.sh');
                                 self.sendNotification('Compiling Java code..');
                                 try {
                                     child = execSync(path + '/compile.sh');
                                 } catch (e) {
-                                    console.log(e.stderr);
+                                    self.logger.error(e.stderr);
+                                    throw e;
                                 }
                                 simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + fileName.slice(0, -5);
                                 self.logger.debug(simulateCode);
@@ -186,7 +186,8 @@ define([
                                 try {
                                     child = execSync(path + '/simulate.sh');
                                 } catch (e) {
-                                    console.log('stderr ' + e.stderr);
+                                    self.logger.error('stderr ' + e.stderr);
+                                    throw e;
                                 }
                                 self.sendNotification('Simulation successful.');
                                 filesToAdd['engineOutput.json'] = fs.readFileSync(path + '/engineOutput.json');
@@ -209,7 +210,7 @@ define([
                     }
                 })
                 .then(function (fileHashes) {
-                  console.log(fileHashes);
+                  self.logger.debug(fileHashes);
                      fileHashes.forEach(function (fileHash) {
                          self.result.addArtifact(fileHash);
                      });
@@ -225,7 +226,6 @@ define([
                   return self.project.createTag('Engine' + Date.now(), self.currentHash);
                 })
                 .then(function (result) {
-                  console.log(result);
                   return artifact.save();
                 })
                 .then(function (artifactHash) {
@@ -401,6 +401,7 @@ define([
             noOfRequiredTransitions: currentConfig['transitions']
         };
         info.className = info.className.replace(/\s+/g, '');
+        self.logger.debug("Engine test name: "+ info.className);
         return info;
     };
 
