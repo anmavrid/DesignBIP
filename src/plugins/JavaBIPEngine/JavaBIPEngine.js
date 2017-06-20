@@ -73,14 +73,11 @@ define([
             path,
             fs,
             artifact,
-            nodes,
-            execSync,
-            child;
+            nodes;
 
         if (typeof window === 'undefined') {
             path = process.cwd();
             fs = require('fs');
-            execSync = require('child_process').execSync;
             if (!fs.existsSync('projectOutputs')) {
                 fs.mkdirSync('projectOutputs');
             }
@@ -113,8 +110,6 @@ define([
             })
                 .then(function (behaviorObject) {
                     var behaviorFiles, file,
-                       compileCode = '',
-                       simulateCode = '',
                         violations, inconsistencies,
                         fileName, testInfo, pathArrayForFile,
                         filesToAdd = {},
@@ -148,48 +143,9 @@ define([
                         fileName = testInfo.className + '.java';
                         pathArrayForFile = fileName.split('/');
                         filesToAdd[fileName] = ejs.render(caseStudyTemplate, testInfo);
-
                         if (path && fs) {
                             if (pathArrayForFile.length >= 1) {
-                                try {
-                                    fs.statSync(path);
-                                } catch (err) {
-                                    if (err.code === 'ENOENT') {
-                                        fs.mkdirSync(path);
-                                    }
-                                }
-                                fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
-                                for (file in behaviorFiles) {
-                                    compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file + '\n\n';
-                                }
-                                compileCode += 'javac -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" ' + path + '/' + fileName;
-                                self.logger.debug(compileCode);
-
-                                fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
-                                self.sendNotification('Compilation script has been successfully created.');
-                                child = execSync('chmod 775 ' + path + '/compile.sh');
-                                self.sendNotification('Compiling Java code..');
-                                try {
-                                    child = execSync(path + '/compile.sh');
-                                } catch (e) {
-                                    self.logger.error(e.stderr);
-                                    throw e;
-                                }
-                                simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + fileName.slice(0, -5);
-                                self.logger.debug(simulateCode);
-
-                                fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
-                                self.sendNotification('Compilation successful.');
-
-                                child = execSync('chmod 775 ' + path + '/simulate.sh');
-                                self.sendNotification('Calling simulate..');
-                                try {
-                                    child = execSync(path + '/simulate.sh');
-                                } catch (e) {
-                                    self.logger.error('stderr ' + e.stderr);
-                                    throw e;
-                                }
-                                self.sendNotification('Simulation successful.');
+                                self.compileAndSimulate(behaviorFiles, filesToAdd[fileName], fileName, path, fs);
                                 filesToAdd['engineOutput.json'] = fs.readFileSync(path + '/engineOutput.json');
                             }
                         }
@@ -238,6 +194,54 @@ define([
                     // Result success is false at invocation.
                     callback(err, self.result);
                 });
+    };
+
+    JavaBIPEngine.prototype.compileAndSimulate = function (behaviorFiles, fileValue, fileName, path, fs) {
+       var file, child, execSync,
+           self = this,
+           compileCode = '',
+           simulateCode = '';
+
+          execSync = require('child_process').execSync;
+          try {
+              fs.statSync(path);
+          } catch (err) {
+              if (err.code === 'ENOENT') {
+                  fs.mkdirSync(path);
+              }
+          }
+          fs.writeFileSync(path + '/' + fileName, fileValue, 'utf8');
+          for (file in behaviorFiles) {
+              compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file + '\n\n';
+          }
+          compileCode += 'javac -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" ' + path + '/' + fileName;
+          self.logger.debug(compileCode);
+
+          fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
+          self.sendNotification('Compilation script has been successfully created.');
+          child = execSync('chmod 775 ' + path + '/compile.sh');
+          self.sendNotification('Compiling Java code..');
+          try {
+              child = execSync(path + '/compile.sh');
+          } catch (e) {
+              self.logger.error(e.stderr);
+              throw e;
+          }
+          simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + fileName.slice(0, -5);
+          self.logger.debug(simulateCode);
+
+          fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
+          self.sendNotification('Compilation successful.');
+
+          child = execSync('chmod 775 ' + path + '/simulate.sh');
+          self.sendNotification('Calling simulate..');
+          try {
+              child = execSync(path + '/simulate.sh');
+          } catch (e) {
+              self.logger.error('stderr ' + e.stderr);
+              throw e;
+          }
+          self.sendNotification('Simulation successful.');
     };
 
     JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
