@@ -163,30 +163,33 @@ define([
                                     compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file + '\n\n';
                                 }
                                 compileCode += 'javac -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" ' + path + '/' + fileName;
+                                self.logger.debug(compileCode);
 
                                 fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
                                 self.sendNotification('Compilation script has been successfully created.');
 
                                 child = execSync('chmod 775 ' + path + '/compile.sh');
+                                self.sendNotification('Compiling Java code..');
                                 try {
                                     child = execSync(path + '/compile.sh');
                                 } catch (e) {
                                     console.log(e.stderr);
                                 }
                                 simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + fileName.slice(0, -5);
+                                self.logger.debug(simulateCode);
 
                                 fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
-                                self.sendNotification('Simulation script has been successfully created.');
+                                self.sendNotification('Compilation successful.');
 
                                 child = execSync('chmod 775 ' + path + '/simulate.sh');
+                                self.sendNotification('Calling simulate..');
                                 try {
                                     child = execSync(path + '/simulate.sh');
                                 } catch (e) {
                                     console.log('stderr ' + e.stderr);
                                 }
-                                self.sendNotification('Engine execution has finished.');
+                                self.sendNotification('Simulation successful.');
                                 filesToAdd['engineOutput.json'] = fs.readFileSync(path + '/engineOutput.json');
-                                //filesToAdd['engineOutput.json'] = JSON.stringify(require(path + '/engineOutput'));
                             }
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
@@ -211,7 +214,7 @@ define([
                     console.log('before save', self.currentHash);
                     return self.save('Engine output added to results');
                 })
-                .then(function (result) {
+                .then(function () {
                   console.log('after save', self.currentHash);
                   //TODO: Better name of tag..
                   return self.project.createTag('Engine' + Date.now(), self.currentHash);
