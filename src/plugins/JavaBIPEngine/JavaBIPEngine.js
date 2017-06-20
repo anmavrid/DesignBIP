@@ -190,7 +190,10 @@ define([
                             }
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
-                        return Q.all([artifact.addFiles({fileName:filesToAdd[fileName]}), artifact.addFiles({'engineOutput.json':filesToAdd['engineOutput.json']})]);
+                        return Q.all([
+                          artifact.addFile(fileName, filesToAdd[fileName]),
+                          artifact.addFile('engineOutput.json', filesToAdd['engineOutput.json'])
+                        ]);
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
@@ -202,11 +205,20 @@ define([
                   console.log(fileHashes);
                      fileHashes.forEach(function (fileHash) {
                        //Q.all returns an array of arrays with one element
-                         self.result.addArtifact(fileHash[0]);
+                         self.result.addArtifact(fileHash);
                      });
-                    self.core.setAttribute(self.activeNode, 'engineOutput', fileHashes[1][0]);
-                    self.save('Engine output added to results');
-                    return artifact.save();
+                    self.core.setAttribute(self.activeNode, 'engineOutput', fileHashes[1]);
+                    console.log('before save', self.currentHash);
+                    return self.save('Engine output added to results');
+                })
+                .then(function (result) {
+                  console.log('after save', self.currentHash);
+                  //TODO: Better name of tag..
+                  return self.project.createTag('Engine' + Date.now(), self.currentHash);
+                })
+                .then(function (result) {
+                  console.log(result);
+                  return artifact.save();
                 })
                 .then(function (artifactHash) {
                     self.result.addArtifact(artifactHash);
