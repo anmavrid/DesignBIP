@@ -54,6 +54,7 @@ describe('BehaviorSpecGenerator', function () {
     });
 
     it('should succeed on valid model', function (done) {
+        this.timeout(3500);
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
             context = {
