@@ -53,285 +53,238 @@ describe('JavaBIPEngine', function () {
             .nodeify(done);
     });
 
-    // it('should succeed on valid model', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/u',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(err).to.equal(null);
-    //             expect(typeof pluginResult).to.equal('object');
-    //             expect(pluginResult.success).to.equal(true);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should succeed on valid model', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/e',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(err).to.equal(null);
-    //             expect(typeof pluginResult).to.equal('object');
-    //             expect(pluginResult.success).to.equal(true);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should succeed on valid model', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/9',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(err).to.equal(null);
-    //             expect(typeof pluginResult).to.equal('object');
-    //             expect(pluginResult.success).to.equal(true);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should succeed on valid model', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/Q',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(err).to.equal(null);
-    //             expect(typeof pluginResult).to.equal('object');
-    //             expect(pluginResult.success).to.equal(true);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should succeed on valid model', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(err).to.equal(null);
-    //             expect(typeof pluginResult).to.equal('object');
-    //             expect(pluginResult.success).to.equal(true);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
+    it('should succeed on valid model', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+              transitions: 1000,
+              cardinality: 2,
+              p: 3,
+              t: 3
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/u',
+            };
+        this.timeout(20000);
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
 
-    // it('should fail on invalid cardinality', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t/d',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(pluginResult.success).to.equal(false);
-    //             //expect(pluginResult).to.deep.equal({});
-    //             expect(pluginResult.error).to.include('violation(s)');
-    //             expect(pluginResult.messages.length).to.equal(1);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should fail on invalid cardinality', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t/o',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(pluginResult.success).to.equal(false);
-    //             //expect(pluginResult).to.deep.equal({});
-    //             expect(pluginResult.error).to.include('violation(s)');
-    //             expect(pluginResult.messages.length).to.equal(1);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should fail on invalid cardinality', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t/T',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(pluginResult.success).to.equal(false);
-    //             //expect(pluginResult).to.deep.equal({});
-    //             expect(pluginResult.error).to.include('violation(s)');
-    //             expect(pluginResult.messages.length).to.equal(1);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should fail on invalid cardinality', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t/C',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(pluginResult.success).to.equal(false);
-    //             //expect(pluginResult).to.deep.equal({});
-    //             expect(pluginResult.error).to.include('violation(s)');
-    //             expect(pluginResult.messages.length).to.equal(1);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should fail on invalid cardinality', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t/n',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(pluginResult.success).to.equal(false);
-    //             //expect(pluginResult).to.deep.equal({});
-    //             expect(pluginResult.error).to.include('violation(s)');
-    //             expect(pluginResult.messages.length).to.equal(1);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should succeed on valid cardinality', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t/N',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(err).to.equal(null);
-    //             expect(typeof pluginResult).to.equal('object');
-    //             expect(pluginResult.success).to.equal(true);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
-    //
-    // it('should fail on invalid cardinality', function (done) {
-    //     var manager = new PluginCliManager(null, logger, gmeConfig),
-    //         pluginConfig = {},
-    //         context = {
-    //             project: project,
-    //             commitHash: commitHash,
-    //             branchName: 'test',
-    //             activeNode: '/f/t/O',
-    //         };
-    //
-    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-    //         try {
-    //             expect(pluginResult.success).to.equal(false);
-    //             //expect(pluginResult).to.deep.equal({});
-    //             expect(pluginResult.error).to.include('violation(s)');
-    //             expect(pluginResult.messages.length).to.equal(1);
-    //             done();
-    //         }
-    //         catch (e) {
-    //             done(e);
-    //         }
-    //     });
-    // });
+    it('should fail on non equal matching factors', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+                transitions: 1000,
+                cardinality: 3,
+                k: 3,
+                n: 3,
+                m: 3
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/e',
+            };
+        this.timeout(10000);
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                expect(pluginResult.error).to.include('inconsistencies');
+                expect(pluginResult.messages.length).to.equal(4);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should succeed on valid model', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+              transitions: 1000,
+              cardinality: 3,
+              k: 3,
+              n: 3,
+              m: 3
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/9',
+            };
+        this.timeout(20000);
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on inconsistency', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+                transitions: 1000,
+                cardinality: 2,
+                m: 3,
+                n: 3
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/Q',
+            };
+        this.timeout(10000);
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should succeed on valid model', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {
+              transitions: 1000,
+              cardinality: 1,
+              n: 3
+            },
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/t',
+            };
+        this.timeout(20000);
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(err).to.equal(null);
+                expect(typeof pluginResult).to.equal('object');
+                expect(pluginResult.success).to.equal(true);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on invalid cardinality n*', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/A/S',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on invalid cardinality ne^2', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/A/6',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on invalid cardinality e!', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/A/A',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
+
+    it('should fail on invalid cardinality 2+1-', function (done) {
+        var manager = new PluginCliManager(null, logger, gmeConfig),
+            pluginConfig = {},
+            context = {
+                project: project,
+                commitHash: commitHash,
+                branchName: 'test',
+                activeNode: '/f/A/T',
+            };
+
+        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+            try {
+                expect(pluginResult.success).to.equal(false);
+                //expect(pluginResult).to.deep.equal({});
+                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.messages.length).to.equal(1);
+                done();
+            }
+            catch (e) {
+                done(e);
+            }
+        });
+    });
 });
