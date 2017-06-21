@@ -67,7 +67,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/u',
             };
-        this.timeout(20000);
+        this.timeout(30000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(err).to.equal(null);
@@ -125,7 +125,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/9',
             };
-        this.timeout(20000);
+        this.timeout(30000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(err).to.equal(null);
@@ -180,7 +180,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/t',
             };
-        this.timeout(20000);
+        this.timeout(30000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(err).to.equal(null);
@@ -203,7 +203,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/A/S',
             };
-
+        this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -226,7 +226,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/A/6',
             };
-
+        this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -249,7 +249,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/A/A',
             };
-
+        this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -273,7 +273,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/A/T',
             };
-
+        this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);

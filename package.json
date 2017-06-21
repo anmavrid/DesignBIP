@@ -12,7 +12,7 @@
   "scripts": {
     "start": "node app.js",
     "test": "node ./node_modules/mocha/bin/mocha --recursive test",
-    "test_cover": "node ./node_modules/istanbul/lib/cli.js --hook-run-in-context cover node_modules/mocha/bin/_mocha -- -R spec --timeout 10000 --recursive test",
+    "test_cover": "node ./node_modules/istanbul/lib/cli.js --hook-run-in-context cover node_modules/mocha/bin/_mocha -- -R spec --timeout 100000 --recursive test",
     "apply": "node ./node_modules/webgme/src/bin/apply.js",
     "diff": "node ./node_modules/webgme/src/bin/diff.js",
     "export": "node ./node_modules/webgme/src/bin/export.js",
