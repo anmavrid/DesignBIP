@@ -27,16 +27,16 @@ describe('JavaBIPEngine', function () {
                 return storage.openDatabase();
             })
             .then(function () {
-                var importParam = {
-                    projectSeed: testFixture.path.join(__dirname, 'JavaBIPEngine_violations.webgmex'),
-                    projectName: projectName,
-                    branchName: 'master',
-                    logger: logger,
-                    gmeConfig: gmeConfig
-                };
+                    var importParam = {
+                        projectSeed: testFixture.path.join(__dirname, 'JavaBIPEngine_violations.webgmex'),
+                        projectName: projectName,
+                        branchName: 'master',
+                        logger: logger,
+                        gmeConfig: gmeConfig
+                    };
 
-                return testFixture.importProject(storage, importParam);
-            })
+                    return testFixture.importProject(storage, importParam);
+                })
             .then(function (importResult) {
                 project = importResult.project;
                 commitHash = importResult.commitHash;
@@ -53,125 +53,120 @@ describe('JavaBIPEngine', function () {
             .nodeify(done);
     });
 
-    it('should succeed on valid model', function (done) {
-        this.timeout(3500);
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/u',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(err).to.equal(null);
-                expect(typeof pluginResult).to.equal('object');
-                expect(pluginResult.success).to.equal(true);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should succeed on valid model', function (done) {
-        this.timeout(3500);
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/e',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(err).to.equal(null);
-                expect(typeof pluginResult).to.equal('object');
-                expect(pluginResult.success).to.equal(true);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should succeed on valid model', function (done) {
-        this.timeout(3500);
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/9',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(err).to.equal(null);
-                expect(typeof pluginResult).to.equal('object');
-                expect(pluginResult.success).to.equal(true);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should succeed on valid model', function (done) {
-        this.timeout(3500);
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/Q',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(err).to.equal(null);
-                expect(typeof pluginResult).to.equal('object');
-                expect(pluginResult.success).to.equal(true);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should succeed on valid model', function (done) {
-        this.timeout(3500);
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/t',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(err).to.equal(null);
-                expect(typeof pluginResult).to.equal('object');
-                expect(pluginResult.success).to.equal(true);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
+    // it('should succeed on valid model', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/u',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(err).to.equal(null);
+    //             expect(typeof pluginResult).to.equal('object');
+    //             expect(pluginResult.success).to.equal(true);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should succeed on valid model', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/e',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(err).to.equal(null);
+    //             expect(typeof pluginResult).to.equal('object');
+    //             expect(pluginResult.success).to.equal(true);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should succeed on valid model', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/9',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(err).to.equal(null);
+    //             expect(typeof pluginResult).to.equal('object');
+    //             expect(pluginResult.success).to.equal(true);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should succeed on valid model', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/Q',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(err).to.equal(null);
+    //             expect(typeof pluginResult).to.equal('object');
+    //             expect(pluginResult.success).to.equal(true);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should succeed on valid model', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(err).to.equal(null);
+    //             expect(typeof pluginResult).to.equal('object');
+    //             expect(pluginResult.success).to.equal(true);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
 
     // it('should fail on invalid cardinality', function (done) {
     //     var manager = new PluginCliManager(null, logger, gmeConfig),
