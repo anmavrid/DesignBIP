@@ -211,6 +211,7 @@ define([
             }
         }
         fs.writeFileSync(path + '/' + fileName, fileValue, 'utf8');
+        compileCode += '#!/bin/bash '+ '\n\n';
         for (file in behaviorFiles) {
             compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file + '\n\n';
         }
@@ -218,11 +219,11 @@ define([
         self.logger.debug(compileCode);
 
         fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
-        self.sendNotification('Compilation script has been successfully created.');
-        child = execSync('chmod 775 ' + path + '/compile.sh');
+        //self.sendNotification('Compilation script has been successfully created.');
+        //child = execSync('chmod 775 ' + path + '/compile.sh');
         self.sendNotification('Compiling Java code..');
         try {
-            child = execSync(path + '/compile.sh');
+            child = execSync('/bin/bash ' + path + '/compile.sh');
         } catch (e) {
             self.logger.error(e.stderr);
             throw e;
@@ -233,10 +234,10 @@ define([
         fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
         self.sendNotification('Compilation successful.');
 
-        child = execSync('chmod 775 ' + path + '/simulate.sh');
+        //child = execSync('chmod 775 ' + path + '/simulate.sh');
         self.sendNotification('Calling simulate..');
         try {
-            child = execSync(path + '/simulate.sh');
+            child = execSync('/bin/bash ' + path + '/simulate.sh');
         } catch (e) {
             self.logger.error('stderr ' + e.stderr);
             throw e;
@@ -257,7 +258,6 @@ define([
             connections: [],
             connectors: []
         };
-
         for (path in nodes) {
             node = nodes[path];
             //TODO: Update for hierarchical models
