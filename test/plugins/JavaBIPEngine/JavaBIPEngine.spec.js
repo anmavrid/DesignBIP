@@ -27,16 +27,16 @@ describe('JavaBIPEngine', function () {
                 return storage.openDatabase();
             })
             .then(function () {
-                var importParam = {
-                    projectSeed: testFixture.path.join(__dirname, 'JavaBIPEngine_violations.webgmex'),
-                    projectName: projectName,
-                    branchName: 'master',
-                    logger: logger,
-                    gmeConfig: gmeConfig
-                };
+                    var importParam = {
+                        projectSeed: testFixture.path.join(__dirname, 'JavaBIPEngine_violations.webgmex'),
+                        projectName: projectName,
+                        branchName: 'master',
+                        logger: logger,
+                        gmeConfig: gmeConfig
+                    };
 
-                return testFixture.importProject(storage, importParam);
-            })
+                    return testFixture.importProject(storage, importParam);
+                })
             .then(function (importResult) {
                 project = importResult.project;
                 commitHash = importResult.commitHash;
@@ -60,7 +60,7 @@ describe('JavaBIPEngine', function () {
     //             project: project,
     //             commitHash: commitHash,
     //             branchName: 'test',
-    //             activeNode: '/f/a',
+    //             activeNode: '/f/u',
     //         };
     //
     //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -75,7 +75,7 @@ describe('JavaBIPEngine', function () {
     //         }
     //     });
     // });
-
+    //
     // it('should succeed on valid model', function (done) {
     //     var manager = new PluginCliManager(null, logger, gmeConfig),
     //         pluginConfig = {},
@@ -83,7 +83,7 @@ describe('JavaBIPEngine', function () {
     //             project: project,
     //             commitHash: commitHash,
     //             branchName: 'test',
-    //             activeNode: '/f/B',
+    //             activeNode: '/f/e',
     //         };
     //
     //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -98,7 +98,7 @@ describe('JavaBIPEngine', function () {
     //         }
     //     });
     // });
-
+    //
     // it('should succeed on valid model', function (done) {
     //     var manager = new PluginCliManager(null, logger, gmeConfig),
     //         pluginConfig = {},
@@ -106,7 +106,7 @@ describe('JavaBIPEngine', function () {
     //             project: project,
     //             commitHash: commitHash,
     //             branchName: 'test',
-    //             activeNode: '/f/T',
+    //             activeNode: '/f/9',
     //         };
     //
     //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -121,7 +121,7 @@ describe('JavaBIPEngine', function () {
     //         }
     //     });
     // });
-
+    //
     // it('should succeed on valid model', function (done) {
     //     var manager = new PluginCliManager(null, logger, gmeConfig),
     //         pluginConfig = {},
@@ -129,7 +129,30 @@ describe('JavaBIPEngine', function () {
     //             project: project,
     //             commitHash: commitHash,
     //             branchName: 'test',
-    //             activeNode: '/f/7',
+    //             activeNode: '/f/Q',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(err).to.equal(null);
+    //             expect(typeof pluginResult).to.equal('object');
+    //             expect(pluginResult.success).to.equal(true);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should succeed on valid model', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t',
     //         };
     //
     //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -145,147 +168,170 @@ describe('JavaBIPEngine', function () {
     //     });
     // });
 
-    it('should fail on invalid cardinality', function (done) {
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/t/2',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(pluginResult.success).to.equal(false);
-                //expect(pluginResult).to.deep.equal({});
-                expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(1);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should fail on invalid cardinality', function (done) {
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/t/1',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(pluginResult.success).to.equal(false);
-                //expect(pluginResult).to.deep.equal({});
-                expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(1);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should fail on invalid cardinality', function (done) {
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/t/g',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(pluginResult.success).to.equal(false);
-                //expect(pluginResult).to.deep.equal({});
-                expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(1);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should fail on invalid cardinality', function (done) {
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/t/4',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(pluginResult.success).to.equal(false);
-                //expect(pluginResult).to.deep.equal({});
-                expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(1);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should fail on invalid cardinality', function (done) {
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/t/2',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(pluginResult.success).to.equal(false);
-                //expect(pluginResult).to.deep.equal({});
-                expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(1);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
-
-    it('should fail on invalid cardinality', function (done) {
-        var manager = new PluginCliManager(null, logger, gmeConfig),
-            pluginConfig = {},
-            context = {
-                project: project,
-                commitHash: commitHash,
-                branchName: 'test',
-                activeNode: '/f/t/p',
-            };
-
-        manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
-            try {
-                expect(pluginResult.success).to.equal(false);
-                //expect(pluginResult).to.deep.equal({});
-                expect(pluginResult.error).to.include('violation(s)');
-                expect(pluginResult.messages.length).to.equal(1);
-                done();
-            }
-            catch (e) {
-                done(e);
-            }
-        });
-    });
+    // it('should fail on invalid cardinality', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t/d',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(pluginResult.success).to.equal(false);
+    //             //expect(pluginResult).to.deep.equal({});
+    //             expect(pluginResult.error).to.include('violation(s)');
+    //             expect(pluginResult.messages.length).to.equal(1);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should fail on invalid cardinality', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t/o',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(pluginResult.success).to.equal(false);
+    //             //expect(pluginResult).to.deep.equal({});
+    //             expect(pluginResult.error).to.include('violation(s)');
+    //             expect(pluginResult.messages.length).to.equal(1);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should fail on invalid cardinality', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t/T',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(pluginResult.success).to.equal(false);
+    //             //expect(pluginResult).to.deep.equal({});
+    //             expect(pluginResult.error).to.include('violation(s)');
+    //             expect(pluginResult.messages.length).to.equal(1);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should fail on invalid cardinality', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t/C',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(pluginResult.success).to.equal(false);
+    //             //expect(pluginResult).to.deep.equal({});
+    //             expect(pluginResult.error).to.include('violation(s)');
+    //             expect(pluginResult.messages.length).to.equal(1);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should fail on invalid cardinality', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t/n',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(pluginResult.success).to.equal(false);
+    //             //expect(pluginResult).to.deep.equal({});
+    //             expect(pluginResult.error).to.include('violation(s)');
+    //             expect(pluginResult.messages.length).to.equal(1);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should succeed on valid cardinality', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t/N',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(err).to.equal(null);
+    //             expect(typeof pluginResult).to.equal('object');
+    //             expect(pluginResult.success).to.equal(true);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
+    //
+    // it('should fail on invalid cardinality', function (done) {
+    //     var manager = new PluginCliManager(null, logger, gmeConfig),
+    //         pluginConfig = {},
+    //         context = {
+    //             project: project,
+    //             commitHash: commitHash,
+    //             branchName: 'test',
+    //             activeNode: '/f/t/O',
+    //         };
+    //
+    //     manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
+    //         try {
+    //             expect(pluginResult.success).to.equal(false);
+    //             //expect(pluginResult).to.deep.equal({});
+    //             expect(pluginResult.error).to.include('violation(s)');
+    //             expect(pluginResult.messages.length).to.equal(1);
+    //             done();
+    //         }
+    //         catch (e) {
+    //             done(e);
+    //         }
+    //     });
+    // });
 });

@@ -11,20 +11,24 @@ define([
     'plugin/PluginConfig',
     'text!./metadata.json',
     'plugin/PluginBase',
+    'q',
      'plugin/JavaBIPEngine/JavaBIPEngine/ArithmeticExpressionParser',
      'plugin/ArchitectureSpecGenerator/ArchitectureSpecGenerator/ArchitectureSpecGenerator',
      'plugin/BehaviorSpecGenerator/BehaviorSpecGenerator/BehaviorSpecGenerator',
      'common/util/ejs',
-     'text!./Templates/caseStudy.ejs'
+     'text!./Templates/caseStudy.ejs',
+     'common/util/guid'
 ], function (
     PluginConfig,
     pluginMetadata,
     PluginBase,
+    Q,
     ArithmeticExpressionParser,
     ArchitectureSpecGenerator,
     BehaviorSpecGenerator,
     ejs,
-    caseStudyTemplate) {
+    caseStudyTemplate,
+    guid) {
     'use strict';
 
     pluginMetadata = JSON.parse(pluginMetadata);
@@ -66,79 +70,94 @@ define([
         // Use self to access core, project, result, logger etc from PluginBase.
         // These are all instantiated at this point.
         var self = this,
-            path = self.core.getAttribute(self.core.getParent(self.activeNode), 'path'),
+            path,
             fs,
             artifact,
             nodes;
-            //exec,
-            //child;
 
-        if (path) {
-            path += '/' + self.core.getAttribute(self.activeNode, 'name');
-            path = path.replace(/\s+/g, '');
-            if (typeof window === 'undefined') {
-                // Running on server
-                fs = require('fs');
-                //exec = require('child_process').exec;
+        if (typeof window === 'undefined') {
+            path = process.cwd();
+            fs = require('fs');
+            if (!fs.existsSync('projectOutputs')) {
+                fs.mkdirSync('projectOutputs');
             }
+            path += '/projectOutputs/' + self.core.getAttribute(self.activeNode, 'name') + guid();
+            path = path.replace(/\s+/g, '');
         }
-
 
         self.loadNodeMap(self.activeNode)
             .then(function (nodes_) {
+                var glueObject;
                 nodes = nodes_;
-                // TODO: Use this properly
-                console.log(ArchitectureSpecGenerator.getGeneratedFile(self, nodes, self.activeNode));
+                glueObject = ArchitectureSpecGenerator.getGeneratedFile(self, nodes, self.activeNode);
+                if (fs && path && glueObject.violations.length === 0) {
+                    try {
+                        fs.statSync(path);
+                    } catch (err) {
+                        if (err.code === 'ENOENT') {
+                            fs.mkdirSync(path);
+                        }
+                    }
+                    fs.writeFileSync(path + '/' + 'Glue.xml', glueObject.fileContent, 'utf8');
+                } else if (glueObject.violations.length > 0) {
+                    glueObject.violations.forEach(function (violation) {
+                        self.createMessage(violation.node, violation.message, 'error');
+                    });
+                    throw new Error('Architecture model has ' + glueObject.violations.length +
+                          '  violation(s), see messages for details.');
+                }
                 return BehaviorSpecGenerator.getGeneratedFiles(self, nodes, self.activeNode);
             })
-                .then(function (result) {
-                    // TODO: Use this properly
-                    console.log(result);
-
-                    var violations = self.hasViolations(nodes),
-                        inconsistencies, fileName, testInfo, pathArrayForFile, engineOutputFileName,
+                .then(function (behaviorObject) {
+                    var behaviorFiles, file,
+                        violations, inconsistencies,
+                        fileName, testInfo, pathArrayForFile,
                         filesToAdd = {},
                         architectureModel = {};
+
+                    if (fs && path && behaviorObject.violations.length === 0) {
+                        behaviorFiles = behaviorObject.files;
+                        self.logger.debug(behaviorFiles.length);
+                        for (file in behaviorFiles) {
+                            fs.writeFileSync(path + '/' + file, behaviorFiles[file], 'utf8');
+                        }
+                    } else if (behaviorObject.violations.length > 0) {
+                        behaviorObject.violations.forEach(function (violation) {
+                            self.createMessage(violation.node, violation.message, 'error');
+                        });
+                        throw new Error('Behavior model has ' + behaviorObject.violations.length +
+                              '  violation(s), see messages for details.');
+                    }
+                    violations = self.hasViolations(nodes);
                     if (violations.length > 0) {
                         violations.forEach(function (violation) {
                             self.createMessage(violation.node, violation.message, 'error');
                         });
-                        throw new Error('Model has ' + violations.length + ' violation(s), see messages for details.');
+                        throw new Error('Parameterized model has ' + violations.length + ' violation(s), see messages for details.');
                     }
                     architectureModel = self.getArchitectureModel(nodes);
                     inconsistencies = self.checkConsistency(architectureModel, nodes);
+                    self.logger.debug(inconsistencies.length);
                     if (inconsistencies.length === 0) {
-                        testInfo = self.generateTestInfo(architectureModel);
+                        testInfo = self.generateTestInfo(architectureModel, path);
                         fileName = testInfo.className + '.java';
-                        engineOutputFileName = testInfo.className + 'EngineOutput' + Date.now() + '.txt';
                         pathArrayForFile = fileName.split('/');
                         filesToAdd[fileName] = ejs.render(caseStudyTemplate, testInfo);
-
                         if (path && fs) {
                             if (pathArrayForFile.length >= 1) {
-                                try {
-                                    fs.statSync(path);
-                                } catch (err) {
-                                    if (err.code === 'ENOENT') {
-                                        fs.mkdirSync(path);
-                                    }
-                                }
-                                fs.writeFileSync(path + '/' + fileName, filesToAdd[fileName], 'utf8');
-                                // child = exec('mvn test -Dtest=' + testInfo.className, function (error, stdout, stderr) {
-                                //         console.log('stdout: ' + stdout);
-                                //         console.log('stderr: ' + stderr);
-                                //         filesToAdd[engineOutputFileName] = stdout;
-                                //         if (error !== null) {
-                                //             throw new Error('Execution error: ' + error + '.');
-                                //         }
-                                //     });
-                                // fs.writeFileSync(path + '/' + engineOutputFileName, filesToAdd[engineOutputFileName], 'utf8');
+                                self.compileAndSimulate(behaviorFiles, filesToAdd[fileName], fileName, path, fs);
+                                filesToAdd['engineOutput.json'] = fs.readFileSync(path + '/engineOutput.json');
                             }
-
-
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
-                        return artifact.addFiles(filesToAdd);
+                        if (path && fs) {
+                          return Q.all([
+                            artifact.addFile(fileName, filesToAdd[fileName]),
+                            artifact.addFile('engineOutput.json', filesToAdd['engineOutput.json'])
+                          ]);
+                        } else {
+                          return artifact.addFiles(filesToAdd);
+                        }
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
                             self.createMessage(inconsistency.node, inconsistency.message, 'error');
@@ -146,9 +165,24 @@ define([
                         throw new Error('Model has ' + inconsistencies.length + ' inconsistencies, see messages for details.');
                     }
                 })
-                .then(function (fileHash) {
-                    self.result.addArtifact(fileHash);
-                    return artifact.save();
+                .then(function (fileHashes) {
+                  self.logger.debug(fileHashes);
+                     fileHashes.forEach(function (fileHash) {
+                         self.result.addArtifact(fileHash);
+                     });
+                    if (path && fs) {
+                      self.core.setAttribute(self.activeNode, 'engineOutput', fileHashes[1]);
+                      self.logger.debug('before save', self.currentHash);
+                      return self.save('Engine output added to results');
+                    }
+                })
+                .then(function () {
+                  self.logger.debug('after save', self.currentHash);
+                  //TODO: Better name of tag..
+                  return self.project.createTag('Engine' + Date.now(), self.currentHash);
+                })
+                .then(function () {
+                  return artifact.save();
                 })
                 .then(function (artifactHash) {
                     self.result.addArtifact(artifactHash);
@@ -159,7 +193,55 @@ define([
                     self.logger.error(err.stack);
                     // Result success is false at invocation.
                     callback(err, self.result);
-                }) ;
+                });
+    };
+
+    JavaBIPEngine.prototype.compileAndSimulate = function (behaviorFiles, fileValue, fileName, path, fs) {
+        var file, child, execSync,
+           self = this,
+           compileCode = '',
+           simulateCode = '';
+
+        execSync = require('child_process').execSync;
+        try {
+            fs.statSync(path);
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                fs.mkdirSync(path);
+            }
+        }
+        fs.writeFileSync(path + '/' + fileName, fileValue, 'utf8');
+        for (file in behaviorFiles) {
+            compileCode += 'javac -cp "' + process.cwd() + '/engineLibraries/*" ' + path + '/' + file + '\n\n';
+        }
+        compileCode += 'javac -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" ' + path + '/' + fileName;
+        self.logger.debug(compileCode);
+
+        fs.writeFileSync(path + '/compile.sh', compileCode, 'utf8');
+        self.sendNotification('Compilation script has been successfully created.');
+        child = execSync('chmod 775 ' + path + '/compile.sh');
+        self.sendNotification('Compiling Java code..');
+        try {
+            child = execSync(path + '/compile.sh');
+        } catch (e) {
+            self.logger.error(e.stderr);
+            throw e;
+        }
+        simulateCode = 'java -cp "' + path + '/:' + process.cwd() + '/engineLibraries/*" org.junit.runner.JUnitCore ' + fileName.slice(0, -5);
+        self.logger.debug(simulateCode);
+
+        fs.writeFileSync(path + '/simulate.sh', simulateCode, 'utf8');
+        self.sendNotification('Compilation successful.');
+
+        child = execSync('chmod 775 ' + path + '/simulate.sh');
+        self.sendNotification('Calling simulate..');
+        try {
+            child = execSync(path + '/simulate.sh');
+        } catch (e) {
+            self.logger.error('stderr ' + e.stderr);
+            throw e;
+        }
+        self.sendNotification('Simulation successful.');
     };
 
     JavaBIPEngine.prototype.getArchitectureModel = function (nodes) {
@@ -178,53 +260,52 @@ define([
 
         for (path in nodes) {
             node = nodes[path];
-            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
-                cardinality = self.core.getAttribute(node, 'cardinality');
-                //component = node;
-                architectureModel.componentTypes.push(node);
-                node.name  = self.core.getAttribute(node, 'name');
-                node.path = path;
-                for (child of self.core.getChildrenPaths(node)) {
-                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
-                        //var port = nodes[child];
-                        architectureModel.ports.push(nodes[child]);
-                        if (/^[a-z]$/.test(cardinality)) {
-                            node.cardinalityParameter = cardinality;
-                            self.logger.debug('cardinalityParameter ' + node.cardinalityParameter);
-                            cardinality = currentConfig[cardinality];
+            //TODO: Update for hierarchical models
+            if (!self.isMetaTypeOf(self.core.getParent(node), self.META.ArchitectureStylesLibrary) && !self.isMetaTypeOf(self.core.getParent(node), self.META.ComponentTypesLibrary)) {
+                if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+                    cardinality = self.core.getAttribute(node, 'cardinality');
+                    architectureModel.componentTypes.push(node);
+                    node.name  = self.core.getAttribute(node, 'name');
+                    node.path = path;
+                    for (child of self.core.getChildrenPaths(node)) {
+                        if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
+                            architectureModel.ports.push(nodes[child]);
+                            if (/^[a-z]$/.test(cardinality)) {
+                                node.cardinalityParameter = cardinality;
+                                self.logger.debug('cardinalityParameter ' + node.cardinalityParameter);
+                                cardinality = currentConfig[cardinality];
+                            }
+                            self.logger.debug('cardinality: ' + cardinality);
+                            nodes[child].cardinality = cardinality;
                         }
-                        self.logger.debug('cardinality: ' + cardinality);
-                        nodes[child].cardinality = cardinality;
                     }
-                }
-                node.cardinalityValue = cardinality;
-                self.logger.debug('cardinalityValue ' + node.cardinalityValue);
+                    node.cardinalityValue = cardinality;
+                    self.logger.debug('cardinalityValue ' + node.cardinalityValue);
 
-            } else if (self.isMetaTypeOf(node, self.META.Connector)) {
-                /* If the connector is binary */
-                if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
-                    //connector = node;
-                    architectureModel.connectors.push(node);
-                    srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
-                    dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
-                    srcConnectorEnd.connector = node;
-                    dstConnectorEnd.connector = node;
-                    node.ends = [srcConnectorEnd, dstConnectorEnd];
-                /* If it is part of an n-ary connector */
-                } else {
-                    architectureModel.subConnectors.push(node);
+                } else if (self.isMetaTypeOf(node, self.META.Connector)) {
+                    /* If the connector is binary */
+                    if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
+                        architectureModel.connectors.push(node);
+                        srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
+                        dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
+                        srcConnectorEnd.connector = node;
+                        dstConnectorEnd.connector = node;
+                        node.ends = [srcConnectorEnd, dstConnectorEnd];
+                    /* If it is part of an n-ary connector */
+                    } else {
+                        architectureModel.subConnectors.push(node);
+                    }
+                } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
+                    architectureModel.connections.push(node);
+                    end = nodes[self.core.getPointerPath(node, 'src')];
+                    if (self.getMetaType(end) !== self.META.Connector) {
+                        architectureModel.connectorEnds.push(end);
+                        end.degree = self.core.getAttribute(end, 'degree');
+                        end.multiplicity = self.core.getAttribute(end, 'multiplicity');
+                    }
+                    //TODO: add export ports for hierarchical connector motifs
                 }
-            } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
-                architectureModel.connections.push(node);
-                end = nodes[self.core.getPointerPath(node, 'src')];
-                if (self.getMetaType(end) !== self.META.Connector) {
-                    //var connectorEnd = end;
-                    architectureModel.connectorEnds.push(end);
-                    end.degree = self.core.getAttribute(end, 'degree');
-                    end.multiplicity = self.core.getAttribute(end, 'multiplicity');
-                }
-                //TODO: add export ports for hierarchical connector motifs
-            }
+          }
         }
         return architectureModel;
     };
@@ -314,16 +395,17 @@ define([
         return self.checkConnectorConsistency(architectureModel);
     };
 
-    JavaBIPEngine.prototype.generateTestInfo = function (architectureModel) {
+    JavaBIPEngine.prototype.generateTestInfo = function (architectureModel, path) {
         var self = this,
         currentConfig = this.getCurrentConfig(),
             info = {
             className: self.core.getAttribute(self.activeNode, 'name'),
-            gluePath: 'src/',
+            path: path,
             componentType: architectureModel.componentTypes,
             noOfRequiredTransitions: currentConfig['transitions']
         };
         info.className = info.className.replace(/\s+/g, '');
+        self.logger.debug('Engine test name: '+ info.className);
         return info;
     };
 

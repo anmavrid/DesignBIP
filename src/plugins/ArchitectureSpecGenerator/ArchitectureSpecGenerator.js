@@ -59,7 +59,7 @@ define([
         self.loadNodeMap(self.activeNode)
             .then(function (nodes) {
                 var filesToAdd = {},
-                    result = ArchitectureSpecGenerator.getGeneratedFile(self, nodes, self.activeNode);
+                    result = ArchitectureSpecGenerator.getGeneratedFile(self, nodes);
 
                 if (result.violations.length > 0) {
                     result.violations.forEach(function (violation) {
@@ -98,7 +98,7 @@ define([
      *
      * @returns {fileContent: string, violations: Objects[]}
      */
-    ArchitectureSpecGenerator.getGeneratedFile = function (self, nodes, activeNode) {
+    ArchitectureSpecGenerator.getGeneratedFile = function (self, nodes) {
         var result = {
                 violations: ArchitectureSpecGenerator.prototype.getViolations.call(self, nodes),
                 fileContent: null
@@ -161,6 +161,8 @@ define([
                     }
                     option.push({causes: causes});
                 }
+            } else {
+                option.push({causes: [{port: []}]});
             }
             macros.accept.push({effect: effect, causes: acceptCauses});
             macros.require.push({effect: effect, causes: {option: option}});
@@ -274,7 +276,7 @@ define([
                 }
             } else {
                 for (end of connector.ends) {
-                    if (end.port.name !== port.name) {
+                    if (end.port.id !== port.id) {
                         macros.accept.add(end.port);
                     }
                 }
@@ -290,8 +292,7 @@ define([
                 }
                 for (end of connector.ends) {
                     if (triggerExists === false) {
-                        //TODO: update ports of different components may have the same names
-                        if ((end.port.name !== port.name || end.multiplicity !== '1') &&
+                        if ((end.port.id !== port.id || end.multiplicity !== '1') &&
                             /^[0-9]$/.test(end.multiplicity)) {
 
                             reqCause = [];
@@ -308,10 +309,9 @@ define([
                             });
                         }
                     } else {
-                        //TODO: update ports of different components may have the same names
                         if (end.type === 'Trigger' &&
                             /^[0-9]$/.test(end.multiplicity) &&
-                            (end.port.name !== port.name || end.multiplicity !== '1' )) {
+                            (end.port.id !== port.id || end.multiplicity !== '1' )) {
                             reqCause = [];
                             for (i = 0; i < parseInt(end.multiplicity); i++) {
                                 reqCause.push(end.port);
@@ -335,7 +335,7 @@ define([
 
     ArchitectureSpecGenerator.prototype.generateArchitectureModel = function (nodes) {
         var self = this,
-            path, node, end, port, child, connector,
+            path, node, end, port, child, connector, parent,
             srcConnectorEnd, dstConnectorEnd,
             subConnectors = [],
             architectureModel = {
@@ -346,46 +346,52 @@ define([
 
         for (path in nodes) {
             node = nodes[path];
-            if (self.isMetaTypeOf(node, self.META.ComponentType)) {
-                for (child of self.core.getChildrenPaths(node)) {
-                    if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
-                        nodes[child].componentType = path;
+            //TODO: Update for hierarchical models
+            parent = self.core.getParent(node);
+            if (!self.isMetaTypeOf(parent, self.META.ArchitectureStylesLibrary) && !self.isMetaTypeOf(parent, self.META.ComponentTypesLibrary)) {
+                if (self.isMetaTypeOf(node, self.META.ComponentType)) {
+                    for (child of self.core.getChildrenPaths(node)) {
+                        if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
+                            nodes[child].componentType = path;
+                        }
                     }
-                }
-            } else if (self.isMetaTypeOf(node, self.META.EnforceableTransition)) {
-                port = node;
-                architectureModel.ports.push(port);
-                port.name = self.core.getAttribute(node, 'name');
-            } else if (self.isMetaTypeOf(node, self.META.Connector)) {
-                /* If the connector is binary */
-                if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
-                    connector = node;
-                    architectureModel.connectors.push(node);
-                    srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
-                    dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
-                    srcConnectorEnd.connector = node;
-                    dstConnectorEnd.connector = node;
-                    connector.ends = [srcConnectorEnd, dstConnectorEnd];
-                    /* If it is part of an n-ary connector */
-                } else {
-                    subConnectors.push(node);
-                }
-            } else if (self.isMetaTypeOf(node, self.META.Connection) && self.getMetaType(node) !== node) {
-                end = nodes[self.core.getPointerPath(node, 'src')];
-                if (end !== undefined && self.getMetaType(end) !== self.META.Connector) {
-                    architectureModel.connectorEnds.push(end);
-                    port = nodes[self.core.getPointerPath(node, 'dst')];
-                    end.port = port;
-                    if (!port.hasOwnProperty('connectorEnds')) {
-                        port.connectorEnds = [];
+                } else if ((self.isMetaTypeOf(node, self.META.EnforceableTransition)) && (!self.isMetaTypeOf(self.core.getParent(parent), self.META.ArchitectureStylesLibrary)) && (!self.isMetaTypeOf(self.core.getParent(parent), self.META.ComponentTypesLibrary))) {
+                    port = node;
+                    architectureModel.ports.push(port);
+                    port.name = self.core.getAttribute(node, 'name');
+                    port.id = self.core.getPath(node, 'ID');
+                } else if (self.isMetaTypeOf(node, self.META.Connector)) {
+                    /* If the connector is binary */
+                    if (self.getMetaType(nodes[self.core.getPointerPath(node, 'dst')]) !== self.META.Connector) {
+                        connector = node;
+                        architectureModel.connectors.push(node);
+                        srcConnectorEnd = nodes[self.core.getPointerPath(node, 'src')];
+                        dstConnectorEnd = nodes[self.core.getPointerPath(node, 'dst')];
+                        srcConnectorEnd.connector = node;
+                        dstConnectorEnd.connector = node;
+                        connector.ends = [srcConnectorEnd, dstConnectorEnd];
+                        /* If it is part of an n-ary connector */
+                    } else {
+                        subConnectors.push(node);
                     }
-                    port.connectorEnds.push(end);
-                    end.type = self.core.getAttribute(end, 'name');
-                    end.degree = self.core.getAttribute(end, 'degree');
-                    end.multiplicity = self.core.getAttribute(end, 'multiplicity');
+                } else if (self.isMetaTypeOf(node, self.META.Connection)) {
+                    end = nodes[self.core.getPointerPath(node, 'src')];
+                    if (end !== undefined && self.getMetaType(end) !== self.META.Connector) {
+                        architectureModel.connectorEnds.push(end);
+                        port = nodes[self.core.getPointerPath(node, 'dst')];
+                        end.port = port;
+                        if (!port.hasOwnProperty('connectorEnds')) {
+                            port.connectorEnds = [];
+                        }
+                        port.connectorEnds.push(end);
+                        end.type = self.core.getAttribute(end, 'name');
+                        end.degree = self.core.getAttribute(end, 'degree');
+                        end.multiplicity = self.core.getAttribute(end, 'multiplicity');
+                    }
+                    //TODO: add also export ports for hierarchical connector motifs
                 }
-                //TODO: add also export ports for hierarchical connector motifs
             }
+
         }
         architectureModel = ArchitectureSpecGenerator.prototype.connectorToEnds.call(self,
             subConnectors, architectureModel, nodes);
