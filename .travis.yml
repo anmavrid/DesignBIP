@@ -22,6 +22,9 @@ cache:
 node_js:
   - "6"
 
+  jdk:
+  - oraclejdk8
+
 env:
   - TEST_FOLDER=true
 
