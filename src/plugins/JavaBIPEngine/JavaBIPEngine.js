@@ -137,7 +137,7 @@ define([
                     }
                     architectureModel = self.getArchitectureModel(nodes);
                     inconsistencies = self.checkConsistency(architectureModel, nodes);
-                    self.logger.debug(inconsistencies.length);
+                    self.logger.debug('number of inconsistencies: '+ inconsistencies.length);
                     if (inconsistencies.length === 0) {
                         testInfo = self.generateTestInfo(architectureModel, path);
                         fileName = testInfo.className + '.java';
@@ -151,12 +151,12 @@ define([
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
                         if (path && fs) {
-                          return Q.all([
+                            return Q.all([
                             artifact.addFile(fileName, filesToAdd[fileName]),
                             artifact.addFile('engineOutput.json', filesToAdd['engineOutput.json'])
                           ]);
                         } else {
-                          return artifact.addFiles(filesToAdd);
+                            return artifact.addFiles(filesToAdd);
                         }
                     } else {
                         inconsistencies.forEach(function (inconsistency) {
