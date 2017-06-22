@@ -8,6 +8,7 @@
 define([
     'js/Constants',
     'js/NodePropertyNames',
+    '../Core/BIPComponentTypeDecorator.Core',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.DecoratorBase',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.DecoratorBaseWithDragPointerHelpers',
     'js/Utils/GMEConcepts',
@@ -16,11 +17,13 @@ define([
     'css!./BIPComponentTypeDecorator.DiagramDesignerWidget.css'
 ], function (CONSTANTS,
              nodePropertyNames,
+             BIPComponentTypeDecoratorCore,
              DecoratorBase,
              PointerAndSetHelpers,
              GMEConcepts,
              DD_CONSTANTS,
-             BIPComponentTypeDecoratorTemplate) {
+             BIPComponentTypeDecoratorTemplate
+) {
 
     'use strict';
 
@@ -44,6 +47,7 @@ define([
         var opts = _.extend({}, options);
 
         DecoratorBase.apply(this, [opts]);
+        BIPComponentTypeDecoratorCore.apply(this, [opts]);
 
         this.name = '';
         this.cardinality = 'n';
@@ -65,6 +69,7 @@ define([
     };
 
     _.extend(BIPComponentTypeDecorator.prototype, DecoratorBase.prototype);
+    _.extend(BIPComponentTypeDecorator.prototype, BIPComponentTypeDecoratorCore.prototype);
     BIPComponentTypeDecorator.prototype.DECORATORID = DECORATOR_ID;
 
     /*********************** OVERRIDE DecoratorBaseWithDragPointerHelpers MEMBERS **************************/
@@ -157,6 +162,7 @@ define([
         }
 
         this.skinParts.$cardinality.text(this.cardinality);
+        this._updateColors();
     };
 
     BIPComponentTypeDecorator.prototype._renderPorts = function () {

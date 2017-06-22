@@ -41,7 +41,7 @@
     "istanbul": "^0.4.5",
     "jscs": "3.0.7",
     "jshint": "2.9.3",
-    "webgme-bip-editors": "github:pmeijer/webgme-bip-editors"
+    "webgme-bip-editors": ">=0.2.0"
   },
   "dependencies": {
     "bower": "^1.8.0",
