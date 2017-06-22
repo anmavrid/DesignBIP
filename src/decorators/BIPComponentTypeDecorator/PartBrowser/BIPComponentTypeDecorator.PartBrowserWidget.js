@@ -10,6 +10,7 @@ define([
     'js/Constants',
     'js/NodePropertyNames',
     'js/Widgets/PartBrowser/PartBrowserWidget.DecoratorBase',
+    '../Core/BIPComponentTypeDecorator.Core',
     'js/Widgets/DiagramDesigner/DiagramDesignerWidget.Constants',
     'text!../DiagramDesigner/BIPComponentTypeDecorator.DiagramDesignerWidget.html',
     'css!../DiagramDesigner/BIPComponentTypeDecorator.DiagramDesignerWidget.css',
@@ -17,8 +18,10 @@ define([
 ], function (CONSTANTS,
              nodePropertyNames,
              PartBrowserWidgetDecoratorBase,
+             BIPComponentTypeDecoratorCore,
              DiagramDesignerWidgetConstants,
-             BIPComponentTypeDecoratorDiagramDesignerWidgetTemplate) {
+             BIPComponentTypeDecoratorDiagramDesignerWidgetTemplate
+             ) {
 
     'use strict';
 
@@ -29,11 +32,13 @@ define([
         var opts = _.extend({}, options);
 
         PartBrowserWidgetDecoratorBase.apply(this, [opts]);
+        BIPComponentTypeDecoratorCore.apply(this, [opts]);
 
         this.logger.debug('BIPComponentTypeDecoratorPartBrowserWidget ctor');
     };
 
     _.extend(BIPComponentTypeDecoratorPartBrowserWidget.prototype, PartBrowserWidgetDecoratorBase.prototype);
+    _.extend(BIPComponentTypeDecoratorPartBrowserWidget.prototype, BIPComponentTypeDecoratorCore.prototype);
     BIPComponentTypeDecoratorPartBrowserWidget.prototype.DECORATORID = DECORATOR_ID;
 
     /*********************** OVERRIDE DiagramDesignerWidgetDecoratorBase MEMBERS **************************/
@@ -70,6 +75,7 @@ define([
                 this.$el.addClass('compound-type');
             }
         }
+        this._updateColors();
     };
 
     BIPComponentTypeDecoratorPartBrowserWidget.prototype.update = function () {
