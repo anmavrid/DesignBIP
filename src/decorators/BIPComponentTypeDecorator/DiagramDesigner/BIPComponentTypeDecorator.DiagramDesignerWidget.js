@@ -22,8 +22,7 @@ define([
              PointerAndSetHelpers,
              GMEConcepts,
              DD_CONSTANTS,
-             BIPComponentTypeDecoratorTemplate
-) {
+             BIPComponentTypeDecoratorTemplate) {
 
     'use strict';
 
@@ -42,6 +41,8 @@ define([
 
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'cardinality';
+    nodePropertyNames.Sets = nodePropertyNames.Sets || {};
+    nodePropertyNames.Sets.styleBases = 'styleBases'; // Change this to fit the meta.
 
     BIPComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);
@@ -138,7 +139,8 @@ define([
 
     BIPComponentTypeDecorator.prototype._renderOwnProperties = function () {
         var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
+            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
+            membersInfo = [];
 
         //render GME-ID in the DOM, for debugging
         this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
@@ -151,7 +153,20 @@ define([
             this.position.x = this.hostDesignerItem.positionX;
             this.position.y = this.hostDesignerItem.positionY;
             this.isCompound = this._isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
+            if (this.setIsDefined) {
+                nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+                    .forEach(function (id) {
+                        var memberNode = client.getNode(id);
+                        if (memberNode) {
+                            membersInfo.push({
+                                name: memberNode.getAttribute('name')
+                            });
+                        }
+                    });
+            }
         }
+
+        console.log(membersInfo);
 
         //find name placeholder
         this.skinParts.$name.text(this.name);
@@ -536,7 +551,7 @@ define([
         var territoryRule = {},
             gmeID = this._metaInfo[CONSTANTS.GME_ID],
             client = this._control._client,
-            nodeObj =  client.getNode(gmeID),
+            nodeObj = client.getNode(gmeID),
             hasAspect = this._aspect && this._aspect !== CONSTANTS.ASPECT_ALL && nodeObj &&
                 nodeObj.getValidAspectNames().indexOf(this._aspect) !== -1;
 
@@ -573,6 +588,27 @@ define([
                 self.portsInfo[portId].$el.find('.trans-connector').removeClass('show-connectors');
             });
         }
+    };
+
+    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
+        var territoryRule = {},
+            gmeID = this._metaInfo[CONSTANTS.GME_ID],
+            client = this._control._client,
+            nodeObj = client.getNode(gmeID),
+            validSetNames = nodeObj.getValidSetNames();
+
+        // The node itself and its children
+        territoryRule[gmeID] = {children: 1};
+
+        if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
+            this.setIsDefined = true;
+            nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+                .forEach(function (id) {
+                    territoryRule[id] = {children: 0};
+                });
+        }
+
+        return territoryRule;
     };
 
     return BIPComponentTypeDecorator;
