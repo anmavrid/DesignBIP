@@ -161,33 +161,14 @@ define([
               // It was either just created or this is the initial
               // updateTerritory we invoked.
                     if (setIsDefined) {
-                        membersInfo = [];
+                        //membersInfo = [];
                         var memberNode = client.getNode(events[i].eid);
+                        console.log(memberNode);
                         if (memberNode) {
                             membersInfo.push({
                                 name: memberNode.getAttribute('name'),
                                 id: events[i].eid
                             });
-                            if (membersInfo) {
-                                self.skinParts.$name.popover({
-                                    delay: {
-                                        show: 150,
-                                        hide: 1000
-                                    },
-                                    animation: false,
-                                    trigger: 'hover',
-                                    title: '',
-                                    html: true,
-                                    content: function () {
-                                        var popOverText = 'From Architecture Styles:<br\>';
-                                        for (var member of membersInfo) {
-                                          //FIXME: Find a better way
-                                            popOverText += '- <a href="" onclick="WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');' + '">' + member.name + '</a><br/>';
-                                        }
-                                        return popOverText;
-                                    }
-                                });
-                            }
                         }
                     }
 
@@ -209,7 +190,6 @@ define([
         //render GME-ID in the DOM, for debugging
         this.$el.attr({'data-id': gmeID});
 
-        //patterns[gmeID] = {children: 1};
         if (nodeObj) {
             validSetNames = nodeObj.getValidSetNames();
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
@@ -224,9 +204,36 @@ define([
                 nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
                     .forEach(function (id) {
                         patterns[id] = {children: 0};
-                        client.updateTerritory(userId, patterns);
-
                     });
+                client.updateTerritory(userId, patterns);
+                if (membersInfo) {
+                    self.skinParts.$name.popover({
+                        delay: {
+                            show: 150,
+                            hide: 1000
+                        },
+                        animation: false,
+                        trigger: 'hover',
+                        title: '',
+                        html: true,
+                        content: function () {
+                            var popOverText = 'From Architecture Styles:<br\>';
+                            for (var member of membersInfo) {
+                                popOverText += '- <a class="' + member.name + '" href=""' + '">' + member.name + '</a><br/>';
+                                // popOverText += '- <a href="" onclick="WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');' + '">' + member.name + '</a><br/>';
+                            }
+                            return popOverText;
+                        }
+                    }).on('shown.bs.popover', function () {
+                        for (var member of membersInfo) {
+                          console.log(self.skinParts.$name.find(member.name));
+                          self.skinParts.$name.find(member.name).on('click', function () {
+                            WebGMEGlobal.State.registerActiveObject('\'' + member.name + '\'');
+
+                      });
+                    }
+                    });
+                }
             }
         }
         //find name placeholder
