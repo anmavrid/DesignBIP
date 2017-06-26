@@ -261,7 +261,7 @@ define([
         for (path in nodes) {
             node = nodes[path];
             //TODO: Update for hierarchical models
-            if (!self.isMetaTypeOf(self.core.getParent(node), self.META.ArchitectureStylesLibrary) && !self.isMetaTypeOf(self.core.getParent(node), self.META.ComponentTypesLibrary)) {
+            if (!self.isMetaTypeOf(self.core.getParent(node), self.META.ArchitectureStyle) && !self.isMetaTypeOf(self.core.getParent(node), self.META.ComponentTypesLibrary)) {
                 if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                     cardinality = self.core.getAttribute(node, 'cardinality');
                     architectureModel.componentTypes.push(node);
