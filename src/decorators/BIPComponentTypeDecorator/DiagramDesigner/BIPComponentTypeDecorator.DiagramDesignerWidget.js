@@ -42,7 +42,7 @@ define([
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'cardinality';
     nodePropertyNames.Sets = nodePropertyNames.Sets || {};
-    nodePropertyNames.Sets.styleBases = 'styleBases'; // Change this to fit the meta.
+    nodePropertyNames.Sets.styleBases = 'associatedWith'; // Change this to fit the meta.
 
     BIPComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);
@@ -56,6 +56,8 @@ define([
         this.portsInfo = {};
         this.registeredPorts = {};
         this.orderedPortsId = [];
+        this.membersInfo = [];
+        this.setIsDefined = false;
         this.position = {
             x: 100,
             y: 100
@@ -63,6 +65,9 @@ define([
 
         this.skinParts.$name = this.$el.find('.name');
         this.skinParts.$cardinality = this.$el.find('.cardinality');
+        // console.log(this.skinParts.$cardinality);
+        // this.skinParts.$membersInfo = this.$el.find('.membersInfo');
+        // console.log(this.skinParts.$membersInfo);
         this.skinParts.$portsLHS = this.$el.find('.lhs');
         this.skinParts.$portsRHS = this.$el.find('.rhs');
 
@@ -139,12 +144,14 @@ define([
 
     BIPComponentTypeDecorator.prototype._renderOwnProperties = function () {
         var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
-            membersInfo = [];
+            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
+            //membersInfo = [];
 
         //render GME-ID in the DOM, for debugging
+        //console.trace();
         this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
 
+        //console.log(nodeObj);
         if (nodeObj) {
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
             this.cardinality = nodeObj.getAttribute(nodePropertyNames.Attributes.cardinality) || '';
@@ -153,21 +160,23 @@ define([
             this.position.x = this.hostDesignerItem.positionX;
             this.position.y = this.hostDesignerItem.positionY;
             this.isCompound = this._isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
-            if (this.setIsDefined) {
-                nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
-                    .forEach(function (id) {
-                        var memberNode = client.getNode(id);
-                        if (memberNode) {
-                            membersInfo.push({
-                                name: memberNode.getAttribute('name')
-                            });
-                        }
-                    });
-            }
+            //console.log(this.setIsDefined);
+            // if (this.setIsDefined) {
+            //     nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+            //         .forEach(function (id) {
+            //             var memberNode = client.getNode(id);
+            //             console.log('memberNode'+ memberNode);
+            //             if (memberNode) {
+            //                 membersInfo.push({
+            //                     name: memberNode.getAttribute('name')
+            //                 });
+            //             }
+            //         });
+            // }
+
+
         }
-
-        console.log(membersInfo);
-
+        //console.log(membersInfo);
         //find name placeholder
         this.skinParts.$name.text(this.name);
         this.$el.removeClass('compound-type');
@@ -184,6 +193,7 @@ define([
         var self = this;
 
         this._retrievePortsInfo();
+        //console.trace();
 
         this.orderedPortsId.forEach(function (portId) {
             var info = self.portsInfo[portId],
@@ -547,19 +557,74 @@ define([
         return undefined;
     };
 
-    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
-        var territoryRule = {},
-            gmeID = this._metaInfo[CONSTANTS.GME_ID],
-            client = this._control._client,
-            nodeObj = client.getNode(gmeID),
-            hasAspect = this._aspect && this._aspect !== CONSTANTS.ASPECT_ALL && nodeObj &&
-                nodeObj.getValidAspectNames().indexOf(this._aspect) !== -1;
+    // BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
+    //     var territoryRule = {},
+    //         gmeID = this._metaInfo[CONSTANTS.GME_ID],
+    //         client = this._control._client,
+    //         nodeObj = client.getNode(gmeID),
+    //         hasAspect = this._aspect && this._aspect !== CONSTANTS.ASPECT_ALL && nodeObj &&
+    //             nodeObj.getValidAspectNames().indexOf(this._aspect) !== -1;
+    //
+    //     if (hasAspect) {
+    //         territoryRule[gmeID] = client.getAspectTerritoryPattern(gmeID, this._aspect);
+    //         territoryRule[gmeID].children = 1;
+    //     } else {
+    //         territoryRule[gmeID] = {children: 1};
+    //     }
+    //
+    //     return territoryRule;
+    // };
 
-        if (hasAspect) {
-            territoryRule[gmeID] = client.getAspectTerritoryPattern(gmeID, this._aspect);
-            territoryRule[gmeID].children = 1;
-        } else {
-            territoryRule[gmeID] = {children: 1};
+    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
+        var self = this,
+        territoryRule = {},
+            gmeID = self._metaInfo[CONSTANTS.GME_ID],
+            client = self._control._client,
+            nodeObj = client.getNode(gmeID),
+            validSetNames = nodeObj.getValidSetNames(),
+            setIsDefined;
+        // The node itself and its children
+        territoryRule[gmeID] = {children: 1};
+        if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
+            setIsDefined = true;
+            nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+                .forEach(function (id) {
+                    territoryRule[id] = {children: 0};
+                    if (setIsDefined) {
+                        self.membersInfo = [];
+                        // var memberNode = client.getNode(id);
+                        client.getCoreInstance(null, function (err, result) {
+                            result.core.loadByPath(result.rootNode, id, function (err, memberNode) {
+                                if (memberNode) {
+                                    self.membersInfo.push({
+                                        name: result.core.getAttribute(memberNode, 'name'),
+                                        id: id
+                                    });
+                                    if (self.membersInfo) {
+                                        self.skinParts.$name.popover({
+                                            delay: {
+                                                show: 150,
+                                                hide: 1500
+                                            },
+                                            animation: false,
+                                            trigger: 'hover',
+                                            title: '',
+                                            html: true,
+                                            content: function () {
+                                                var popOverText = 'From Styles Library:<br\>';
+                                                for (var member of self.membersInfo) {
+                                                    var onclick = 'WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');';
+                                                    popOverText += '- <span style="text-decoration: underline; color: #00f;" onclick="'+onclick+'">' + member.name + '</span><br/>';
+                                                }
+                                                return popOverText;
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
         }
 
         return territoryRule;
@@ -588,27 +653,6 @@ define([
                 self.portsInfo[portId].$el.find('.trans-connector').removeClass('show-connectors');
             });
         }
-    };
-
-    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
-        var territoryRule = {},
-            gmeID = this._metaInfo[CONSTANTS.GME_ID],
-            client = this._control._client,
-            nodeObj = client.getNode(gmeID),
-            validSetNames = nodeObj.getValidSetNames();
-
-        // The node itself and its children
-        territoryRule[gmeID] = {children: 1};
-
-        if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
-            this.setIsDefined = true;
-            nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
-                .forEach(function (id) {
-                    territoryRule[id] = {children: 0};
-                });
-        }
-
-        return territoryRule;
     };
 
     return BIPComponentTypeDecorator;
