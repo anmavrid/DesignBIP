@@ -147,16 +147,69 @@ define([
             client = self._control._client,
             gmeID = self._metaInfo[CONSTANTS.GME_ID],
             nodeObj = client.getNode(gmeID),
+            userId,
             validSetNames,
             setIsDefined,
             membersInfo = [],
             patterns = {};
 
+        function eventHandler(events) {
+            var i, nodeObj;
+            for (i = 0; i < events.length; i += 1) {
+                if (events[i].etype === 'load') {
+              // The node is loaded and we have access to it.
+              // It was either just created or this is the initial
+              // updateTerritory we invoked.
+                    if (setIsDefined) {
+                        membersInfo = [];
+                        var memberNode = client.getNode(events[i].eid);
+                        if (memberNode) {
+                            membersInfo.push({
+                                name: memberNode.getAttribute('name'),
+                                id: events[i].eid
+                            });
+                            if (membersInfo) {
+                                self.skinParts.$name.popover({
+                                    delay: {
+                                        show: 150,
+                                        hide: 1000
+                                    },
+                                    animation: false,
+                                    trigger: 'hover',
+                                    title: '',
+                                    html: true,
+                                    content: function () {
+                                        var popOverText = 'From Architecture Styles:<br\>';
+                                        for (var member of membersInfo) {
+                                          //FIXME: Find a better way
+                                            popOverText += '- <a href="" onclick="WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');' + '">' + member.name + '</a><br/>';
+                                        }
+                                        return popOverText;
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                // The nodeObj contains methods for querying the node, see below.
+                } else if (events[i].etype === 'update') {
+                  // There were changes to the node (some might not apply to your application).
+                  // The node is still loaded and we have access to it.
+                    nodeObj = client.getNode(events[i].eid);
+                } else if (events[i].etype === 'unload') {
+                  // The node was removed from the model (we can no longer access it).
+                  // We still get the path/id via events[i].eid
+                } else {
+                  // "Technical events" not used.
+                }
+              }
+        }
+        userId = client.addUI(null, eventHandler);
+
         //render GME-ID in the DOM, for debugging
         this.$el.attr({'data-id': gmeID});
 
-        patterns[gmeID] = {children: 1};
-        //client.updateTerritory(patterns);
+        //patterns[gmeID] = {children: 1};
         if (nodeObj) {
             validSetNames = nodeObj.getValidSetNames();
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
@@ -171,48 +224,10 @@ define([
                 nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
                     .forEach(function (id) {
                         patterns[id] = {children: 0};
-                        //client.updateTerritory(patterns);
-                        if (setIsDefined) {
-                            membersInfo = [];
-                            console.log(id);
-                            var memberNode = client.getNode(id);
-                            console.log(memberNode);
-                            //client.getCoreInstance(null, function (err, result) {
-                                //result.core.loadByPath(result.rootNode, id, function (err, memberNode) {
-                                    if (memberNode) {
-                                        membersInfo.push({
-                                            name: memberNode.getAttribute('name'),
-                                            id: id
-                                        });
-                                        if (membersInfo) {
-                                            self.skinParts.$name.popover({
-                                                delay: {
-                                                    show: 150,
-                                                    hide: 1000
-                                                },
-                                                animation: false,
-                                                trigger: 'hover',
-                                                title: '',
-                                                html: true,
-                                                content: function () {
-                                                    var popOverText = 'From Architecture Styles:<br\>';
-                                                    for (var member of membersInfo) {
-                                                      //FIXME: Find a better way
-                                                        popOverText += '- <a href="" onclick="WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');' + '">' + member.name + '</a><br/>';
-                                                        // popOverText += '- <a class="' + member.name + '"href=""' + '">' + member.name + '</a><br/>';
-                                                    }
-                                                    return popOverText;
-                                                }
-                                            });
-                                        }
-                                    }
-                                //});
-                            //});
-                        }
+                        client.updateTerritory(userId, patterns);
+
                     });
             }
-
-
         }
         //find name placeholder
         this.skinParts.$name.text(this.name);
