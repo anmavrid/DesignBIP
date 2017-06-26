@@ -143,16 +143,22 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype._renderOwnProperties = function () {
-        var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]);
-            //membersInfo = [];
+        var self = this,
+            client = self._control._client,
+            gmeID = self._metaInfo[CONSTANTS.GME_ID],
+            nodeObj = client.getNode(gmeID),
+            validSetNames,
+            setIsDefined,
+            membersInfo = [],
+            patterns = {};
 
         //render GME-ID in the DOM, for debugging
-        //console.trace();
-        this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
+        this.$el.attr({'data-id': gmeID});
 
-        //console.log(nodeObj);
+        patterns[gmeID] = {children: 1};
+        //client.updateTerritory(patterns);
         if (nodeObj) {
+            validSetNames = nodeObj.getValidSetNames();
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
             this.cardinality = nodeObj.getAttribute(nodePropertyNames.Attributes.cardinality) || '';
             //this.position = nodeObj.getEditableRegistry('position');
@@ -160,23 +166,54 @@ define([
             this.position.x = this.hostDesignerItem.positionX;
             this.position.y = this.hostDesignerItem.positionY;
             this.isCompound = this._isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
-            //console.log(this.setIsDefined);
-            // if (this.setIsDefined) {
-            //     nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
-            //         .forEach(function (id) {
-            //             var memberNode = client.getNode(id);
-            //             console.log('memberNode'+ memberNode);
-            //             if (memberNode) {
-            //                 membersInfo.push({
-            //                     name: memberNode.getAttribute('name')
-            //                 });
-            //             }
-            //         });
-            // }
+            if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
+                setIsDefined = true;
+                nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+                    .forEach(function (id) {
+                        patterns[id] = {children: 0};
+                        //client.updateTerritory(patterns);
+                        if (setIsDefined) {
+                            membersInfo = [];
+                            console.log(id);
+                            var memberNode = client.getNode(id);
+                            console.log(memberNode);
+                            //client.getCoreInstance(null, function (err, result) {
+                                //result.core.loadByPath(result.rootNode, id, function (err, memberNode) {
+                                    if (memberNode) {
+                                        membersInfo.push({
+                                            name: memberNode.getAttribute('name'),
+                                            id: id
+                                        });
+                                        if (membersInfo) {
+                                            self.skinParts.$name.popover({
+                                                delay: {
+                                                    show: 150,
+                                                    hide: 1000
+                                                },
+                                                animation: false,
+                                                trigger: 'hover',
+                                                title: '',
+                                                html: true,
+                                                content: function () {
+                                                    var popOverText = 'From Architecture Styles:<br\>';
+                                                    for (var member of membersInfo) {
+                                                      //FIXME: Find a better way
+                                                        popOverText += '- <a href="" onclick="WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');' + '">' + member.name + '</a><br/>';
+                                                        // popOverText += '- <a class="' + member.name + '"href=""' + '">' + member.name + '</a><br/>';
+                                                    }
+                                                    return popOverText;
+                                                }
+                                            });
+                                        }
+                                    }
+                                //});
+                            //});
+                        }
+                    });
+            }
 
 
         }
-        //console.log(membersInfo);
         //find name placeholder
         this.skinParts.$name.text(this.name);
         this.$el.removeClass('compound-type');
@@ -575,60 +612,7 @@ define([
     //     return territoryRule;
     // };
 
-    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
-        var self = this,
-        territoryRule = {},
-            gmeID = self._metaInfo[CONSTANTS.GME_ID],
-            client = self._control._client,
-            nodeObj = client.getNode(gmeID),
-            validSetNames = nodeObj.getValidSetNames(),
-            setIsDefined;
-        // The node itself and its children
-        territoryRule[gmeID] = {children: 1};
-        if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
-            setIsDefined = true;
-            nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
-                .forEach(function (id) {
-                    territoryRule[id] = {children: 0};
-                    if (setIsDefined) {
-                        self.membersInfo = [];
-                        // var memberNode = client.getNode(id);
-                        client.getCoreInstance(null, function (err, result) {
-                            result.core.loadByPath(result.rootNode, id, function (err, memberNode) {
-                                if (memberNode) {
-                                    self.membersInfo.push({
-                                        name: result.core.getAttribute(memberNode, 'name'),
-                                        id: id
-                                    });
-                                    if (self.membersInfo) {
-                                        self.skinParts.$name.popover({
-                                            delay: {
-                                                show: 150,
-                                                hide: 1500
-                                            },
-                                            animation: false,
-                                            trigger: 'hover',
-                                            title: '',
-                                            html: true,
-                                            content: function () {
-                                                var popOverText = 'From Styles Library:<br\>';
-                                                for (var member of self.membersInfo) {
-                                                    var onclick = 'WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');';
-                                                    popOverText += '- <span style="text-decoration: underline; color: #00f;" onclick="'+onclick+'">' + member.name + '</span><br/>';
-                                                }
-                                                return popOverText;
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        });
-                    }
-                });
-        }
 
-        return territoryRule;
-    };
 
     BIPComponentTypeDecorator.prototype.showSourceConnectors = function (/*params*/) {
     };
