@@ -1,4 +1,4 @@
-/*globals define, _, $, console*/
+/*globals define, _, $, console, WebGMEGlobal*/
 /*jshint browser: true, camelcase: false*/
 
 /**
@@ -56,6 +56,8 @@ define([
         this.portsInfo = {};
         this.registeredPorts = {};
         this.orderedPortsId = [];
+        this.userId = null;
+        this.patterns = {};
         this.membersInfo = [];
         this.setIsDefined = false;
         this.position = {
@@ -83,7 +85,32 @@ define([
     BIPComponentTypeDecorator.prototype.$DOMBase = $(BIPComponentTypeDecoratorTemplate);
 
     BIPComponentTypeDecorator.prototype.on_addTo = function () {
-        var self = this;
+        var self = this,
+            gmeID = self._metaInfo[CONSTANTS.GME_ID],
+            client = this._control._client;
+
+        function eventHandler(events) {
+            var nodeObj;
+
+            self.membersInfo = [];
+
+            nodeObj = client.getNode(gmeID);
+
+            if (!nodeObj || nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.styleBases) === -1) {
+                return;
+            }
+
+            nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+                .forEach(function (id) {
+                    var memberNode = client.getNode(id);
+                    self.membersInfo.push({
+                        id: id,
+                        name: memberNode.getAttribute('name')
+                    });
+                });
+        }
+
+        this.userId = this._control._client.addUI(null, eventHandler);
 
         this._renderOwnProperties();
 
@@ -127,6 +154,38 @@ define([
             content: 'Cardinality: ' + this.cardinality
         });
 
+        self.skinParts.$name.popover({
+            delay: {
+                show: 150,
+                hide: 1000
+            },
+            animation: false,
+            trigger: 'hover',
+            title: 'From Architecture Styles',
+            html: true,
+            content: '<ul class="member-info-popover"></ul>'
+        }).on('shown.bs.popover', function () {
+            var memberInfoEl = self.$el.find('.member-info-popover'),
+                popOver = memberInfoEl.parent().parent();
+
+            if (self.membersInfo.length === 0) {
+                popOver.hide();
+            } else {
+                self.membersInfo.forEach(function (info) {
+                    var anchorEl = $('<a href=""/>');
+
+                    anchorEl.text(info.name);
+                    anchorEl.on('click', function (event) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        WebGMEGlobal.State.registerActiveObject(info.id);
+                    });
+
+                    memberInfoEl.append($('<li/>').append(anchorEl));
+                });
+            }
+        });
+
         //let the parent decorator class do its job first
         DecoratorBase.prototype.on_addTo.apply(this, arguments);
         this._renderPorts();
@@ -147,45 +206,8 @@ define([
             client = self._control._client,
             gmeID = self._metaInfo[CONSTANTS.GME_ID],
             nodeObj = client.getNode(gmeID),
-            userId,
             validSetNames,
-            setIsDefined,
-            membersInfo = [],
             patterns = {};
-
-        function eventHandler(events) {
-            var i, nodeObj;
-            for (i = 0; i < events.length; i += 1) {
-                if (events[i].etype === 'load') {
-              // The node is loaded and we have access to it.
-              // It was either just created or this is the initial
-              // updateTerritory we invoked.
-                    if (setIsDefined) {
-                        //membersInfo = [];
-                        var memberNode = client.getNode(events[i].eid);
-                        console.log(memberNode);
-                        if (memberNode) {
-                            membersInfo.push({
-                                name: memberNode.getAttribute('name'),
-                                id: events[i].eid
-                            });
-                        }
-                    }
-
-                // The nodeObj contains methods for querying the node, see below.
-                } else if (events[i].etype === 'update') {
-                  // There were changes to the node (some might not apply to your application).
-                  // The node is still loaded and we have access to it.
-                    nodeObj = client.getNode(events[i].eid);
-                } else if (events[i].etype === 'unload') {
-                  // The node was removed from the model (we can no longer access it).
-                  // We still get the path/id via events[i].eid
-                } else {
-                  // "Technical events" not used.
-                }
-              }
-        }
-        userId = client.addUI(null, eventHandler);
 
         //render GME-ID in the DOM, for debugging
         this.$el.attr({'data-id': gmeID});
@@ -200,39 +222,14 @@ define([
             this.position.y = this.hostDesignerItem.positionY;
             this.isCompound = this._isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
             if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
-                setIsDefined = true;
                 nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
                     .forEach(function (id) {
                         patterns[id] = {children: 0};
                     });
-                client.updateTerritory(userId, patterns);
-                if (membersInfo) {
-                    self.skinParts.$name.popover({
-                        delay: {
-                            show: 150,
-                            hide: 1000
-                        },
-                        animation: false,
-                        trigger: 'hover',
-                        title: '',
-                        html: true,
-                        content: function () {
-                            var popOverText = 'From Architecture Styles:<br\>';
-                            for (var member of membersInfo) {
-                                popOverText += '- <a class="' + member.name + '" href=""' + '">' + member.name + '</a><br/>';
-                                // popOverText += '- <a href="" onclick="WebGMEGlobal.State.registerActiveObject(\'' + member.id + '\');' + '">' + member.name + '</a><br/>';
-                            }
-                            return popOverText;
-                        }
-                    }).on('shown.bs.popover', function () {
-                        for (var member of membersInfo) {
-                          console.log(self.skinParts.$name.find(member.name));
-                          self.skinParts.$name.find(member.name).on('click', function () {
-                            WebGMEGlobal.State.registerActiveObject('\'' + member.name + '\'');
 
-                      });
-                    }
-                    });
+                if (_.difference(Object.keys(patterns), Object.keys(self.patterns)).length > 0) {
+                    self.patterns = patterns;
+                    client.updateTerritory(self.userId, patterns);
                 }
             }
         }
@@ -616,25 +613,23 @@ define([
         return undefined;
     };
 
-    // BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
-    //     var territoryRule = {},
-    //         gmeID = this._metaInfo[CONSTANTS.GME_ID],
-    //         client = this._control._client,
-    //         nodeObj = client.getNode(gmeID),
-    //         hasAspect = this._aspect && this._aspect !== CONSTANTS.ASPECT_ALL && nodeObj &&
-    //             nodeObj.getValidAspectNames().indexOf(this._aspect) !== -1;
-    //
-    //     if (hasAspect) {
-    //         territoryRule[gmeID] = client.getAspectTerritoryPattern(gmeID, this._aspect);
-    //         territoryRule[gmeID].children = 1;
-    //     } else {
-    //         territoryRule[gmeID] = {children: 1};
-    //     }
-    //
-    //     return territoryRule;
-    // };
+    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
+        var territoryRule = {},
+            gmeID = this._metaInfo[CONSTANTS.GME_ID],
+            client = this._control._client,
+            nodeObj = client.getNode(gmeID),
+            hasAspect = this._aspect && this._aspect !== CONSTANTS.ASPECT_ALL && nodeObj &&
+                nodeObj.getValidAspectNames().indexOf(this._aspect) !== -1;
 
+        if (hasAspect) {
+            territoryRule[gmeID] = client.getAspectTerritoryPattern(gmeID, this._aspect);
+            territoryRule[gmeID].children = 1;
+        } else {
+            territoryRule[gmeID] = {children: 1};
+        }
 
+        return territoryRule;
+    };
 
     BIPComponentTypeDecorator.prototype.showSourceConnectors = function (/*params*/) {
     };
@@ -659,6 +654,14 @@ define([
                 self.portsInfo[portId].$el.find('.trans-connector').removeClass('show-connectors');
             });
         }
+    };
+
+    BIPComponentTypeDecorator.prototype.destroy = function () {
+        if (this.userId) {
+            this._control._client.removeUI(this.userId);
+        }
+
+        DecoratorBase.prototype.destroy.call(this);
     };
 
     return BIPComponentTypeDecorator;
