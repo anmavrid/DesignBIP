@@ -61,7 +61,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/f',
+                activeNode: '/f/z/f',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -84,7 +84,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/1',
+                activeNode: '/f/z/1',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -108,7 +108,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/U',
+                activeNode: '/f/z/U',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -132,7 +132,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/k',
+                activeNode: '/f/z/k',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -156,7 +156,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/s',
+                activeNode: '/f/z/s',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -180,7 +180,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/B',
+                activeNode: '/f/z/B',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -204,7 +204,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/e',
+                activeNode: '/f/z/e',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -228,7 +228,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/v',
+                activeNode: '/f/z/v',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -252,7 +252,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/z',
+                activeNode: '/f/z/z',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -276,7 +276,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/q',
+                activeNode: '/f/z/q',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -300,7 +300,7 @@ describe('BehaviorSpecGenerator', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/t/o',
+                activeNode: '/f/z/o',
             };
 
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {

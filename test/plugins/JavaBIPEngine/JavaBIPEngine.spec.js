@@ -144,20 +144,20 @@ describe('JavaBIPEngine', function () {
             pluginConfig = {
                 transitions: 1000,
                 cardinality: 2,
-                m: 3,
-                n: 3
+                p: 1,
+                t: 3
             },
             context = {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/Q',
+                activeNode: '/f/u',
             };
-        this.timeout(10000);
+        this.timeout(30000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
-                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.error).to.include('inconsistencies');
                 expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
@@ -201,7 +201,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/S',
+                activeNode: '/f/n/S',
             };
         this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -224,7 +224,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/6',
+                activeNode: '/f/n/6',
             };
         this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -247,7 +247,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/A',
+                activeNode: '/f/n/A',
             };
         this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -271,7 +271,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/T',
+                activeNode: '/f/n/T',
             };
         this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
