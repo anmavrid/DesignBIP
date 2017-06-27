@@ -42,7 +42,8 @@ define([
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'cardinality';
     nodePropertyNames.Sets = nodePropertyNames.Sets || {};
-    nodePropertyNames.Sets.styleBases = 'associatedWith'; // Change this to fit the meta.
+    nodePropertyNames.Sets.associatedWith = 'associatedWith';
+    nodePropertyNames.Sets.implementedBy = 'implementedBy';
 
     BIPComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);
@@ -59,6 +60,7 @@ define([
         this.userId = null;
         this.patterns = {};
         this.membersInfo = [];
+        this.implementersInfo = [];
         this.setIsDefined = false;
         this.position = {
             x: 100,
@@ -93,21 +95,33 @@ define([
             var nodeObj;
 
             self.membersInfo = [];
+            self.implementersInfo = [];
 
             nodeObj = client.getNode(gmeID);
 
-            if (!nodeObj || nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.styleBases) === -1) {
+            if (!nodeObj || (nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.associatedWith) === -1 && nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.implementedBy) === -1)) {
                 return;
             }
-
-            nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
-                .forEach(function (id) {
-                    var memberNode = client.getNode(id);
-                    self.membersInfo.push({
-                        id: id,
-                        name: memberNode.getAttribute('name')
+            if (nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.associatedWith) > -1) {
+                nodeObj.getMemberIds(nodePropertyNames.Sets.associatedWith)
+                    .forEach(function (id) {
+                        var memberNode = client.getNode(id);
+                        self.membersInfo.push({
+                            id: id,
+                            name: memberNode.getAttribute('name')
+                        });
                     });
-                });
+            }
+            if (nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.implementedBy) > -1) {
+                nodeObj.getMemberIds(nodePropertyNames.Sets.implementedBy)
+                    .forEach(function (id) {
+                        var memberNode = client.getNode(id);
+                        self.implementersInfo.push({
+                            id: id,
+                            name: memberNode.getAttribute('name')
+                        });
+                    });
+            }
         }
 
         this.userId = this._control._client.addUI(null, eventHandler);
@@ -161,26 +175,36 @@ define([
             },
             animation: false,
             trigger: 'hover',
-            title: 'From Architecture Styles',
+            title: '',
             html: true,
-            content: '<ul class="member-info-popover"></ul>'
+            content: '<span class="member-info-popover"></span>'
         }).on('shown.bs.popover', function () {
             var memberInfoEl = self.$el.find('.member-info-popover'),
                 popOver = memberInfoEl.parent().parent();
-
-            if (self.membersInfo.length === 0) {
+            if (self.membersInfo.length === 0 && self.implementersInfo.length === 0) {
                 popOver.hide();
-            } else {
+            } else if (self.membersInfo.length > 0 && self.implementersInfo.length === 0) {
+                memberInfoEl.append('From Architecture Styles:');
                 self.membersInfo.forEach(function (info) {
                     var anchorEl = $('<a href=""/>');
-
                     anchorEl.text(info.name);
                     anchorEl.on('click', function (event) {
                         event.stopPropagation();
                         event.preventDefault();
                         WebGMEGlobal.State.registerActiveObject(info.id);
                     });
-
+                    memberInfoEl.append($('<li/>').append(anchorEl));
+                });
+            } else if (self.implementersInfo.length > 0 && self.membersInfo.length === 0) {
+                memberInfoEl.append('Implemented By:');
+                self.implementersInfo.forEach(function (info) {
+                    var anchorEl = $('<a href=""/>');
+                    anchorEl.text(info.name);
+                    anchorEl.on('click', function (event) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        WebGMEGlobal.State.registerActiveObject(info.id);
+                    });
                     memberInfoEl.append($('<li/>').append(anchorEl));
                 });
             }
@@ -221,12 +245,18 @@ define([
             this.position.x = this.hostDesignerItem.positionX;
             this.position.y = this.hostDesignerItem.positionY;
             this.isCompound = this._isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
-            if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
-                nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+            if (validSetNames.indexOf(nodePropertyNames.Sets.associatedWith) > -1 || validSetNames.indexOf(nodePropertyNames.Sets.implementedBy) > -1) {
+                if (validSetNames.indexOf(nodePropertyNames.Sets.associatedWith) > -1) {
+                    nodeObj.getMemberIds(nodePropertyNames.Sets.associatedWith)
+                      .forEach(function (id) {
+                            patterns[id] = {children: 0};
+                        });
+                } else {
+                    nodeObj.getMemberIds(nodePropertyNames.Sets.implementedBy)
                     .forEach(function (id) {
-                        patterns[id] = {children: 0};
-                    });
-
+                            patterns[id] = {children: 0};
+                        });
+                }
                 if (_.difference(Object.keys(patterns), Object.keys(self.patterns)).length > 0) {
                     self.patterns = patterns;
                     client.updateTerritory(self.userId, patterns);
