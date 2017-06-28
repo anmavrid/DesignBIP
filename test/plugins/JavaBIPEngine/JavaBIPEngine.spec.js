@@ -17,7 +17,7 @@ describe('JavaBIPEngine', function () {
         gmeAuth,
         storage,
         commitHash;
-
+this.timeout(20000);
     before(function (done) {
         testFixture.clearDBAndGetGMEAuth(gmeConfig, projectName)
             .then(function (gmeAuth_) {
@@ -67,7 +67,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/u',
             };
-        this.timeout(30000);
+        this.timeout(50000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(err).to.equal(null);
@@ -96,7 +96,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/e',
             };
-        this.timeout(10000);
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -125,7 +125,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/9',
             };
-        this.timeout(30000);
+        this.timeout(50000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(err).to.equal(null);
@@ -144,20 +144,20 @@ describe('JavaBIPEngine', function () {
             pluginConfig = {
                 transitions: 1000,
                 cardinality: 2,
-                m: 3,
-                n: 3
+                p: 1,
+                t: 3
             },
             context = {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/Q',
+                activeNode: '/f/u',
             };
-        this.timeout(10000);
+        this.timeout(50000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
-                expect(pluginResult.error).to.include('violation(s)');
+                expect(pluginResult.error).to.include('inconsistencies');
                 expect(pluginResult.messages.length).to.equal(1);
                 done();
             }
@@ -180,7 +180,7 @@ describe('JavaBIPEngine', function () {
                 branchName: 'test',
                 activeNode: '/f/t',
             };
-        this.timeout(30000);
+        this.timeout(50000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(err).to.equal(null);
@@ -201,7 +201,7 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/S',
+                activeNode: '/f/n/S',
             };
         this.timeout(10000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
@@ -224,9 +224,9 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/6',
+                activeNode: '/f/n/6',
             };
-        this.timeout(10000);
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -247,9 +247,9 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/A',
+                activeNode: '/f/n/A',
             };
-        this.timeout(10000);
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -271,9 +271,9 @@ describe('JavaBIPEngine', function () {
                 project: project,
                 commitHash: commitHash,
                 branchName: 'test',
-                activeNode: '/f/A/T',
+                activeNode: '/f/n/T',
             };
-        this.timeout(10000);
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);

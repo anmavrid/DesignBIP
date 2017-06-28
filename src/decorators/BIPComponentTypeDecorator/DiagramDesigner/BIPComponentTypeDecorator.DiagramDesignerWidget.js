@@ -1,4 +1,4 @@
-/*globals define, _, $, console*/
+this.parentsInfo/*globals define, _, $, console, WebGMEGlobal*/
 /*jshint browser: true, camelcase: false*/
 
 /**
@@ -42,7 +42,8 @@ define([
     nodePropertyNames = JSON.parse(JSON.stringify(nodePropertyNames));
     nodePropertyNames.Attributes.cardinality = 'cardinality';
     nodePropertyNames.Sets = nodePropertyNames.Sets || {};
-    nodePropertyNames.Sets.styleBases = 'styleBases'; // Change this to fit the meta.
+    nodePropertyNames.Sets.associatedWith = 'associatedWith';
+    nodePropertyNames.Sets.implementedBy = 'implementedBy';
 
     BIPComponentTypeDecorator = function (options) {
         var opts = _.extend({}, options);
@@ -56,6 +57,10 @@ define([
         this.portsInfo = {};
         this.registeredPorts = {};
         this.orderedPortsId = [];
+        this.userId = null;
+        this.patterns = {};
+        this.parentsInfo = [];
+        this.implementersInfo = [];
         this.position = {
             x: 100,
             y: 100
@@ -63,6 +68,9 @@ define([
 
         this.skinParts.$name = this.$el.find('.name');
         this.skinParts.$cardinality = this.$el.find('.cardinality');
+        // console.log(this.skinParts.$cardinality);
+        // this.skinParts.$membersInfo = this.$el.find('.membersInfo');
+        // console.log(this.skinParts.$membersInfo);
         this.skinParts.$portsLHS = this.$el.find('.lhs');
         this.skinParts.$portsRHS = this.$el.find('.rhs');
 
@@ -78,7 +86,44 @@ define([
     BIPComponentTypeDecorator.prototype.$DOMBase = $(BIPComponentTypeDecoratorTemplate);
 
     BIPComponentTypeDecorator.prototype.on_addTo = function () {
-        var self = this;
+        var self = this,
+            gmeID = self._metaInfo[CONSTANTS.GME_ID],
+            client = this._control._client;
+
+        function eventHandler(events) {
+            var nodeObj;
+
+            self.parentsInfo = [];
+            self.implementersInfo = [];
+
+            nodeObj = client.getNode(gmeID);
+
+            if (!nodeObj || (nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.associatedWith) === -1 && nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.implementedBy) === -1)) {
+                return;
+            }
+            if (nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.associatedWith) > -1) {
+                nodeObj.getMemberIds(nodePropertyNames.Sets.associatedWith)
+                    .forEach(function (id) {
+                        var memberNode = client.getNode(id);
+                        self.parentsInfo.push({
+                            id: id,
+                            name: memberNode ? memberNode.getAttribute('name') : 'N/A'
+                        });
+                    });
+            }
+            if (nodeObj.getValidSetNames().indexOf(nodePropertyNames.Sets.implementedBy) > -1) {
+                nodeObj.getMemberIds(nodePropertyNames.Sets.implementedBy)
+                    .forEach(function (id) {
+                        var memberNode = client.getNode(id);
+                        self.implementersInfo.push({
+                            id: id,
+                            name: memberNode ? memberNode.getAttribute('name') : 'N/A'
+                        });
+                    });
+            }
+        }
+
+        this.userId = this._control._client.addUI(null, eventHandler);
 
         this._renderOwnProperties();
 
@@ -122,6 +167,48 @@ define([
             content: 'Cardinality: ' + this.cardinality
         });
 
+        self.skinParts.$name.popover({
+            delay: {
+                show: 150,
+                hide: 1000
+            },
+            animation: false,
+            trigger: 'hover',
+            title: '',
+            html: true,
+            content: '<span class="member-info-popover"></span>'
+        }).on('shown.bs.popover', function () {
+            var memberInfoEl = self.$el.find('.member-info-popover'),
+                popOver = memberInfoEl.parent().parent();
+            if (self.parentsInfo.length === 0 && self.implementersInfo.length === 0) {
+                popOver.hide();
+            } else if (self.parentsInfo.length > 0 && self.implementersInfo.length === 0) {
+                memberInfoEl.append('From Architecture Styles:');
+                self.parentsInfo.forEach(function (info) {
+                    var anchorEl = $('<a href=""/>');
+                    anchorEl.text(info.name);
+                    anchorEl.on('click', function (event) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        WebGMEGlobal.State.registerActiveObject(info.id);
+                    });
+                    memberInfoEl.append($('<li/>').append(anchorEl));
+                });
+            } else if (self.implementersInfo.length > 0 && self.parentsInfo.length === 0) {
+                memberInfoEl.append('Implemented By:');
+                self.implementersInfo.forEach(function (info) {
+                    var anchorEl = $('<a href=""/>');
+                    anchorEl.text(info.name);
+                    anchorEl.on('click', function (event) {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        WebGMEGlobal.State.registerActiveObject(info.id);
+                    });
+                    memberInfoEl.append($('<li/>').append(anchorEl));
+                });
+            }
+        });
+
         //let the parent decorator class do its job first
         DecoratorBase.prototype.on_addTo.apply(this, arguments);
         this._renderPorts();
@@ -138,14 +225,18 @@ define([
     };
 
     BIPComponentTypeDecorator.prototype._renderOwnProperties = function () {
-        var client = this._control._client,
-            nodeObj = client.getNode(this._metaInfo[CONSTANTS.GME_ID]),
-            membersInfo = [];
+        var self = this,
+            client = self._control._client,
+            gmeID = self._metaInfo[CONSTANTS.GME_ID],
+            nodeObj = client.getNode(gmeID),
+            validSetNames,
+            patterns = {};
 
         //render GME-ID in the DOM, for debugging
-        this.$el.attr({'data-id': this._metaInfo[CONSTANTS.GME_ID]});
+        this.$el.attr({'data-id': gmeID});
 
         if (nodeObj) {
+            validSetNames = nodeObj.getValidSetNames();
             this.name = nodeObj.getAttribute(nodePropertyNames.Attributes.name) || '';
             this.cardinality = nodeObj.getAttribute(nodePropertyNames.Attributes.cardinality) || '';
             //this.position = nodeObj.getEditableRegistry('position');
@@ -153,21 +244,25 @@ define([
             this.position.x = this.hostDesignerItem.positionX;
             this.position.y = this.hostDesignerItem.positionY;
             this.isCompound = this._isOfMetaTypeName(nodeObj.getMetaTypeId(), 'CompoundType');
-            if (this.setIsDefined) {
-                nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
+            if (validSetNames.indexOf(nodePropertyNames.Sets.associatedWith) > -1 || validSetNames.indexOf(nodePropertyNames.Sets.implementedBy) > -1) {
+                if (validSetNames.indexOf(nodePropertyNames.Sets.associatedWith) > -1) {
+                    nodeObj.getMemberIds(nodePropertyNames.Sets.associatedWith)
+                      .forEach(function (id) {
+                            patterns[id] = {children: 0};
+                        });
+                }
+                if (validSetNames.indexOf(nodePropertyNames.Sets.implementedBy) > -1) {
+                    nodeObj.getMemberIds(nodePropertyNames.Sets.implementedBy)
                     .forEach(function (id) {
-                        var memberNode = client.getNode(id);
-                        if (memberNode) {
-                            membersInfo.push({
-                                name: memberNode.getAttribute('name')
-                            });
-                        }
-                    });
+                            patterns[id] = {children: 0};
+                        });
+                }
+                if (_.difference(Object.keys(patterns), Object.keys(self.patterns)).length > 0) {
+                    self.patterns = patterns;
+                    client.updateTerritory(self.userId, patterns);
+                }
             }
         }
-
-        console.log(membersInfo);
-
         //find name placeholder
         this.skinParts.$name.text(this.name);
         this.$el.removeClass('compound-type');
@@ -184,6 +279,7 @@ define([
         var self = this;
 
         this._retrievePortsInfo();
+        //console.trace();
 
         this.orderedPortsId.forEach(function (portId) {
             var info = self.portsInfo[portId],
@@ -590,25 +686,12 @@ define([
         }
     };
 
-    BIPComponentTypeDecorator.prototype.getTerritoryQuery = function () {
-        var territoryRule = {},
-            gmeID = this._metaInfo[CONSTANTS.GME_ID],
-            client = this._control._client,
-            nodeObj = client.getNode(gmeID),
-            validSetNames = nodeObj.getValidSetNames();
-
-        // The node itself and its children
-        territoryRule[gmeID] = {children: 1};
-
-        if (validSetNames.indexOf(nodePropertyNames.Sets.styleBases) > -1) {
-            this.setIsDefined = true;
-            nodeObj.getMemberIds(nodePropertyNames.Sets.styleBases)
-                .forEach(function (id) {
-                    territoryRule[id] = {children: 0};
-                });
+    BIPComponentTypeDecorator.prototype.destroy = function () {
+        if (this.userId) {
+            this._control._client.removeUI(this.userId);
         }
 
-        return territoryRule;
+        DecoratorBase.prototype.destroy.call(this);
     };
 
     return BIPComponentTypeDecorator;
