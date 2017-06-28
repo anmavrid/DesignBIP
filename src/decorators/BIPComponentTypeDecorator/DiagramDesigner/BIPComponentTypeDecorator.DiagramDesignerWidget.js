@@ -107,7 +107,7 @@ define([
                         var memberNode = client.getNode(id);
                         self.parentsInfo.push({
                             id: id,
-                            name: memberNode.getAttribute('name')
+                            name: memberNode ? memberNode.getAttribute('name') : 'N/A'
                         });
                     });
             }
@@ -117,7 +117,7 @@ define([
                         var memberNode = client.getNode(id);
                         self.implementersInfo.push({
                             id: id,
-                            name: memberNode.getAttribute('name')
+                            name: memberNode ? memberNode.getAttribute('name') : 'N/A'
                         });
                     });
             }
@@ -250,7 +250,8 @@ define([
                       .forEach(function (id) {
                             patterns[id] = {children: 0};
                         });
-                } else {
+                }
+                if (validSetNames.indexOf(nodePropertyNames.Sets.implementedBy) > -1) {
                     nodeObj.getMemberIds(nodePropertyNames.Sets.implementedBy)
                     .forEach(function (id) {
                             patterns[id] = {children: 0};
