@@ -61,7 +61,6 @@ define([
         this.patterns = {};
         this.membersInfo = [];
         this.implementersInfo = [];
-        this.setIsDefined = false;
         this.position = {
             x: 100,
             y: 100
