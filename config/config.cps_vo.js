@@ -5,7 +5,7 @@ var path = require('path'),
     validateConfig = require('webgme/config/validator');
 
 // Add/overwrite any additional settings here
-// config.server.port = 
+// config.server.port =
 //config.mongo.uri = 'mongodb://127.0.0.1:27017/bip';
 
 //config.requirejsPaths['widgets/DiagramDesigner'] =
@@ -25,5 +25,19 @@ config.authentication.logInUrl = 'http://cps-vo.org/group/tools'
 config.authentication.logOutUrl = 'http://cps-vo.org/group/tools'
 config.authentication.jwt.privateKey = path.join(__dirname, '..', '..', 'token_keys','private_key');
 config.authentication.jwt.publicKey = path.join(__dirname, '..', '..', 'token_keys', 'public_key');
+
+console.log('#### Using Deployment Config ###');
+config.server.workerManager.path = path.join(__dirname, '../node_modules/webgme-docker-worker-manager/dockerworkermanager');
+
+config.server.workerManager.options = {
+    //dockerode: null, // https://github.com/apocas/dockerode#getting-started
+    image: 'webgme-docker-worker:0.1.1',
+    maxRunningContainers: 4,
+    keepContainersAtFailure: false
+};
+
+// Decrease from 10
+config.server.maxWorkers = 6;
+
 validateConfig(config);
 module.exports = config;
