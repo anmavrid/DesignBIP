@@ -348,14 +348,14 @@ define([
             node = nodes[path];
             //TODO: Update for hierarchical models
             parent = self.core.getParent(node);
-            if (!self.isMetaTypeOf(parent, self.META.ArchitectureStylesLibrary) && !self.isMetaTypeOf(parent, self.META.ComponentTypesLibrary)) {
+            if (!self.isMetaTypeOf(parent, self.META.ArchitectureStyle) && !self.isMetaTypeOf(parent, self.META.ComponentTypesLibrary)) {
                 if (self.isMetaTypeOf(node, self.META.ComponentType)) {
                     for (child of self.core.getChildrenPaths(node)) {
                         if (self.isMetaTypeOf(nodes[child], self.META.EnforceableTransition)) {
                             nodes[child].componentType = path;
                         }
                     }
-                } else if ((self.isMetaTypeOf(node, self.META.EnforceableTransition)) && (!self.isMetaTypeOf(self.core.getParent(parent), self.META.ArchitectureStylesLibrary)) && (!self.isMetaTypeOf(self.core.getParent(parent), self.META.ComponentTypesLibrary))) {
+                } else if ((self.isMetaTypeOf(node, self.META.EnforceableTransition)) && (!self.isMetaTypeOf(self.core.getParent(parent), self.META.ArchitectureStyle)) && (!self.isMetaTypeOf(self.core.getParent(parent), self.META.ComponentTypesLibrary))) {
                     port = node;
                     architectureModel.ports.push(port);
                     port.name = self.core.getAttribute(node, 'name');
