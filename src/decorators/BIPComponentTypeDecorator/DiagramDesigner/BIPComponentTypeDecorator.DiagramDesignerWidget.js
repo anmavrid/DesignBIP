@@ -1,4 +1,4 @@
-/*globals define, _, $, console, WebGMEGlobal*/
+this.parentsInfo/*globals define, _, $, console, WebGMEGlobal*/
 /*jshint browser: true, camelcase: false*/
 
 /**
@@ -59,7 +59,7 @@ define([
         this.orderedPortsId = [];
         this.userId = null;
         this.patterns = {};
-        this.membersInfo = [];
+        this.parentsInfo = [];
         this.implementersInfo = [];
         this.position = {
             x: 100,
@@ -93,7 +93,7 @@ define([
         function eventHandler(events) {
             var nodeObj;
 
-            self.membersInfo = [];
+            self.parentsInfo = [];
             self.implementersInfo = [];
 
             nodeObj = client.getNode(gmeID);
@@ -105,7 +105,7 @@ define([
                 nodeObj.getMemberIds(nodePropertyNames.Sets.associatedWith)
                     .forEach(function (id) {
                         var memberNode = client.getNode(id);
-                        self.membersInfo.push({
+                        self.parentsInfo.push({
                             id: id,
                             name: memberNode.getAttribute('name')
                         });
@@ -180,11 +180,11 @@ define([
         }).on('shown.bs.popover', function () {
             var memberInfoEl = self.$el.find('.member-info-popover'),
                 popOver = memberInfoEl.parent().parent();
-            if (self.membersInfo.length === 0 && self.implementersInfo.length === 0) {
+            if (self.parentsInfo.length === 0 && self.implementersInfo.length === 0) {
                 popOver.hide();
-            } else if (self.membersInfo.length > 0 && self.implementersInfo.length === 0) {
+            } else if (self.parentsInfo.length > 0 && self.implementersInfo.length === 0) {
                 memberInfoEl.append('From Architecture Styles:');
-                self.membersInfo.forEach(function (info) {
+                self.parentsInfo.forEach(function (info) {
                     var anchorEl = $('<a href=""/>');
                     anchorEl.text(info.name);
                     anchorEl.on('click', function (event) {
@@ -194,7 +194,7 @@ define([
                     });
                     memberInfoEl.append($('<li/>').append(anchorEl));
                 });
-            } else if (self.implementersInfo.length > 0 && self.membersInfo.length === 0) {
+            } else if (self.implementersInfo.length > 0 && self.parentsInfo.length === 0) {
                 memberInfoEl.append('Implemented By:');
                 self.implementersInfo.forEach(function (info) {
                     var anchorEl = $('<a href=""/>');
