@@ -15,9 +15,6 @@
       }
     },
     "seeds": {
-      "BIP": {
-        "src": "src/seeds/BIP"
-      },
       "BIPv1": {
         "src": "src/seeds/BIPv1"
       }
