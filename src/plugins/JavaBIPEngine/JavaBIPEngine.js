@@ -112,6 +112,8 @@ define([
                     var behaviorFiles, file,
                         violations, inconsistencies,
                         fileName, testInfo, pathArrayForFile,
+                        compilationOutput, compilationjson,
+                        currentConfig = self.getCurrentConfig(),
                         filesToAdd = {},
                         architectureModel = {};
 
@@ -146,7 +148,12 @@ define([
                         if (path && fs) {
                             if (pathArrayForFile.length >= 1) {
                                 self.compileAndSimulate(behaviorFiles, filesToAdd[fileName], fileName, path, fs);
-                                filesToAdd['engineOutput.json'] = fs.readFileSync(path + '/engineOutput.json');
+                                compilationOutput = fs.readFileSync(path + '/engineOutput.json', 'utf8');
+                                compilationjson = JSON.parse(compilationOutput);
+                                if(compilationjson.output.length > currentConfig['transitions']) {
+                                    compilationjson.output.splice(currentConfig['transitions'], compilationjson.output.length-currentConfig['transitions']);
+                               }
+                                filesToAdd['engineOutput.json'] = JSON.stringify(compilationjson);
                             }
                         }
                         artifact = self.blobClient.createArtifact('EngineInputAndOutput');
