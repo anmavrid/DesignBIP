@@ -10,6 +10,8 @@ var config = require('./config.deployment'),
 
 console.log('#### Using Deployment Test Config ###');
 
+config.server.workerManager.options.keepContainersAtFailure = true;
+
 config.server.log.transports = [{
     transportType: 'Console',
     options: {
