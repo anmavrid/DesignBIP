@@ -17,7 +17,7 @@ describe('ArchitectureSpecGenerator', function () {
         gmeAuth,
         storage,
         commitHash;
-
+this.timeout(20000);
     before(function (done) {
         testFixture.clearDBAndGetGMEAuth(gmeConfig, projectName)
             .then(function (gmeAuth_) {
@@ -62,7 +62,7 @@ describe('ArchitectureSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/h',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -87,7 +87,7 @@ describe('ArchitectureSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/E',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -112,7 +112,7 @@ describe('ArchitectureSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/a',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);

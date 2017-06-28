@@ -17,7 +17,7 @@ describe('BehaviorSpecGenerator', function () {
         gmeAuth,
         storage,
         commitHash;
-
+        this.timeout(20000);
     before(function (done) {
         testFixture.clearDBAndGetGMEAuth(gmeConfig, projectName)
             .then(function (gmeAuth_) {
@@ -54,7 +54,7 @@ describe('BehaviorSpecGenerator', function () {
     });
 
     it('should succeed on valid model', function (done) {
-        this.timeout(10000);
+        this.timeout(20000);
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
             context = {
@@ -86,7 +86,7 @@ describe('BehaviorSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/z/1',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -110,7 +110,7 @@ describe('BehaviorSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/z/U',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -134,7 +134,7 @@ describe('BehaviorSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/z/k',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -158,7 +158,7 @@ describe('BehaviorSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/z/s',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -182,7 +182,7 @@ describe('BehaviorSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/z/B',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -206,7 +206,7 @@ describe('BehaviorSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/z/e',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -230,7 +230,7 @@ describe('BehaviorSpecGenerator', function () {
                 branchName: 'test',
                 activeNode: '/f/z/v',
             };
-
+        this.timeout(20000);
         manager.executePlugin(pluginName, pluginConfig, context, function (err, pluginResult) {
             try {
                 expect(pluginResult.success).to.equal(false);
@@ -268,7 +268,7 @@ describe('BehaviorSpecGenerator', function () {
             }
         });
     });
-
+    this.timeout(20000);
     it('should fail on invalid guard expression', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
@@ -292,7 +292,7 @@ describe('BehaviorSpecGenerator', function () {
             }
         });
     });
-
+    this.timeout(20000);
     it('should fail on invalid guard expression with spaces', function (done) {
         var manager = new PluginCliManager(null, logger, gmeConfig),
             pluginConfig = {},
