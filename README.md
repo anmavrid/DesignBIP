@@ -93,3 +93,5 @@ cd webgme
 npm install
 npm start
 ```
+
+References: [link](https://www.npmjs.com/package/webgme-bip), [link](https://github.com/webgme/webgme), [link](https://github.com/webgme/webgme-cli/issues/199), [link](https://docs.npmjs.com/getting-started/installing-npm-packages-globally)
