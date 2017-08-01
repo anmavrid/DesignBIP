@@ -46,6 +46,12 @@ sudo apt-get install mongodb-server
 
 `npm` is the Node.js package manager, that will allow you to easily install modules and packages to use with Node.js.
 
+Install the command line interface version of webgme globally to your operating system (so the `webgme start` command will work later):
+```
+sudo npm install webgme-cli -g
+```
+(Now, if you run `whereis webgme`, it should give you a location for the executable.)
+
 To clone the repository, first install git (if needed):
 
 ```
@@ -55,9 +61,35 @@ sudo apt-get install git
 and then do:
 
 ```
+cd /home/$USER
 git clone https://github.com/anmavrid/webgme-bip.git
 ```
+This makes the 'project root' for the git repo `/home/$USER/webgme-bip` (you can pick a different location for it besides `/home/$USER/` if you'd like).
 
-Start mongodb locally by running the `mongod` executable in your mongodb installation (you may need to create a `data` directory or set `--dbpath`).
+Start mongodb locally by running the `mongod` executable in your mongodb installation (you may need to create a `data` directory or set `--dbpath`). For example:
+```
+cd /home/$USER
+mkdir bip_data
+mongod --dbpath ./bip_data
+```
+wait until you see a line that says "[initandlisten] waiting for connections on port 27017".
 
-Then, run `webgme start` from the project root to start . Finally, navigate to `http://localhost:8888` to start using the WebGME-BIP design studio!
+Then, in a new terminal window, run `webgme start` from the project root (`webgme-bip`) to start. For example:
+```
+cd /home/$USER/webgme-bip
+webgme start
+```
+
+Finally, navigate to `http://localhost:8888` to start using the WebGME-BIP design studio!
+```
+firefox "https://127.0.0.1:8888/" &
+```
+
+As an aside... you can also download and install `webgme` itself locally if you'd like to play around with the basic (non-bip) interface:
+```
+cd /home/$USER
+git clone https://github.com/webgme/webgme.git
+cd webgme
+npm install
+npm start
+```
