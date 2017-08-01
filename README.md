@@ -70,7 +70,7 @@ Start mongodb locally by running the `mongod` executable in your mongodb install
 ```
 cd /home/$USER
 mkdir bip_data
-mongod --dbpath ./bip_data
+mongodb --dbpath ./bip_data
 ```
 wait until you see a line that says "[initandlisten] waiting for connections on port 27017".
 
