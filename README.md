@@ -13,9 +13,22 @@ First, install the following:
 - [NodeJS](https://nodejs.org/en/) (v4.x.x recommended)
 - [MongoDB](https://www.mongodb.com/)
 
-Second, start mongodb locally by running the `mongod` executable in your mongodb installation (you may need to create a `data` directory or set `--dbpath`).
+Then, install the command line interface of [webgme](https://github.com/webgme/webgme-cli).
 
-Then, run `webgme start` from the project root to start . Finally, navigate to `http://localhost:8888` to start using the WebGME-BIP design studio!
+Then, clone the `webgme-bip` repository and install packages with npm:
+```
+npm install
+npm instal webgme
+```
+
+Start mongodb locally by running the `mongod` executable in your mongodb installation (you may need to create a `data` directory or set `--dbpath`).
+
+Start the server locally
+```
+npm start
+```
+
+After the webgme server is up and there are no error messages in the console, open a valid address in the browser to start using the WebGME-BIP design studio. The default is http://127.0.0.1:8888/, you should see all valid addresses in the console.
 
 ## Alternative - No installation needed
 The design studio can be accessed (read-only) directly [here](https://editor.webgme.org/?project=anastasia%2BBIP&node=%2Ff%2Ft)
@@ -36,36 +49,32 @@ If you would like to create your own, private BIP projects:
 * A general tutorial on [modeling with WebGME](http://www.youtube.com/watch?v=YKi_256Vy_0&list=PLhvSjgKmeyjhp4_hnf-xPdCgES56dnMJb&index=3).
 
 ## Slower Start
-WebGME is a a node.js application that uses mongodb. Ubuntu users can install nodejs and mongodb as follows:
+First, install the following:
+- [NodeJS](https://nodejs.org/en/download/) (v4.x.x recommended)
+- [MongoDB](https://www.mongodb.com/download-center#production)
 
+Install the command line interface version of webgme globally to your operating system:
 ```
-sudo apt-get nodejs
-sudo apt-get install npm
-sudo apt-get install mongodb-server
+npm install -g webgme-cli
 ```
+(If you run `whereis webgme`, it should give you a location for the executable.)
 
-`npm` is the Node.js package manager, that will allow you to easily install modules and packages to use with Node.js.
+To clone the repository, first install (if necessary):
+- [Git](https://git-scm.com/downloads)
 
-Install the command line interface version of webgme globally to your operating system (so the `webgme start` command will work later):
-```
-sudo npm install webgme-cli -g
-```
-(Now, if you run `whereis webgme`, it should give you a location for the executable.)
-
-To clone the repository, first install git (if needed):
-
-```
-sudo apt-get install git
-```
-
-and then do:
-
+and then clone the repository in your preferred directory, for example:
 ```
 cd /home/$USER
 git clone https://github.com/anmavrid/webgme-bip.git
 ```
 This makes the 'project root' for the git repo `/home/$USER/webgme-bip` (you can pick a different location for it besides `/home/$USER/` if you'd like).
 
+Install packages with npm in the project root (`webgme-bip`):
+```
+cd /home/$USER/webgme-bip
+npm install
+npm install webgme
+```
 Start mongodb locally by running the `mongod` executable in your mongodb installation (you may need to create a `data` directory or set `--dbpath`). For example:
 ```
 cd /home/$USER
@@ -74,24 +83,16 @@ mongodb --dbpath ./bip_data
 ```
 wait until you see a line that says "[initandlisten] waiting for connections on port 27017".
 
-Then, in a new terminal window, run `webgme start` from the project root (`webgme-bip`) to start. For example:
+Then, in a new terminal window, run `npm start` from the project root (`webgme-bip`) to start. For example:
 ```
 cd /home/$USER/webgme-bip
-webgme start
-```
-
-Finally, navigate to `http://localhost:8888` to start using the WebGME-BIP design studio!
-```
-firefox "https://127.0.0.1:8888/" &
-```
-
-As an aside... you can also download and install `webgme` itself locally if you'd like to play around with the basic (non-bip) interface:
-```
-cd /home/$USER
-git clone https://github.com/webgme/webgme.git
-cd webgme
-npm install
 npm start
 ```
 
-References: [link](https://www.npmjs.com/package/webgme-bip), [link](https://github.com/webgme/webgme), [link](https://github.com/webgme/webgme-cli/issues/199), [link](https://docs.npmjs.com/getting-started/installing-npm-packages-globally)
+After the webgme server is up and there are no error messages in the console, open a valid address in the browser to start using the WebGME-BIP design studio. The default is http://127.0.0.1:8888/, you should see all valid addresses in the console.
+
+## Other information
+
+If you would like to play around with "generic" `webgme`, you do not need to download and install it. WebGME-BIP contains `webgme` as a node_module and all "generic" visualization is included.
+
+Links: [npm](https://www.npmjs.com/package/webgme-bip)
