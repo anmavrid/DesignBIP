@@ -71,11 +71,13 @@ define([
     // defines the parts of the project that the visualizer is interested in
     // (this allows the browser to then only load those relevant parts).
     BIPCodeEditorControl.prototype.selectedObjectChanged = function (nodeId) {
+        var node = this._client.getNode(nodeId),
+            typeId = node !== null ? node.getMetaTypeId() : null;
 
         if (typeof nodeId === 'string' &&
             this._currentNodeId !== nodeId &&
-            this._client.getNode(this._client.getNode(nodeId).getMetaTypeId())
-                .getAttribute('name') === 'ComponentType') {
+            typeof typeId === 'string' &&
+            this._client.getNode(typeId).getAttribute('name') === 'ComponentType') {
             //we have a viable component type so let us change things
             this._currentNodeId = nodeId;
             this._selfPatterns = {};
