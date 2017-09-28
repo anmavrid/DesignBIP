@@ -2,7 +2,7 @@
  * Before running with this configuration (will not work with windows w/o)
  * 1. Install docker http://docs.master.dockerproject.org/engine/installation/linux/ubuntulinux/
  * 2. Build the image using the provided Docker file.
-      $ docker build -t webgme-docker-worker:0.1.1 .
+      $ docker build -t webgme-docker-worker:1.0.0 .
  */
 
 // TODO: We need to turn on authentication and add the settings for cps-vo
@@ -18,7 +18,7 @@ config.server.workerManager.path = path.join(__dirname, '../node_modules/webgme-
 
 config.server.workerManager.options = {
     //dockerode: null, // https://github.com/apocas/dockerode#getting-started
-    image: 'webgme-docker-worker:0.1.1',
+    image: 'webgme-docker-worker:1.0.0',
     maxRunningContainers: 4,
     keepContainersAtFailure: false
 };
