@@ -7,44 +7,7 @@ We present a design studio, developed using the WebGME tool, for the specificati
 * [More information about BIP](http://www-verimag.imag.fr/Rigorous-Design-of-Component-Based.html)
 * [More information about JavaBIP](http://onlinelibrary.wiley.com/doi/10.1002/spe.2495/abstract)
 
-
 ## Quick Start
-First, install the following:
-- [NodeJS](https://nodejs.org/en/) (v4.x.x recommended)
-- [MongoDB](https://www.mongodb.com/)
-
-Then, clone the `webgme-bip` repository and install packages with npm:
-```
-npm install
-npm instal webgme
-```
-Start mongodb locally by running the `mongod` executable in your mongodb installation (you may need to create a `data` directory or set `--dbpath`).
-
-Start the server locally
-```
-npm start
-```
-After the webgme server is up and there are no error messages in the console, open a valid address in the browser to start using the WebGME-BIP design studio. The default is http://127.0.0.1:8888/, you should see all valid addresses in the console.
-
-## Alternative - No installation needed
-The design studio can be accessed (read-only) directly [here](https://editor.webgme.org/?project=anastasia%2BBIP&node=%2Ff%2Ft)
-, where you can see the Switchable Routes BIP project.
-
-A non-read-only version of the design-studio can be accessed [here](https://editor.webgme.org/?project=demo%2BBIP_test&branch=master&node=%2Ff%2Ft&visualizer=BIPEditor&tab=0&layout=DefaultLayout).
-
-If you would like to create your own, private BIP projects:
-1. create a [WebGME account](WebGMEhttp://webgme.org/),
-2. create a new project ( 3-minute tutorial for how to [create a project](http://www.youtube.com/watch?v=xR0rmcVFcgY&feature=youtu.be)),
-3. use the BIP seed.
-
-## Background material
-* A general paper on [BIP](https://infoscience.epfl.ch/record/170496/files/ieee-software.pdf).
-
-* A paper on [Architecture Diagrams](https://arxiv.org/pdf/1608.03324.pdf).
-
-* A general tutorial on [modeling with WebGME](http://www.youtube.com/watch?v=YKi_256Vy_0&list=PLhvSjgKmeyjhp4_hnf-xPdCgES56dnMJb&index=3).
-
-## Slower Start
 First, install the following:
 - [NodeJS](https://nodejs.org/en/download/) (v4.x.x recommended)
 - [MongoDB](https://www.mongodb.com/download-center#production)
@@ -86,6 +49,24 @@ npm start
 ```
 
 After the webgme server is up and there are no error messages in the console, open a valid address in the browser to start using the WebGME-BIP design studio. The default is http://127.0.0.1:8888/, you should see all valid addresses in the console.
+
+## Alternative - No installation needed
+The design studio can be accessed (read-only) directly [here](https://editor.webgme.org/?project=anastasia%2BBIP&node=%2Ff%2Ft)
+, where you can see the Switchable Routes BIP project.
+
+A non-read-only version of the design-studio can be accessed [here](https://editor.webgme.org/?project=demo%2BBIP_test&branch=master&node=%2Ff%2Ft&visualizer=BIPEditor&tab=0&layout=DefaultLayout).
+
+If you would like to create your own, private BIP projects:
+1. create a [WebGME account](WebGMEhttp://webgme.org/),
+2. create a new project ( 3-minute tutorial for how to [create a project](http://www.youtube.com/watch?v=xR0rmcVFcgY&feature=youtu.be)),
+3. use the BIP seed.
+
+## Background material
+* A general paper on [BIP](https://infoscience.epfl.ch/record/170496/files/ieee-software.pdf).
+
+* A paper on [Architecture Diagrams](https://arxiv.org/pdf/1608.03324.pdf).
+
+* A general tutorial on [modeling with WebGME](http://www.youtube.com/watch?v=YKi_256Vy_0&list=PLhvSjgKmeyjhp4_hnf-xPdCgES56dnMJb&index=3).
 
 ## Other information
 
