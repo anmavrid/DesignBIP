@@ -24,7 +24,7 @@
     "clean_up": "node ./node_modules/webgme/src/bin/clean_up.js",
     "postinstall": "bower install"
   },
-  "version": "1.1.0",
+  "version": "1.2.0",
   "keywords": [
     "webgme",
     "bip",
