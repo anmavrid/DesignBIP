@@ -12,12 +12,6 @@ First, install the following:
 - [NodeJS](https://nodejs.org/en/download/) (v4.x.x recommended)
 - [MongoDB](https://www.mongodb.com/download-center#production)
 
-Install the command line interface version of webgme globally to your operating system:
-```
-npm install -g webgme-cli
-```
-(If you run `whereis webgme`, it should give you a location for the executable.)
-
 To clone the repository, first install (if necessary):
 - [Git](https://git-scm.com/downloads)
 
@@ -49,6 +43,9 @@ npm start
 ```
 
 After the webgme server is up and there are no error messages in the console, open a valid address in the browser to start using the WebGME-BIP design studio. The default is http://127.0.0.1:8888/, you should see all valid addresses in the console.
+
+Click `Create New…` to create a new project.
+After entering a project name of your choice, import the seed `BIP` to start working on BIP!
 
 ## Alternative - No installation needed
 The design studio can be accessed (read-only) directly [here](https://editor.webgme.org/?project=anastasia%2BBIP&node=%2Ff%2Ft)
