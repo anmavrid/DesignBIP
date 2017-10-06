@@ -25,8 +25,9 @@ config.authentication.logInUrl = 'http://cps-vo.org/group/tools'
 config.authentication.logOutUrl = 'http://cps-vo.org/group/tools'
 config.authentication.jwt.privateKey = path.join(__dirname, '..', '..', 'token_keys','private_key');
 config.authentication.jwt.publicKey = path.join(__dirname, '..', '..', 'token_keys', 'public_key');
+config.server.port = 80;
 
-console.log('#### Using Deployment Config ###');
+console.log('#### Using CPS-VO Config ###');
 config.server.workerManager.path = path.join(__dirname, '../node_modules/webgme-docker-worker-manager/dockerworkermanager');
 
 config.server.workerManager.options = {
