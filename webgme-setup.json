@@ -12,6 +12,14 @@
       "JavaBIPEngine": {
         "src": "src/plugins/JavaBIPEngine",
         "test": "test/plugins/JavaBIPEngine"
+      },
+      "BIP1CodeGenerator": {
+        "src": "src/plugins/BIP1CodeGenerator",
+        "test": "test/plugins/BIP1CodeGenerator"
+      },
+      "BIP2CodeGenerator": {
+        "src": "src/plugins/BIP2CodeGenerator",
+        "test": "test/plugins/BIP2CodeGenerator"
       }
     },
     "seeds": {
