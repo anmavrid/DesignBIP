@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "bower": "^1.8.0",
+    "webgme": "^2.19.0",
     "webgme-docker-worker-manager": "^0.1.0"
   },
   "license": "MIT"

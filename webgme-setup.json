@@ -41,7 +41,13 @@
     },
     "addons": {},
     "layouts": {},
-    "routers": {}
+    "routers": {
+      "UserGroupAdder": {
+        "src": "src/routers/UserGroupAdder",
+        "test": "test/routers/UserGroupAdder",
+        "mount": "routers/UserGroupAdder"
+      }
+    }
   },
   "dependencies": {
     "plugins": {},

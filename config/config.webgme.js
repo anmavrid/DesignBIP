@@ -17,7 +17,7 @@ config.visualization.panelPaths.push(__dirname + '/../node_modules/webgme-bip-ed
 config.visualization.panelPaths.push(__dirname + '/../src/visualizers/panels');
 
 
-
+config.rest.components['routers/UserGroupAdder'] = __dirname + '/../src/routers/UserGroupAdder/UserGroupAdder.js';
 
 // Visualizer descriptors
 config.visualization.visualizerDescriptors.push(__dirname + '/../src/visualizers/Visualizers.json');
